@@ -5,10 +5,13 @@
   "main": "bot-server.js",
   "scripts": {
     "start": "node bot-server.js",
-    "dev": "node bot-server.js"
+    "dev": "node bot-server.js",
+    "webhook:set": "node scripts/set-webhook.js",
+    "webhook:info": "node scripts/set-webhook.js info"
   },
   "dependencies": {
-    "node-telegram-bot-api": "^0.66.0"
+    "node-telegram-bot-api": "^0.66.0",
+    "node-fetch": "^2.6.7"
   },
   "keywords": ["telegram", "bot", "games"],
   "author": "墨焕科技",

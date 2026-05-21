@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "**/*.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "**/*.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "**/*.js",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/games/2048/(.*)",
+      "dest": "/games/2048/$1"
+    },
+    {
+      "src": "/games/particle/(.*)",
+      "dest": "/games/particle/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "env": {
+    "TELEGRAM_BOT_TOKEN": "8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk"
+  }
+}
