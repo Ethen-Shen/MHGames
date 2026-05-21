@@ -1,8 +1,8 @@
 {
   "platform": "telegram",
-  "name": "Neon 2048",
+  "name": "Xiaoxiaole",
   "version": "2.0.0",
-  "description": "Neon-themed 2048 puzzle game for Telegram Mini App",
+  "description": "Xiaoxiaole 2048 puzzle game for Telegram Mini App",
   "author": "MHGames",
   "gameUrl": "/games/2048/",
   "adProvider": "telegram_stars",

@@ -852,12 +852,12 @@ function showGameOver(isWin) {
 
 function saveScore(score) {
   var hs = getHighScore();
-  if (score > hs) { try { localStorage.setItem('neon2048HighScore', score); } catch (e) {} return true; }
+  if (score > hs) { try { localStorage.setItem('xiaoxiaoleHighScore', score); } catch (e) {} return true; }
   return false;
 }
 
 function getHighScore() {
-  try { var hs = localStorage.getItem('neon2048HighScore'); return hs ? parseInt(hs) : 0; } catch (e) { return 0; }
+  try { var hs = localStorage.getItem('xiaoxiaoleHighScore'); return hs ? parseInt(hs) : 0; } catch (e) { return 0; }
 }
 
 function reviveGame() {
@@ -896,19 +896,19 @@ function reviveWithStars() {
 }
 
 function saveHistoryMaxTile(tile) {
-  try { localStorage.setItem('neon2048MaxTile', tile); } catch (e) {}
+  try { localStorage.setItem('xiaoxiaoleMaxTile', tile); } catch (e) {}
 }
 
 function getHistoryMaxTile() {
-  try { var mt = localStorage.getItem('neon2048MaxTile'); return mt ? parseInt(mt) : 0; } catch (e) { return 0; }
+  try { var mt = localStorage.getItem('xiaoxiaoleMaxTile'); return mt ? parseInt(mt) : 0; } catch (e) { return 0; }
 }
 
 function saveHistoryTotalTiles(total) {
-  try { localStorage.setItem('neon2048TotalTiles', total); } catch (e) {}
+  try { localStorage.setItem('xiaoxiaoleTotalTiles', total); } catch (e) {}
 }
 
 function getHistoryTotalTiles() {
-  try { var tt = localStorage.getItem('neon2048TotalTiles'); return tt ? parseInt(tt) : 0; } catch (e) { return 0; }
+  try { var tt = localStorage.getItem('xiaoxiaoleTotalTiles'); return tt ? parseInt(tt) : 0; } catch (e) { return 0; }
 }
 
 function reportLoadingProgress(progress) {
@@ -1019,12 +1019,12 @@ function animateBg() {
 
 function checkDailyReward() {
   var today = new Date().toDateString();
-  var lastRewardDate = localStorage.getItem('neon2048DailyReward');
+  var lastRewardDate = localStorage.getItem('xiaoxiaoleDailyReward');
   if (lastRewardDate === today) return;
 
   // 安全地尝试使用CloudStorage，如果失败就降级到localStorage
   function giveDailyReward() {
-    localStorage.setItem('neon2048DailyReward', today);
+    localStorage.setItem('xiaoxiaoleDailyReward', today);
     addBlockCount++;
     deleteBlockCount++;
     updatePropButtons();
@@ -1033,11 +1033,11 @@ function checkDailyReward() {
 
   try {
     if (window.Telegram && Telegram.WebApp && Telegram.WebApp.CloudStorage) {
-      Telegram.WebApp.CloudStorage.getItem('neon2048DailyReward', function(err, date) {
+      Telegram.WebApp.CloudStorage.getItem('xiaoxiaoleDailyReward', function(err, date) {
         if (err || date !== today) {
           try {
             if (Telegram.WebApp.CloudStorage) {
-              Telegram.WebApp.CloudStorage.setItem('neon2048DailyReward', today);
+              Telegram.WebApp.CloudStorage.setItem('xiaoxiaoleDailyReward', today);
             }
           } catch (e) {
             console.log('CloudStorage setItem failed, using localStorage only');

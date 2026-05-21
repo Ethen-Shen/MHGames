@@ -1,71 +1,14 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "games/**/*.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.css",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.json",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.png",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.jpg",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.svg",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.mp3",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "**/*.ogg",
-      "use": "@vercel/static"
+  "functions": {
+    "api/webhook.js": {
+      "memory": 128,
+      "maxDuration": 10
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1",
-      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH"]
-    },
-    {
-      "src": "/setup",
-      "dest": "/setup.html"
-    },
-    {
-      "src": "/games/2048/(.*)",
-      "dest": "/games/2048/$1"
-    },
-    {
-      "src": "/games/particle/(.*)",
-      "dest": "/games/particle/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/setup",
+      "destination": "/setup.html"
     }
-  ],
-  "env": {
-    "TELEGRAM_BOT_TOKEN": "8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk"
-  }
+  ]
 }

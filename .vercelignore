@@ -1,0 +1,8 @@
+node_modules
+.git
+.gitignore
+bot-server.js
+scripts/
+*.md
+**/game_backup.js
+README.md

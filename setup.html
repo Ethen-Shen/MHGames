@@ -126,8 +126,8 @@
     </div>
 
     <script>
-        var BOT_TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
-        var WEBHOOK_URL = 'https://www.mohuan.asia/api/webhook';
+        var BOT_TOKEN = new URLSearchParams(window.location.search).get('token') || '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
+        var WEBHOOK_URL = new URLSearchParams(window.location.search).get('webhook') || 'https://www.mohuan.asia/api/webhook';
         var API_BASE = 'https://api.telegram.org/bot' + BOT_TOKEN;
 
         document.getElementById('webhookUrl').textContent = WEBHOOK_URL;
