@@ -27,6 +27,16 @@ var tgUser = null;
 var isLoggedIn = false;
 var API_BASE = '';
 
+function showAgeRating() {
+  var ageRating = document.querySelector('.age-rating-box-fixed');
+  if (ageRating) ageRating.style.display = 'block';
+}
+
+function hideAgeRating() {
+  var ageRating = document.querySelector('.age-rating-box-fixed');
+  if (ageRating) ageRating.style.display = 'none';
+}
+
 function initTelegramUser() {
   try {
     if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
@@ -313,9 +323,10 @@ function initGame(mode, level) {
   document.addEventListener('keydown', handleKeyDown);
   startBgMusic();
   document.getElementById('home-page').style.display = 'none';
-    document.getElementById('level-select-page').style.display = 'none';
+  document.getElementById('level-select-page').style.display = 'none';
   document.getElementById('game-over-page').style.display = 'none';
   document.getElementById('game-page').style.display = 'flex';
+  hideAgeRating();
 }
 
 function resizeCanvas() {
@@ -835,6 +846,7 @@ function showGameOver(isWin) {
 
   document.getElementById('game-page').style.display = 'none';
   document.getElementById('game-over-page').style.display = 'flex';
+  showAgeRating();
   stopBgMusic();
 }
 
@@ -1074,6 +1086,7 @@ document.addEventListener('DOMContentLoaded', function() {
     reportLoadingProgress(1);
     loadingPage.style.display = 'none';
     document.getElementById('home-page').style.display = 'flex';
+    showAgeRating();
   }
   var loadingInterval = setInterval(function() {
     progressValue += 8;
@@ -1096,9 +1109,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('add-block').addEventListener('click', function() { addBlockAction(); });
   document.getElementById('delete-block').addEventListener('click', function() { deleteBlockAction(); });
   document.getElementById('restart-button').addEventListener('click', function() { playSfx(sfxClick); initGame(gameMode, currentLevel); });
-  document.getElementById('home-button').addEventListener('click', function() { playSfx(sfxBack); stopBgMusic(); document.getElementById('game-page').style.display = 'none'; document.getElementById('home-page').style.display = 'flex'; });
-  document.getElementById('play-again').addEventListener('click', function() { playSfx(sfxClick); document.getElementById('game-over-page').style.display = 'none'; document.getElementById('game-page').style.display = 'flex'; initGame(gameMode, currentLevel); });
-  document.getElementById('back-to-home').addEventListener('click', function() { playSfx(sfxBack); document.getElementById('game-over-page').style.display = 'none'; document.getElementById('home-page').style.display = 'flex'; });
+  document.getElementById('home-button').addEventListener('click', function() { playSfx(sfxBack); stopBgMusic(); document.getElementById('game-page').style.display = 'none'; document.getElementById('home-page').style.display = 'flex'; showAgeRating(); });
+  document.getElementById('play-again').addEventListener('click', function() { playSfx(sfxClick); document.getElementById('game-over-page').style.display = 'none'; document.getElementById('game-page').style.display = 'flex'; hideAgeRating(); initGame(gameMode, currentLevel); });
+  document.getElementById('back-to-home').addEventListener('click', function() { playSfx(sfxBack); document.getElementById('game-over-page').style.display = 'none'; document.getElementById('home-page').style.display = 'flex'; showAgeRating(); });
 
   var reviveBtn = document.getElementById('revive-game');
   if (reviveBtn) {
