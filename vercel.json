@@ -24,6 +24,10 @@
       "dest": "/api/$1"
     },
     {
+      "src": "/setup",
+      "dest": "/setup.html"
+    },
+    {
       "src": "/games/2048/(.*)",
       "dest": "/games/2048/$1"
     },

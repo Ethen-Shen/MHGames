@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 Telegram Bot Webhook</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #88f;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .info-box {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .info-box p {
+            color: #0f8;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .btn {
+            width: 100%;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result h3 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        .result pre {
+            color: #8f8;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            color: #0f8;
+        }
+        .error {
+            color: #f44;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 设置 Webhook</h1>
+        <p class="subtitle">一键连接 Telegram Bot 到 Vercel</p>
+        
+        <div class="info-box">
+            <p>📡 Webhook URL: <code>https://www.mohuan.asia/api/webhook</code></p>
+            <p>点击下方按钮设置 Webhook</p>
+        </div>
+        
+        <button class="btn" id="setupBtn" onclick="setupWebhook()">
+            🔗 设置 Webhook
+        </button>
+        
+        <button class="btn" id="infoBtn" onclick="getWebhookInfo()" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+            🔍 查看当前 Webhook 状态
+        </button>
+        
+        <div class="result" id="result">
+            <h3 id="resultTitle">结果</h3>
+            <pre id="resultContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        async function setupWebhook() {
+            const btn = document.getElementById('setupBtn');
+            const resultDiv = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 设置中...';
+            resultDiv.classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/setup-webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.classList.add('show');
+                
+                if (data.success) {
+                    resultTitle.className = 'success';
+                    resultTitle.textContent = '✅ 设置成功！';
+                } else {
+                    resultTitle.className = 'error';
+                    resultTitle.textContent = '❌ 设置失败';
+                }
+                
+                resultContent.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.classList.add('show');
+                resultTitle.className = 'error';
+                resultTitle.textContent = '❌ 请求失败';
+                resultContent.textContent = error.message;
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '🔗 设置 Webhook';
+        }
+        
+        async function getWebhookInfo() {
+            const btn = document.getElementById('infoBtn');
+            const resultDiv = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultContent = document.getElementById('resultContent');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 获取中...';
+            resultDiv.classList.remove('show');
+            
+            try {
+                const response = await fetch('/api/setup-webhook', {
+                    method: 'GET'
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.classList.add('show');
+                resultTitle.textContent = '📋 Webhook 信息';
+                resultContent.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.classList.add('show');
+                resultTitle.className = 'error';
+                resultTitle.textContent = '❌ 请求失败';
+                resultContent.textContent = error.message;
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '🔍 查看当前 Webhook 状态';
+        }
+    </script>
+</body>
+</html>
