@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>墨焕科技 - MH Games</title>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --border-color: #e5e7eb;
+            --logo-fill: #1a1a1a;
+            --transition-speed: 0.3s;
+        }
+
+        :root.dark-theme {
+            --bg-primary: #0f0f23;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent-color: #818cf8;
+            --accent-hover: #6366f1;
+            --border-color: #2d2d44;
+            --logo-fill: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background var(--transition-speed), color var(--transition-speed);
+        }
+
+        /* Logo Container */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-svg {
+            width: 56px;
+            height: 56px;
+            transition: filter var(--transition-speed);
+        }
+
+        .logo-svg .logo-path {
+            fill: var(--logo-fill);
+            transition: fill var(--transition-speed);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            transition: color var(--transition-speed);
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            letter-spacing: 2px;
+            transition: color var(--transition-speed);
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            transition: background var(--transition-speed), border-color var(--transition-speed);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-theme {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-theme:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .btn-lang {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-lang:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 80px 40px;
+            background: linear-gradient(135deg, var(--accent-color)15%, transparent 50%);
+            transition: background var(--transition-speed);
+        }
+
+        .hero-title {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-color), #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* Games Grid */
+        .games-section {
+            padding: 60px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--text-primary);
+            transition: color var(--transition-speed);
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: all var(--transition-speed);
+            border: 1px solid var(--border-color);
+        }
+
+        .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .game-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-image::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(255,255,255,0.1), transparent, rgba(255,255,255,0.1));
+            animation: rotate 3s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .game-icon {
+            font-size: 64px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .game-info {
+            padding: 24px;
+        }
+
+        .game-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            transition: color var(--transition-speed);
+        }
+
+        .game-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .game-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tag {
+            padding: 4px 12px;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--accent-color);
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .btn-play {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent-color), #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed);
+        }
+
+        .btn-play:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-secondary);
+            padding: 40px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            margin-top: 60px;
+            transition: background var(--transition-speed), border-color var(--transition-speed);
+        }
+
+        .footer-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .footer-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            .logo-svg {
+                width: 44px;
+                height: 44px;
+            }
+
+            .logo-title {
+                font-size: 18px;
+            }
+
+            .hero {
+                padding: 40px 20px;
+            }
+
+            .hero-title {
+                font-size: 32px;
+            }
+
+            .hero-subtitle {
+                font-size: 16px;
+            }
+
+            .games-section {
+                padding: 40px 20px;
+            }
+
+            .btn {
+                padding: 8px 14px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <svg class="logo-svg" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g filter="url(#filter0_d_0_1)">
+                    <path class="logo-path" d="M24.3134 41V30V24.6719L12 28.9258L24.3134 22.3086L27.7612 20.418L30.5373 19V27.5937H38.7761V19H45V41H38.7761V32.4063H30.5373V41H24.3134Z"/>
+                </g>
+                <g filter="url(#filter1_d_0_1)">
+                    <path class="logo-path" d="M4 0H11.5257L16.7024 11.8945H16.9634L22.1401 0H29.6658V10.1719V15.9551L39 12.8789L27.3333 19.1953L23.7496 21V8.85938H23.5756L18.6165 20.8359H15.0494L10.0902 8.77734H9.91619V21H4V0Z"/>
+                </g>
+                <defs>
+                    <filter id="filter0_d_0_1" x="8" y="19" width="41" height="30" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                        <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                        <feOffset dy="4"/>
+                        <feGaussianBlur stdDeviation="2"/>
+                        <feComposite in2="hardAlpha" operator="out"/>
+                        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
+                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
+                    </filter>
+                    <filter id="filter1_d_0_1" x="0" y="0" width="43" height="29" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                        <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                        <feOffset dy="4"/>
+                        <feGaussianBlur stdDeviation="2"/>
+                        <feComposite in2="hardAlpha" operator="out"/>
+                        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
+                        <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_1"/>
+                        <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_1" result="shape"/>
+                    </filter>
+                </defs>
+            </svg>
+            <div class="logo-text">
+                <div class="logo-title" id="logo-title">墨焕科技</div>
+                <div class="logo-subtitle" id="logo-subtitle">MH GAMES</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-theme" id="theme-toggle">
+                <span id="theme-icon">🌙</span>
+                <span id="theme-text">夜间模式</span>
+            </button>
+            <button class="btn btn-lang" id="lang-toggle">
+                <span id="lang-icon">🌐</span>
+                <span id="lang-text">English</span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1 class="hero-title" id="hero-title">探索精彩游戏世界</h1>
+            <p class="hero-subtitle" id="hero-subtitle">体验精心打造的HTML5游戏，享受无尽的娱乐时光。随时随地，畅玩不停！</p>
+        </section>
+
+        <section class="games-section">
+            <h2 class="section-title" id="section-title">精选游戏</h2>
+            <div class="games-grid">
+                <div class="game-card">
+                    <div class="game-image">
+                        <span class="game-icon">🎮</span>
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title" id="game1-title">Neon 2048</h3>
+                        <p class="game-description" id="game1-desc">经典2048游戏的霓虹风格版本，滑动方块，合并数字，挑战最高分！</p>
+                        <div class="game-tags">
+                            <span class="tag" id="tag1-1">益智</span>
+                            <span class="tag" id="tag1-2">策略</span>
+                            <span class="tag" id="tag1-3">休闲</span>
+                        </div>
+                        <button class="btn-play" onclick="openGame('2048')" id="game1-btn">
+                            <span id="play-text">开始游戏</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="game-card">
+                    <div class="game-image">
+                        <span class="game-icon">💥</span>
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title" id="game2-title">Particle Blast</h3>
+                        <p class="game-description" id="game2-desc">粒子消除游戏，点击相同颜色的粒子进行消除，获得高分！</p>
+                        <div class="game-tags">
+                            <span class="tag" id="tag2-1">消除</span>
+                            <span class="tag" id="tag2-2">街机</span>
+                            <span class="tag" id="tag2-3">挑战</span>
+                        </div>
+                        <button class="btn-play" onclick="openGame('particle')" id="game2-btn">
+                            <span id="play-text2">开始游戏</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">墨焕科技 MH Games</a>. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Language translations
+        const translations = {
+            'zh': {
+                'logo-title': '墨焕科技',
+                'logo-subtitle': 'MH GAMES',
+                'theme-text': '夜间模式',
+                'theme-icon': '🌙',
+                'theme-text-alt': '日间模式',
+                'theme-icon-alt': '☀️',
+                'lang-text': 'English',
+                'lang-icon': '🌐',
+                'hero-title': '探索精彩游戏世界',
+                'hero-subtitle': '体验精心打造的HTML5游戏，享受无尽的娱乐时光。随时随地，畅玩不停！',
+                'section-title': '精选游戏',
+                'game1-title': 'Neon 2048',
+                'game1-desc': '经典2048游戏的霓虹风格版本，滑动方块，合并数字，挑战最高分！',
+                'tag1-1': '益智',
+                'tag1-2': '策略',
+                'tag1-3': '休闲',
+                'game2-title': 'Particle Blast',
+                'game2-desc': '粒子消除游戏，点击相同颜色的粒子进行消除，获得高分！',
+                'tag2-1': '消除',
+                'tag2-2': '街机',
+                'tag2-3': '挑战',
+                'play-text': '开始游戏',
+                'play-text2': '开始游戏',
+                'footer-text': '© 2024 <a href="#" class="footer-link">墨焕科技 MH Games</a>. All rights reserved.'
+            },
+            'en': {
+                'logo-title': 'MH Games',
+                'logo-subtitle': 'MO HUAN TECHNOLOGY',
+                'theme-text': 'Dark Mode',
+                'theme-icon': '🌙',
+                'theme-text-alt': 'Light Mode',
+                'theme-icon-alt': '☀️',
+                'lang-text': '中文',
+                'lang-icon': '🇨🇳',
+                'hero-title': 'Explore Amazing Games',
+                'hero-subtitle': 'Experience carefully crafted HTML5 games and enjoy endless entertainment. Play anytime, anywhere!',
+                'section-title': 'Featured Games',
+                'game1-title': 'Neon 2048',
+                'game1-desc': 'A neon-style version of the classic 2048 game. Slide tiles, merge numbers, and challenge your high score!',
+                'tag1-1': 'Puzzle',
+                'tag1-2': 'Strategy',
+                'tag1-3': 'Casual',
+                'game2-title': 'Particle Blast',
+                'game2-desc': 'A particle elimination game. Click particles of the same color to eliminate them and score high!',
+                'tag2-1': 'Match 3',
+                'tag2-2': 'Arcade',
+                'tag2-3': 'Challenge',
+                'play-text': 'Play Now',
+                'play-text2': 'Play Now',
+                'footer-text': '© 2024 <a href="#" class="footer-link">MH Games</a>. All rights reserved.'
+            }
+        };
+
+        let currentLang = 'zh';
+        let isDark = false;
+
+        function loadLanguage(lang) {
+            document.getElementById('html-root').lang = lang;
+            
+            const elements = [
+                'logo-title', 'logo-subtitle', 'theme-text', 'lang-text', 
+                'hero-title', 'hero-subtitle', 'section-title',
+                'game1-title', 'game1-desc', 'tag1-1', 'tag1-2', 'tag1-3',
+                'game2-title', 'game2-desc', 'tag2-1', 'tag2-2', 'tag2-3',
+                'play-text', 'play-text2', 'footer-text'
+            ];
+
+            elements.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    elem.innerHTML = translations[lang][id];
+                }
+            });
+
+            // Update language icon
+            const langIcon = document.getElementById('lang-icon');
+            langIcon.textContent = lang === 'zh' ? '🌐' : '🇨🇳';
+        }
+
+        function toggleTheme() {
+            isDark = !isDark;
+            
+            if (isDark) {
+                document.documentElement.classList.add('dark-theme');
+                document.getElementById('theme-icon').textContent = '☀️';
+                document.getElementById('theme-text').textContent = translations[currentLang].theme_text_alt;
+            } else {
+                document.documentElement.classList.remove('dark-theme');
+                document.getElementById('theme-icon').textContent = '🌙';
+                document.getElementById('theme-text').textContent = translations[currentLang].theme_text;
+            }
+            
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'zh' ? 'en' : 'zh';
+            loadLanguage(currentLang);
+            localStorage.setItem('lang', currentLang);
+        }
+
+        function openGame(game) {
+            const urls = {
+                '2048': 'file:///d:/TelegramGames/Tele-Games/2048/index.html',
+                'particle': 'file:///d:/TelegramGames/Tele-Games/粒子消除/index.html'
+            };
+            window.open(urls[game], '_blank');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                toggleTheme();
+            }
+
+            // Load saved language
+            const savedLang = localStorage.getItem('lang');
+            if (savedLang) {
+                currentLang = savedLang;
+                loadLanguage(savedLang);
+            }
+
+            // Add event listeners
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('lang-toggle').addEventListener('click', toggleLanguage);
+        });
+    </script>
+</body>
+</html>
