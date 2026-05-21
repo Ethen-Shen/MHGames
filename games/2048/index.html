@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Neon2048</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+      try {
+        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+          Telegram.WebApp.ready();
+          Telegram.WebApp.expand();
+        }
+      } catch (e) {
+        console.log('Telegram WebApp not available, running in standalone mode');
+      }
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="loading-page" class="loading-page">
+      <div class="loading-content">
+        <div class="logo">MHGames</div>
+        <div class="progress-bar">
+          <div class="progress" id="progress"></div>
+        </div>
+      </div>
+    </div>
+    <canvas id="bg-canvas" class="bg-canvas"></canvas>
+    <div id="home-page" class="home-page" style="display: none">
+      <h1 class="game-title">Neon 2048</h1>
+      <div class="button-container">
+        <button id="play-button" class="start-button cyborg-btn">PLAY</button>
+        <button id="add-shortcut" class="cyborg-btn">ADD TO HOME</button>
+      </div>
+    </div>
+    <div id="level-select-page" class="level-select-page" style="display: none">
+      <h2 class="cyber-title">SELECT LEVEL</h2>
+      <div class="level-buttons">
+        <button id="level-1" class="level-button cyborg-btn">
+          LEVEL 1<br /><small>Reach 256</small>
+        </button>
+        <button id="level-2" class="level-button cyborg-btn">
+          LEVEL 2<br /><small>Reach 512</small>
+        </button>
+        <button id="level-3" class="level-button cyborg-btn">
+          LEVEL 3<br /><small>Reach 1024</small>
+        </button>
+        <button id="level-4" class="level-button cyborg-btn">
+          LEVEL 4<br /><small>Reach 2048</small>
+        </button>
+        <button id="level-5" class="level-button cyborg-btn">
+          LEVEL 5<br /><small>Reach 4096</small>
+        </button>
+        <button id="endless-mode" class="level-button cyborg-btn">
+          ENDLESS<br /><small>No limit</small>
+        </button>
+      </div>
+      <button id="back-from-level" class="back-button cyborg-btn">BACK</button>
+    </div>
+    <div id="game-page" class="game-page" style="display: none">
+      <div class="game-header">
+        <div class="score-info">
+          <div>
+            <span id="label-score">TOTAL:</span>
+            <span id="current-score">0</span>
+          </div>
+          <div>
+            <span id="label-best">MAX:</span> <span id="high-score">0</span>
+          </div>
+        </div>
+        <div class="target-info">
+          <span id="label-target">GOAL:</span> <span id="target-tile">256</span>
+        </div>
+      </div>
+      <button id="sound-toggle" class="sound-toggle">📢</button>
+      <div class="game-container">
+        <canvas id="game-canvas" class="game-canvas"></canvas>
+        <div class="canvas-buttons">
+          <button id="add-block" class="control-button cyborg-btn-sm">
+            ⭐ Watch Ad + BLOCK
+          </button>
+          <button id="delete-block" class="control-button cyborg-btn-sm">
+            ⭐ Watch Ad - BLOCK
+          </button>
+        </div>
+        <div class="canvas-buttons">
+          <button id="restart-button" class="control-button cyborg-btn-sm">
+            RESTART
+          </button>
+          <button id="home-button" class="control-button cyborg-btn-sm">
+            HOME
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="game-over-page" class="game-over-page" style="display: none">
+      <h2 class="cyber-title" id="game-over-title">GAME OVER</h2>
+      <div class="final-score">
+        <span id="label-final-score">FINAL SCORE:</span>
+        <span id="final-score">0</span>
+      </div>
+      <div class="high-score-display">
+        <span id="label-best-score">BEST:</span>
+        <span id="game-over-high-score">0</span>
+      </div>
+      <div class="max-tile-display">
+        <span id="label-max-tile">MAX TILE:</span> <span id="max-tile">2</span>
+      </div>
+      <div class="total-tile-display">
+        <span id="label-total-tile">TOTAL TILES:</span>
+        <span id="total-tile">0</span>
+      </div>
+      <div id="revive-section" class="revive-section" style="display: none; margin: 20px 0;">
+        <button id="revive-game" class="revive-button cyborg-btn">
+          ⭐ Watch Ad to Revive
+        </button>
+        <button id="revive-stars" class="revive-button cyborg-btn" style="margin-top:8px;">
+          ⭐ Revive (1 Star)
+        </button>
+      </div>
+      <button id="play-again" class="play-again-button cyborg-btn">
+        PLAY AGAIN
+      </button>
+      <button id="back-to-home" class="back-home-button cyborg-btn">
+        HOME
+      </button>
+    </div>
+    <!-- 年龄标识 -->
+    <div class="age-rating-box-fixed">
+      <div class="age-rating-inner">
+        <div class="age-rating-number">8+</div>
+        <div class="age-rating-label">CADPA</div>
+      </div>
+      <div class="age-rating-footer">Age Rating Prompt</div>
+    </div>
+    <script src="lang.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>

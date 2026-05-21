@@ -1,0 +1,16 @@
+{
+  "platform": "telegram",
+  "name": "Particle Blast",
+  "version": "2.0.0",
+  "description": "Color-matching elimination game for Telegram Mini App",
+  "author": "MHGames",
+  "gameUrl": "/games/particle/",
+  "adProvider": "telegram_stars",
+  "features": {
+    "fullscreen": true,
+    "highscores": true,
+    "starsPayment": true,
+    "homeScreenShortcut": true,
+    "cloudStorage": true
+  }
+}

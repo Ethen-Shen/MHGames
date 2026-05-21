@@ -1,0 +1,16 @@
+{
+  "platform": "telegram",
+  "name": "Neon 2048",
+  "version": "2.0.0",
+  "description": "Neon-themed 2048 puzzle game for Telegram Mini App",
+  "author": "MHGames",
+  "gameUrl": "/games/2048/",
+  "adProvider": "telegram_stars",
+  "features": {
+    "fullscreen": true,
+    "highscores": true,
+    "starsPayment": true,
+    "homeScreenShortcut": true,
+    "cloudStorage": true
+  }
+}
