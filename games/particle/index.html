@@ -105,6 +105,21 @@
     </div>
     <div class="age-rating-footer">Age Rating Prompt</div>
   </div>
+  <!-- AdsGram 广告集成 -->
+  <script src="https://sdk.adsgram.ai/v1/adsgram.js"></script>
+  <script>
+    // 初始化 AdsGram，你需要替换为你自己的广告位 ID
+    // 在 AdsGram 后台创建广告位后获取
+    let adsgram;
+    try {
+      adsgram = new Adsgram({
+        blockId: "your-block-id-here" // 请替换为你的广告位 ID
+      });
+    } catch (e) {
+      console.log("AdsGram initialization failed:", e);
+      adsgram = null;
+    }
+  </script>
   <script src="lang.js"></script>
   <script src="game.js"></script>
 </body>

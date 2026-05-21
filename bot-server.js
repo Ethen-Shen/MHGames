@@ -1,7 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 
 // 替换为你的Bot Token
-const TOKEN = '8999889580:AAHbnsGQNYu33PZ8yvxvRWOlR3f50o42MJ4';
+const TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
 
 // 游戏简称
 const GAME_SHORT_NAMES = {

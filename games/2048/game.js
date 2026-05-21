@@ -227,7 +227,26 @@ function showAd(callback) {
     isUsingProp = false;
   }
 
-  if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
+  // 优先使用 AdsGram 激励视频广告
+  if (window.adsgram) {
+    try {
+      adsgram.showRewardedAd().then(function(result) {
+        if (result && result.completed) {
+          handleReward();
+        } else {
+          handleCancel();
+        }
+      }).catch(function(e) {
+        console.log("AdsGram ad error:", e);
+        handleCancel();
+      });
+    } catch (e) {
+      console.log("AdsGram ad error:", e);
+      handleCancel();
+    }
+  } 
+  // 备用方案：使用原来的支付方式
+  else if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
     var invoiceUrl = API_BASE + '/api/createInvoice?game=2048&type=item&user_id=' + (tgUser ? tgUser.id : '0');
     fetch(invoiceUrl)
       .then(function(res) { return res.json(); })
