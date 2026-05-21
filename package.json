@@ -1,0 +1,16 @@
+{
+  "name": "mh-games-bot",
+  "version": "1.0.0",
+  "description": "墨焕游戏Telegram Bot",
+  "main": "bot-server.js",
+  "scripts": {
+    "start": "node bot-server.js",
+    "dev": "node bot-server.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "keywords": ["telegram", "bot", "games"],
+  "author": "墨焕科技",
+  "license": "MIT"
+}
