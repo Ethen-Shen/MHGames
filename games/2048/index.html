@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Xiaoxiaole</title>
+    <title>Neon 2048</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
       try {
@@ -31,7 +31,7 @@
     </div>
     <canvas id="bg-canvas" class="bg-canvas"></canvas>
     <div id="home-page" class="home-page" style="display: none">
-      <h1 class="game-title">Xiaoxiaole</h1>
+      <h1 class="game-title">Neon 2048</h1>
       <div class="button-container">
         <button id="play-button" class="start-button cyborg-btn">PLAY</button>
         <button id="add-shortcut" class="cyborg-btn">ADD TO HOME</button>
@@ -138,25 +138,35 @@
       <div class="age-rating-footer">Age Rating Prompt</div>
     </div>
     <!-- AdsGram 广告集成 -->
-    <script src="https://sdk.adsgram.ai/v1/adsgram.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     <script>
       window.adReward = null;
       window.adInterstitial = null;
       window.adTask = null;
 
-      try {
-        window.adReward = window.Adsgram.init({
-          blockId: "30881"
-        });
-        window.adInterstitial = window.Adsgram.init({
-          blockId: "int-30882"
-        });
-        window.adTask = window.Adsgram.init({
-          blockId: "task-30883"
-        });
-        console.log("AdsGram: 3 ad units initialized");
-      } catch (e) {
-        console.log("AdsGram init failed:", e);
+      function initAdsGram() {
+        if (typeof window.Adsgram === 'undefined') {
+          console.log("[AdsGram] SDK not loaded - window.Adsgram is undefined");
+          return;
+        }
+        try {
+          window.adReward = window.Adsgram.init({ blockId: "30881" });
+          window.adInterstitial = window.Adsgram.init({ blockId: "int-30882" });
+          window.adTask = window.Adsgram.init({ blockId: "task-30883" });
+          console.log("[AdsGram] 3 ad units initialized:", {
+            reward: !!window.adReward,
+            interstitial: !!window.adInterstitial,
+            task: !!window.adTask
+          });
+        } catch (e) {
+          console.log("[AdsGram] init failed:", e);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAdsGram);
+      } else {
+        initAdsGram();
       }
     </script>
     <script src="lang.js"></script>

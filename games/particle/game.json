@@ -5,7 +5,7 @@
   "description": "Color-matching elimination game for Telegram Mini App",
   "author": "MHGames",
   "gameUrl": "/games/particle/",
-  "adProvider": "telegram_stars",
+  "adProvider": "adsgram",
   "features": {
     "fullscreen": true,
     "highscores": true,

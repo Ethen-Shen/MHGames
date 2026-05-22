@@ -238,44 +238,41 @@ function showAd(callback) {
     isUsingProp = false;
   }
 
+  console.log("[AdsGram] trying reward ad, adReward exists:", !!window.adReward);
+
   if (window.adReward) {
     try {
       window.adReward.show().then(function(result) {
+        console.log("[AdsGram] reward result:", JSON.stringify(result));
         if (result && result.done) {
           handleReward();
         } else {
           handleCancel();
         }
       }).catch(function(e) {
-        console.log("AdsGram reward ad error:", e);
+        console.log("[AdsGram] reward ad failed:", e);
         handleCancel();
       });
     } catch (e) {
-      console.log("AdsGram reward ad error:", e);
+      console.log("[AdsGram] reward ad error:", e);
       handleCancel();
     }
   }
-  else if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
+  else if (typeof API_BASE === 'string' && API_BASE.length > 0 && window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
     var invoiceUrl = API_BASE + '/api/createInvoice?game=2048&type=item&user_id=' + (tgUser ? tgUser.id : '0');
     fetch(invoiceUrl)
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data && data.invoice_url) {
           Telegram.WebApp.openInvoice(data.invoice_url, function(status) {
-            if (status === 'paid') {
-              handleReward();
-            } else {
-              handleCancel();
-            }
+            if (status === 'paid') { handleReward(); }
+            else { handleCancel(); }
           });
-        } else {
-          handleCancel();
-        }
+        } else { handleCancel(); }
       })
-      .catch(function() {
-        handleCancel();
-      });
+      .catch(function() { handleCancel(); });
   } else {
+    console.log("[AdsGram] no ad provider available, skipping reward");
     handleCancel();
   }
 }
@@ -285,15 +282,17 @@ function showRewardedAd(callback) {
 }
 
 function showInterstitialAd() {
+  console.log("[AdsGram] trying interstitial ad, adInterstitial exists:", !!window.adInterstitial);
+
   if (window.adInterstitial) {
     try {
       window.adInterstitial.show().then(function(result) {
-        console.log("AdsGram interstitial done:", result.done);
+        console.log("[AdsGram] interstitial result:", JSON.stringify(result));
       }).catch(function(e) {
-        console.log("AdsGram interstitial error:", e);
+        console.log("[AdsGram] interstitial failed:", e);
       });
     } catch (e) {
-      console.log("AdsGram interstitial error:", e);
+      console.log("[AdsGram] interstitial error:", e);
     }
   }
 }
@@ -1053,23 +1052,28 @@ function checkDailyReward() {
 
   try {
     if (window.Telegram && Telegram.WebApp && Telegram.WebApp.CloudStorage) {
-      Telegram.WebApp.CloudStorage.getItem('xiaoxiaoleDailyReward', function(err, date) {
-        if (err || date !== today) {
-          try {
-            if (Telegram.WebApp.CloudStorage) {
-              Telegram.WebApp.CloudStorage.setItem('xiaoxiaoleDailyReward', today);
+      try {
+        Telegram.WebApp.CloudStorage.getItem('xiaoxiaoleDailyReward', function(err, date) {
+          if (err || date !== today) {
+            try {
+              if (Telegram.WebApp.CloudStorage) {
+                Telegram.WebApp.CloudStorage.setItem('xiaoxiaoleDailyReward', today, function() {});
+              }
+            } catch (e) {
+              console.log('CloudStorage setItem failed, using localStorage only');
             }
-          } catch (e) {
-            console.log('CloudStorage setItem failed, using localStorage only');
+            giveDailyReward();
           }
-          giveDailyReward();
-        }
-      });
+        });
+      } catch (e) {
+        console.log('CloudStorage not supported in this version, using localStorage');
+        giveDailyReward();
+      }
     } else {
       giveDailyReward();
     }
   } catch (e) {
-    console.log('CloudStorage not available, using localStorage only');
+    console.log('CloudStorage check failed, using localStorage');
     giveDailyReward();
   }
 }

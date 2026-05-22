@@ -208,6 +208,16 @@ var animFrameId = null;
 var levelUpParticles = [];
 var levelUpAnimFrame = null;
 
+function showAgeRating() {
+  var ageRating = document.querySelector('.age-rating-box-fixed');
+  if (ageRating) ageRating.style.display = 'block';
+}
+
+function hideAgeRating() {
+  var ageRating = document.querySelector('.age-rating-box-fixed');
+  if (ageRating) ageRating.style.display = 'none';
+}
+
 function showAd(onReward) {
   if (isReviving) return;
   isReviving = true;
@@ -247,46 +257,41 @@ function showAd(onReward) {
     }
   }
 
-  // 优先使用 AdsGram 激励视频广告
-  if (window.adsgram) {
+  console.log("[AdsGram] trying reward ad, adReward exists:", !!window.adReward);
+
+  if (window.adReward) {
     try {
-      adsgram.showRewardedAd().then(function(result) {
-        if (result && result.completed) {
+      window.adReward.show().then(function(result) {
+        console.log("[AdsGram] reward result:", JSON.stringify(result));
+        if (result && result.done) {
           handleReward();
         } else {
           handleCancel();
         }
       }).catch(function(e) {
-        console.log("AdsGram ad error:", e);
+        console.log("[AdsGram] reward ad failed:", e);
         handleCancel();
       });
     } catch (e) {
-      console.log("AdsGram ad error:", e);
+      console.log("[AdsGram] reward ad error:", e);
       handleCancel();
     }
-  } 
-  // 备用方案：使用原来的支付方式
-  else if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
+  }
+  else if (typeof API_BASE === 'string' && API_BASE.length > 0 && window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
     var invoiceUrl = API_BASE + '/api/createInvoice?game=particle&type=item&user_id=' + (tgUser ? tgUser.id : '0');
     fetch(invoiceUrl)
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data && data.invoice_url) {
           Telegram.WebApp.openInvoice(data.invoice_url, function(status) {
-            if (status === 'paid') {
-              handleReward();
-            } else {
-              handleCancel();
-            }
+            if (status === 'paid') { handleReward(); }
+            else { handleCancel(); }
           });
-        } else {
-          handleCancel();
-        }
+        } else { handleCancel(); }
       })
-      .catch(function() {
-        handleCancel();
-      });
+      .catch(function() { handleCancel(); });
   } else {
+    console.log("[AdsGram] no ad provider available, skipping reward");
     handleCancel();
   }
 }
@@ -296,16 +301,19 @@ function showRewardedVideoAd(onReward) {
 }
 
 function showInterstitialAd(callback) {
-  if (window.adsgram) {
+  console.log("[AdsGram] trying interstitial ad, adInterstitial exists:", !!window.adInterstitial);
+
+  if (window.adInterstitial) {
     try {
-      adsgram.showInterstitialAd().then(function() {
+      window.adInterstitial.show().then(function(result) {
+        console.log("[AdsGram] interstitial result:", JSON.stringify(result));
         if (callback) callback();
       }).catch(function(e) {
-        console.log("AdsGram interstitial ad error:", e);
+        console.log("[AdsGram] interstitial failed:", e);
         if (callback) callback();
       });
     } catch (e) {
-      console.log("AdsGram interstitial ad error:", e);
+      console.log("[AdsGram] interstitial error:", e);
       if (callback) callback();
     }
   } else {
@@ -1114,6 +1122,7 @@ document.addEventListener('DOMContentLoaded', function() {
     playSfx(sfxClick);
     document.getElementById('home-page').style.display = 'none';
     document.getElementById('game-page').style.display = 'flex';
+    hideAgeRating();
     initGame();
   });
   document.getElementById('settings-button').addEventListener('click', function() {
@@ -1142,6 +1151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     currentLevel = 1; levelUpBonusTime = 0;
     document.getElementById('game-over-page').style.display = 'none';
     document.getElementById('game-page').style.display = 'flex';
+    hideAgeRating();
     initGame();
   });
   document.getElementById('back-to-home').addEventListener('click', function() {

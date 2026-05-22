@@ -106,18 +106,32 @@
     <div class="age-rating-footer">Age Rating Prompt</div>
   </div>
   <!-- AdsGram 广告集成 -->
-  <script src="https://sdk.adsgram.ai/v1/adsgram.js"></script>
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <script>
-    // 初始化 AdsGram，你需要替换为你自己的广告位 ID
-    // 在 AdsGram 后台创建广告位后获取
-    let adsgram;
-    try {
-      adsgram = new Adsgram({
-        blockId: "your-block-id-here" // 请替换为你的广告位 ID
-      });
-    } catch (e) {
-      console.log("AdsGram initialization failed:", e);
-      adsgram = null;
+    window.adReward = null;
+    window.adInterstitial = null;
+
+    function initAdsGram() {
+      if (typeof window.Adsgram === 'undefined') {
+        console.log("[AdsGram] SDK not loaded - window.Adsgram is undefined");
+        return;
+      }
+      try {
+        window.adReward = window.Adsgram.init({ blockId: "30886" });
+        window.adInterstitial = window.Adsgram.init({ blockId: "int-30885" });
+        console.log("[AdsGram] ad units initialized:", {
+          reward: !!window.adReward,
+          interstitial: !!window.adInterstitial
+        });
+      } catch (e) {
+        console.log("[AdsGram] init failed:", e);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAdsGram);
+    } else {
+      initAdsGram();
     }
   </script>
   <script src="lang.js"></script>

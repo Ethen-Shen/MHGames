@@ -34,7 +34,7 @@ bot.onText(/\/start/, (msg) => {
 
 选择你想玩的游戏：
 
-/xiaoxiaole - 消消乐2048
+/xiaoxiaole - Neon 2048
 /particle - 粒子消除
 
 或者直接在聊天框输入：

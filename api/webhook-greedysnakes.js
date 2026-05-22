@@ -1,16 +1,14 @@
 const fetch = require('node-fetch');
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN_2 || '8896711967:AAG8tStYIwVSCPMyCzx-wH22pYqQcXoet-E';
 const API = 'https://api.telegram.org/bot' + TOKEN;
 
 const GAME_SHORT_NAMES = {
-  '2048': 'Xiaoxiaole',
-  'particle': 'particleblast'
+  'particle': 'Greedysnakes'
 };
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/',
-  'particleblast': 'https://www.mohuan.asia/games/particle/'
+  'Greedysnakes': 'https://www.mohuan.asia/games/particle/'
 };
 
 async function telegramAPI(method, body) {
@@ -24,7 +22,7 @@ async function telegramAPI(method, body) {
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
-    return res.status(200).json({ status: 'ok', message: 'Telegram Bot Webhook is running' });
+    return res.status(200).json({ status: 'ok', message: 'Greedysnakes Bot Webhook is running' });
   }
 
   try {
@@ -39,16 +37,10 @@ module.exports = async (req, res) => {
         const username = msg.from.username || msg.from.first_name;
         await telegramAPI('sendMessage', {
           chat_id: chatId,
-          text: '🎮 欢迎 ' + username + ' 来到墨焕游戏！\n\n选择你想玩的游戏：\n\n/xiaoxiaole - Neon 2048\n/particle - 粒子消除\n\n或者直接在聊天框输入：\n@MyGame2048Bot 来搜索游戏！'
+          text: '🎮 欢迎 ' + username + ' 来到墨焕游戏！\n\n选择你想玩的游戏：\n\n/greedysnakes - Greedy Snakes\n\n或者直接在聊天框输入：\n@gameplay_888bot 来搜索游戏！'
         });
       }
-      else if (text === '/xiaoxiaole') {
-        await telegramAPI('sendGame', {
-          chat_id: chatId,
-          game_short_name: GAME_SHORT_NAMES['2048']
-        });
-      }
-      else if (text === '/particle') {
+      else if (text === '/greedysnakes') {
         await telegramAPI('sendGame', {
           chat_id: chatId,
           game_short_name: GAME_SHORT_NAMES['particle']
@@ -79,8 +71,7 @@ module.exports = async (req, res) => {
         cache_time: 0,
         is_personal: true,
         results: [
-          { type: 'game', id: '1', game_short_name: GAME_SHORT_NAMES['2048'] },
-          { type: 'game', id: '2', game_short_name: GAME_SHORT_NAMES['particle'] }
+          { type: 'game', id: '1', game_short_name: GAME_SHORT_NAMES['particle'] }
         ]
       });
     }

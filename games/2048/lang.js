@@ -1,6 +1,6 @@
 var languages = {
   en: {
-    gameTitle: "Xiaoxiaole",
+    gameTitle: "Neon 2048",
     classicMode: "CLASSIC",
     challengeMode: "CHALLENGE",
     shareGame: "SHARE GAME",
