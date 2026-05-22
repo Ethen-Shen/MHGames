@@ -143,15 +143,24 @@
       window.adReward = null;
       window.adInterstitial = null;
 
+      console.log("[Diag] URL hash:", window.location.hash);
+      console.log("[Diag] URL search:", window.location.search);
+      try {
+        console.log("[Diag] Telegram.WebApp.initData:", Telegram.WebApp.initData);
+        console.log("[Diag] Telegram.WebApp.initDataUnsafe:", JSON.stringify(Telegram.WebApp.initDataUnsafe));
+      } catch(e) {
+        console.log("[Diag] Telegram.WebApp not available:", e);
+      }
+
       function initAdsGram() {
         if (typeof window.Adsgram === 'undefined') {
           console.log("[AdsGram] SDK not loaded - window.Adsgram is undefined");
           return;
         }
         try {
-          window.adReward = window.Adsgram.init({ blockId: "30881" });
-          window.adInterstitial = window.Adsgram.init({ blockId: "int-30882" });
-          console.log("[AdsGram] 2 ad units initialized:", {
+          window.adReward = window.Adsgram.init({ blockId: "30881", debug: true, debugConsole: true });
+          window.adInterstitial = window.Adsgram.init({ blockId: "int-30882", debug: true, debugConsole: true });
+          console.log("[AdsGram] 2 ad units initialized (debug mode):", {
             reward: !!window.adReward,
             interstitial: !!window.adInterstitial
           });
