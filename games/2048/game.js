@@ -238,6 +238,27 @@ function showAd(callback) {
     isUsingProp = false;
   }
 
+  function tryStarsFallback() {
+    if (typeof API_BASE === 'string' && API_BASE.length > 0 && window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
+      console.log("[AdsGram] falling back to Telegram Stars invoice");
+      var invoiceUrl = API_BASE + '/api/createInvoice?game=2048&type=item&user_id=' + (tgUser ? tgUser.id : '0');
+      fetch(invoiceUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data && data.invoice_url) {
+            Telegram.WebApp.openInvoice(data.invoice_url, function(status) {
+              if (status === 'paid') { handleReward(); }
+              else { handleCancel(); }
+            });
+          } else { handleCancel(); }
+        })
+        .catch(function() { handleCancel(); });
+    } else {
+      console.log("[AdsGram] no ad provider available, skipping reward");
+      handleCancel();
+    }
+  }
+
   console.log("[AdsGram] trying reward ad, adReward exists:", !!window.adReward);
 
   if (window.adReward) {
@@ -250,30 +271,15 @@ function showAd(callback) {
           handleCancel();
         }
       }).catch(function(e) {
-        console.log("[AdsGram] reward ad failed:", e);
-        handleCancel();
+        console.log("[AdsGram] reward ad failed, trying Stars fallback:", e);
+        tryStarsFallback();
       });
     } catch (e) {
-      console.log("[AdsGram] reward ad error:", e);
-      handleCancel();
+      console.log("[AdsGram] reward ad error, trying Stars fallback:", e);
+      tryStarsFallback();
     }
-  }
-  else if (typeof API_BASE === 'string' && API_BASE.length > 0 && window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
-    var invoiceUrl = API_BASE + '/api/createInvoice?game=2048&type=item&user_id=' + (tgUser ? tgUser.id : '0');
-    fetch(invoiceUrl)
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (data && data.invoice_url) {
-          Telegram.WebApp.openInvoice(data.invoice_url, function(status) {
-            if (status === 'paid') { handleReward(); }
-            else { handleCancel(); }
-          });
-        } else { handleCancel(); }
-      })
-      .catch(function() { handleCancel(); });
   } else {
-    console.log("[AdsGram] no ad provider available, skipping reward");
-    handleCancel();
+    tryStarsFallback();
   }
 }
 
