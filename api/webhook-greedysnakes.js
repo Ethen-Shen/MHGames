@@ -20,8 +20,25 @@ async function telegramAPI(method, body) {
   return res.json();
 }
 
+async function registerCommands() {
+  await telegramAPI('setMyCommands', {
+    commands: [
+      { command: 'start', description: '开始游戏' },
+      { command: 'play', description: '开始游戏' },
+      { command: 'help', description: '帮助信息' },
+      { command: 'rank', description: '排行榜' },
+      { command: 'greedysnakes', description: 'Greedy Snakes' }
+    ]
+  });
+}
+
+let commandsRegistered = false;
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
+    if (!commandsRegistered) {
+      registerCommands().then(() => { commandsRegistered = true; }).catch(() => {});
+    }
     return res.status(200).json({ status: 'ok', message: 'Greedysnakes Bot Webhook is running' });
   }
 
@@ -31,18 +48,41 @@ module.exports = async (req, res) => {
     if (update.message) {
       const msg = update.message;
       const chatId = msg.chat.id;
-      const text = msg.text || '';
+      const text = (msg.text || '').trim();
 
-      if (text === '/start' || text === '/play') {
+      if (text === '/start' || text === '/start@gameplay_888bot') {
         await telegramAPI('sendGame', {
           chat_id: chatId,
           game_short_name: GAME_SHORT_NAMES['particle']
         });
       }
-      else if (text === '/greedysnakes') {
+      else if (text === '/play' || text === '/play@gameplay_888bot') {
         await telegramAPI('sendGame', {
           chat_id: chatId,
           game_short_name: GAME_SHORT_NAMES['particle']
+        });
+      }
+      else if (text === '/greedysnakes' || text === '/greedysnakes@gameplay_888bot') {
+        await telegramAPI('sendGame', {
+          chat_id: chatId,
+          game_short_name: GAME_SHORT_NAMES['particle']
+        });
+      }
+      else if (text === '/help' || text === '/help@gameplay_888bot') {
+        await telegramAPI('sendMessage', {
+          chat_id: chatId,
+          text: '🎮 Greedy Snakes - 帮助\n\n' +
+            '/play - 开始 Greedy Snakes 游戏\n' +
+            '/greedysnakes - Greedy Snakes\n' +
+            '/rank - 查看排行榜\n' +
+            '/help - 显示此帮助\n\n' +
+            '💡 你也可以在聊天框输入 @gameplay_888bot 来搜索游戏！'
+        });
+      }
+      else if (text === '/rank' || text === '/rank@gameplay_888bot') {
+        await telegramAPI('sendMessage', {
+          chat_id: chatId,
+          text: '🏆 排行榜功能即将上线，敬请期待！'
         });
       }
     }
