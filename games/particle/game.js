@@ -88,6 +88,14 @@ function initTelegramUser() {
   } catch (e) {
     isLoggedIn = false;
   }
+  if (!tgUser) {
+    var urlParams = new URLSearchParams(window.location.search);
+    var uid = urlParams.get('user_id');
+    if (uid) {
+      tgUser = { id: parseInt(uid) };
+      isLoggedIn = true;
+    }
+  }
 }
 
 function getApiBase() {
@@ -257,27 +265,6 @@ function showAd(onReward) {
     }
   }
 
-  function tryStarsFallback() {
-    if (typeof API_BASE === 'string' && API_BASE.length > 0 && window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
-      console.log("[AdsGram] falling back to Telegram Stars invoice");
-      var invoiceUrl = API_BASE + '/api/createInvoice?game=particle&type=item&user_id=' + (tgUser ? tgUser.id : '0');
-      fetch(invoiceUrl)
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data && data.invoice_url) {
-            Telegram.WebApp.openInvoice(data.invoice_url, function(status) {
-              if (status === 'paid') { handleReward(); }
-              else { handleCancel(); }
-            });
-          } else { handleCancel(); }
-        })
-        .catch(function() { handleCancel(); });
-    } else {
-      console.log("[AdsGram] no ad provider available, skipping reward");
-      handleCancel();
-    }
-  }
-
   console.log("[AdsGram] trying reward ad, adReward exists:", !!window.adReward);
 
   if (window.adReward) {
@@ -290,15 +277,16 @@ function showAd(onReward) {
           handleCancel();
         }
       }).catch(function(e) {
-        console.log("[AdsGram] reward ad failed, trying Stars fallback:", e);
-        tryStarsFallback();
+        console.log("[AdsGram] reward ad failed:", e);
+        handleCancel();
       });
     } catch (e) {
-      console.log("[AdsGram] reward ad error, trying Stars fallback:", e);
-      tryStarsFallback();
+      console.log("[AdsGram] reward ad error:", e);
+      handleCancel();
     }
   } else {
-    tryStarsFallback();
+    console.log("[AdsGram] adReward not available, skipping reward");
+    handleCancel();
   }
 }
 
