@@ -142,7 +142,6 @@
     <script>
       window.adReward = null;
       window.adInterstitial = null;
-      window.adTask = null;
 
       function initAdsGram() {
         if (typeof window.Adsgram === 'undefined') {
@@ -152,11 +151,9 @@
         try {
           window.adReward = window.Adsgram.init({ blockId: "30881" });
           window.adInterstitial = window.Adsgram.init({ blockId: "int-30882" });
-          window.adTask = window.Adsgram.init({ blockId: "task-30883" });
-          console.log("[AdsGram] 3 ad units initialized:", {
+          console.log("[AdsGram] 2 ad units initialized:", {
             reward: !!window.adReward,
-            interstitial: !!window.adInterstitial,
-            task: !!window.adTask
+            interstitial: !!window.adInterstitial
           });
         } catch (e) {
           console.log("[AdsGram] init failed:", e);
