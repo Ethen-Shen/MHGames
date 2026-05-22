@@ -5,7 +5,7 @@ const TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
 const GAME_SHORT_NAME = 'Xiaoxiaole';
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://t.me/MyGame2048Bot/Xiaoxiaole'
+  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/index.html'
 };
 
 const bot = new TelegramBot(TOKEN, {

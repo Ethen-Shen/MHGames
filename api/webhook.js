@@ -6,7 +6,7 @@ const API = 'https://api.telegram.org/bot' + TOKEN;
 const GAME_SHORT_NAME = 'Xiaoxiaole';
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://t.me/MyGame2048Bot/Xiaoxiaole'
+  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/index.html'
 };
 
 async function telegramAPI(method, body) {
