@@ -24,7 +24,6 @@ const bot = new TelegramBot(TOKEN, {
 
 console.log('🤖 墨焕游戏Bot已启动！');
 console.log('📝 游戏列表：', Object.keys(GAME_SHORT_NAMES));
-console.log('🔗 游戏URL：', gameUrls);
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
