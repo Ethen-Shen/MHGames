@@ -2,14 +2,10 @@ const TelegramBot = require('node-telegram-bot-api');
 
 const TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
 
-const GAME_SHORT_NAMES = {
-  '2048': 'Xiaoxiaole',
-  'particle': 'particleblast'
-};
+const GAME_SHORT_NAME = 'Xiaoxiaole';
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://t.me/MyGame2048Bot/Xiaoxiaole',
-  'particleblast': 'https://t.me/gameplay_888bot/Greedysnakes'
+  'Xiaoxiaole': 'https://t.me/MyGame2048Bot/Xiaoxiaole'
 };
 
 const bot = new TelegramBot(TOKEN, {
@@ -22,19 +18,17 @@ const bot = new TelegramBot(TOKEN, {
   }
 });
 
-console.log('🤖 墨焕游戏Bot已启动！');
-console.log('📝 游戏列表：', Object.keys(GAME_SHORT_NAMES));
+console.log('🤖 Neon 2048 Bot已启动！');
 
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const username = msg.from.username || msg.from.first_name;
 
-  const message = `🎮 欢迎 ${username} 来到墨焕游戏！
+  const message = `🎮 欢迎 ${username} 来到 Neon 2048！
 
-选择你想玩的游戏：
-
+/play - 开始游戏
 /xiaoxiaole - Neon 2048
-/particle - 粒子消除
+/help - 帮助信息
 
 或者直接在聊天框输入：
 @MyGame2048Bot 来搜索游戏！`;
@@ -44,21 +38,38 @@ bot.onText(/\/start/, (msg) => {
     .catch(err => console.error('❌ 发送失败:', err));
 });
 
+bot.onText(/\/play/, (msg) => {
+  const chatId = msg.chat.id;
+  sendGame(chatId);
+});
+
 bot.onText(/\/xiaoxiaole/, (msg) => {
   const chatId = msg.chat.id;
-  sendGame(chatId, GAME_SHORT_NAMES['2048']);
+  sendGame(chatId);
 });
 
-bot.onText(/\/particle/, (msg) => {
+bot.onText(/\/help/, (msg) => {
   const chatId = msg.chat.id;
-  sendGame(chatId, GAME_SHORT_NAMES['particle']);
+  bot.sendMessage(chatId, 
+    '🎮 Neon 2048 - 帮助\n\n' +
+    '/play - 开始 Neon 2048 游戏\n' +
+    '/xiaoxiaole - Neon 2048\n' +
+    '/rank - 查看排行榜\n' +
+    '/help - 显示此帮助\n\n' +
+    '💡 你也可以在聊天框输入 @MyGame2048Bot 来搜索游戏！'
+  );
 });
 
-function sendGame(chatId, gameShortName) {
-  console.log(`🎯 发送游戏 "${gameShortName}" 到 ${chatId}`);
+bot.onText(/\/rank/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, '🏆 排行榜功能即将上线，敬请期待！');
+});
+
+function sendGame(chatId) {
+  console.log(`🎯 发送游戏 "${GAME_SHORT_NAME}" 到 ${chatId}`);
   
-  bot.sendGame(chatId, gameShortName)
-    .then(() => console.log(`✅ 游戏 "${gameShortName}" 已发送到 ${chatId}`))
+  bot.sendGame(chatId, GAME_SHORT_NAME)
+    .then(() => console.log(`✅ 游戏 "${GAME_SHORT_NAME}" 已发送到 ${chatId}`))
     .catch(err => {
       console.error('❌ 发送游戏失败:', err.message);
       bot.sendMessage(chatId, '⚠️ 抱歉，游戏暂时无法发送，请稍后再试！')
@@ -70,34 +81,19 @@ bot.on('callback_query', (callbackQuery) => {
   try {
     const gameShortName = callbackQuery.game_short_name;
     const userId = callbackQuery.from.id;
-    
-    let chatId = null;
-    if (callbackQuery.message && callbackQuery.message.chat) {
-      chatId = callbackQuery.message.chat.id;
-    }
 
     console.log(`🎮 用户 ${userId} 点击游戏 ${gameShortName}`);
 
-    let gameUrl = gameUrls[gameShortName];
-    
-    if (!gameUrl) {
-      gameUrl = 'https://www.mohuan.asia/';
-    }
+    let gameUrl = gameUrls[gameShortName] || 'https://www.mohuan.asia/';
 
-    const fullUrl = `${gameUrl}?user_id=${userId}${chatId ? '&chat_id=' + chatId : ''}`;
-
-    console.log(`🔗 打开游戏URL: ${fullUrl}`);
+    console.log(`🔗 打开游戏URL: ${gameUrl}`);
 
     bot.answerCallbackQuery(callbackQuery.id, {
-      url: fullUrl
+      url: gameUrl
     }).then(() => {
       console.log(`✅ 成功打开游戏 ${gameShortName} 给用户 ${userId}`);
     }).catch(err => {
       console.error('❌ 回答回调失败:', err);
-      if (chatId) {
-        bot.sendMessage(chatId, `点击这里玩游戏: ${fullUrl}`)
-          .catch(e => console.error('❌ 发送备用URL失败:', e));
-      }
     });
   } catch (err) {
     console.error('❌ 处理回调查询时出错:', err);
@@ -106,8 +102,7 @@ bot.on('callback_query', (callbackQuery) => {
 
 bot.on('inline_query', (inlineQuery) => {
   const results = [
-    { type: 'game', id: '1', game_short_name: GAME_SHORT_NAMES['2048'] },
-    { type: 'game', id: '2', game_short_name: GAME_SHORT_NAMES['particle'] }
+    { type: 'game', id: '1', game_short_name: GAME_SHORT_NAME }
   ];
 
   bot.answerInlineQuery(inlineQuery.id, results, {

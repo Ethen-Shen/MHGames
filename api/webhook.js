@@ -3,14 +3,10 @@ const fetch = require('node-fetch');
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
 const API = 'https://api.telegram.org/bot' + TOKEN;
 
-const GAME_SHORT_NAMES = {
-  '2048': 'Xiaoxiaole',
-  'particle': 'particleblast'
-};
+const GAME_SHORT_NAME = 'Xiaoxiaole';
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/index.html',
-  'particleblast': 'https://www.mohuan.asia/games/particle/index.html'
+  'Xiaoxiaole': 'https://t.me/MyGame2048Bot/Xiaoxiaole'
 };
 
 async function telegramAPI(method, body) {
@@ -29,8 +25,7 @@ async function registerCommands() {
       { command: 'play', description: '开始游戏' },
       { command: 'help', description: '帮助信息' },
       { command: 'rank', description: '排行榜' },
-      { command: 'xiaoxiaole', description: 'Neon 2048' },
-      { command: 'particle', description: '粒子消除' }
+      { command: 'xiaoxiaole', description: 'Neon 2048' }
     ]
   });
 }
@@ -52,39 +47,31 @@ module.exports = async (req, res) => {
       const msg = update.message;
       const chatId = msg.chat.id;
       const text = (msg.text || '').trim();
-      const userId = msg.from.id;
 
       if (text === '/start' || text === '/start@MyGame2048Bot') {
         await telegramAPI('sendGame', {
           chat_id: chatId,
-          game_short_name: GAME_SHORT_NAMES['2048']
+          game_short_name: GAME_SHORT_NAME
         });
       }
       else if (text === '/play' || text === '/play@MyGame2048Bot') {
         await telegramAPI('sendGame', {
           chat_id: chatId,
-          game_short_name: GAME_SHORT_NAMES['2048']
+          game_short_name: GAME_SHORT_NAME
         });
       }
       else if (text === '/xiaoxiaole' || text === '/xiaoxiaole@MyGame2048Bot') {
         await telegramAPI('sendGame', {
           chat_id: chatId,
-          game_short_name: GAME_SHORT_NAMES['2048']
-        });
-      }
-      else if (text === '/particle' || text === '/particle@MyGame2048Bot') {
-        await telegramAPI('sendGame', {
-          chat_id: chatId,
-          game_short_name: GAME_SHORT_NAMES['particle']
+          game_short_name: GAME_SHORT_NAME
         });
       }
       else if (text === '/help' || text === '/help@MyGame2048Bot') {
         await telegramAPI('sendMessage', {
           chat_id: chatId,
-          text: '🎮 墨焕游戏 - 帮助\n\n' +
+          text: '🎮 Neon 2048 - 帮助\n\n' +
             '/play - 开始 Neon 2048 游戏\n' +
             '/xiaoxiaole - Neon 2048\n' +
-            '/particle - 粒子消除\n' +
             '/rank - 查看排行榜\n' +
             '/help - 显示此帮助\n\n' +
             '💡 你也可以在聊天框输入 @MyGame2048Bot 来搜索游戏！'
@@ -115,8 +102,7 @@ module.exports = async (req, res) => {
         cache_time: 0,
         is_personal: true,
         results: [
-          { type: 'game', id: '1', game_short_name: GAME_SHORT_NAMES['2048'] },
-          { type: 'game', id: '2', game_short_name: GAME_SHORT_NAMES['particle'] }
+          { type: 'game', id: '1', game_short_name: GAME_SHORT_NAME }
         ]
       });
     }
