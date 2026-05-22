@@ -8,8 +8,8 @@ const GAME_SHORT_NAMES = {
 };
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/',
-  'particleblast': 'https://www.mohuan.asia/games/particle/'
+  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/index.html',
+  'particleblast': 'https://www.mohuan.asia/games/particle/index.html'
 };
 
 const bot = new TelegramBot(TOKEN, {

@@ -8,7 +8,7 @@ const GAME_SHORT_NAMES = {
 };
 
 const gameUrls = {
-  'Greedysnakes': 'https://www.mohuan.asia/games/particle/'
+  'Greedysnakes': 'https://www.mohuan.asia/games/particle/index.html'
 };
 
 async function telegramAPI(method, body) {
