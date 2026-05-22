@@ -9,7 +9,7 @@ const GAME_SHORT_NAMES = {
 
 const gameUrls = {
   'Xiaoxiaole': 'https://t.me/MyGame2048Bot/Xiaoxiaole',
-  'particleblast': 'https://www.mohuan.asia/games/particle/index.html'
+  'particleblast': 'https://t.me/gameplay_888bot/Greedysnakes'
 };
 
 const bot = new TelegramBot(TOKEN, {
