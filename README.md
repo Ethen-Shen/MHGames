@@ -1,229 +1,157 @@
 # 墨焕游戏 Telegram Mini App
 
-> 🎮 Telegram 小游戏平台 - 2048 霓虹版 & 粒子消除
+> 🎮 Telegram 小游戏平台 — Neon 2048 & Particle Blast
 > 
-> ⏰ 最后更新: 2026-05-22
-> 
-> 🏷️ 版本: v2.0 (性能优化 + 广告修复版)
+> ⏰ 最后更新: 2026-05-22 | 🏷️ 版本: v3.0
 
-## 📋 项目简介
+## 项目简介
 
-本项目是一个基于 Telegram Web App 的小游戏平台，包含两个精心设计的游戏：
+基于 Telegram Web App 的双游戏平台，通过两个独立 Bot 分别管理两个游戏，集成 AdsGram 广告变现。
 
-- **2048 霓虹版** - 经典数字拼图游戏，霓虹风格UI
-- **粒子消除** - 点击消除相同颜色粒子的休闲游戏
+| 游戏 | Bot | 入口按钮 |
+|------|-----|---------|
+| Neon 2048 | Bot1 (`@xxxBot`) | 🎮 Play Neon 2048 |
+| Particle Blast | Bot2 (`@xxxBot`) | 💥 Play Particle Blast |
 
-### 主要特性
+### 核心特性
 
-✅ 已实现：
-- ✨ 流畅的游戏体验（已移除背景动画，性能大幅提升）
-- 📱 完全响应式设计，适配各种屏幕
-- 🎵 游戏音效和背景音乐
+- 🎮 两款独立游戏，各由一个 Bot 管理
+- 📱 Telegram Mini App 模式（`web_app` 按钮），内嵌 WebView 运行
+- 💰 AdsGram 广告变现（激励视频 + 插屏广告）
+- 🌍 中英文多语言
+- 🚀 Vercel 云部署 + Webhook
 - 📊 本地最高分记录
-- 🌍 中英文多语言支持
-- 🔌 AdsGram 广告集成（激励视频 + 插屏广告）
-- 🤖 双机器人游戏推送
-- 🎁 激励广告获取游戏道具/复活机会
-- 🚀 Vercel 云部署
-- 🔐 隐私政策和服务条款页面
 
 ---
 
-## 🚀 快速开始
-
-### 环境要求
-
-- Node.js 14+
-- Telegram 账号
-- Vercel 账号（可选）
-
-### 本地运行
+## 快速开始
 
 ```bash
-# 克隆项目
-git clone <repository-url>
-cd TelegramGames
-
 # 安装依赖
 npm install
 
-# 运行开发服务器
-npm run dev
-# 或者直接打开 index.html
+# 本地运行双 Bot（polling 模式）
+npm start
+
+# 设置 Webhook（Vercel 部署后）
+npm run webhook:set
+
+# 查看 Webhook 状态
+npm run webhook:info
 ```
-
-### 部署到 Vercel
-
-查看 [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md) 了解详细部署步骤。
 
 ---
 
-## 📂 项目结构
+## 双 Bot 配置
+
+| | Bot1 (Neon 2048) | Bot2 (Particle Blast) |
+|---|---|---|
+| Token | `8979472034:AAF4E2q...` | `8896711967:AAG8tStYI...` |
+| Webhook 路径 | `/api/webhook` | `/api/webhook-greedysnakes` |
+| 游戏页面 | `/games/2048/index.html` | `/games/particle/index.html` |
+| 激励广告 BlockId | `31225` | `30885` |
+| 插屏广告 BlockId | `int-30882` | `int-30886` |
+| 命令 | `/start` `/play` `/help` | `/start` `/play` `/help` |
+
+---
+
+## 广告变现
+
+使用 [AdsGram](https://adsgram.ai) 广告平台，严格按官方 API 规范集成：
+
+- **SDK 位置**: `<head>` 中加载 `sad.min.js`
+- **API 名称**: `window.Adsgram.init()`（小写 g）
+- **激励广告**: `AdController.show().then()` — `result.done === true` 时给奖励
+- **插屏广告**: `AdController.show().then()` — 用户关闭或看完都触发
+- **初始化时机**: `Telegram.WebApp.ready()` 之后立即 `Adsgram.init()`
+
+> ⚠️ 广告仅在 Telegram 客户端内通过 `web_app` 按钮打开时有效。浏览器直接访问会报 `Unable to retrieve launch parameters`，这是正常行为。
+
+---
+
+## 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 前端 | HTML5 + CSS3 + Vanilla JS |
+| Bot | node-telegram-bot-api (polling) |
+| Webhook | Vercel Serverless Functions |
+| 广告 | AdsGram SDK |
+| 部署 | Vercel + GitHub |
+| 域名 | `https://mohuan.asia` |
+
+---
+
+## 项目结构
 
 ```
 TelegramGames/
-├── 📄 README.md                    # 项目说明文档（本文件）
-├── 📄 package.json               # 项目配置
-├── 📄 vercel.json                # Vercel 部署配置
-├── 📄 bot-server.js              # Telegram Bot 服务端
-├── 📄 index.html                 # 首页/游戏选择页面
-├── 📄 404.html                   # 404 页面
-├── 📄 privacy.html               # 隐私政策
-├── 📄 terms.html                 # 服务条款
-├── 📄 DIRECTORY_STRUCTURE.md     # 目录结构说明
-├── 📄 VERCEL_DEPLOY.md           # Vercel 部署指南
-├── 📄 BOT_SETUP.md               # 机器人设置指南
-├── 📁 css/                       # 样式文件
-│   ├── style.css                # 主样式
-│   ├── responsive.css           # 响应式样式
-│   └── ...
-├── 📁 js/                        # 脚本文件
-│   ├── main.js                  # 主脚本
-│   ├── lang.js                  # 多语言配置
-│   └── ...
-├── 📁 games/                     # 游戏目录
-│   ├── 2048/                    # 2048 游戏
-│   │   ├── index.html
-│   │   ├── game.js
-│   │   ├── style.css
+├── index.html                    # 首页（游戏选择）
+├── bot-server.js                 # 双 Bot 本地服务（polling 模式）
+├── package.json
+├── vercel.json
+├── games/
+│   ├── 2048/
+│   │   ├── index.html            # 2048 游戏页面（含 AdsGram SDK）
+│   │   ├── game.js               # 游戏逻辑 + 广告显示
+│   │   ├── styles.css
 │   │   ├── lang.js
-│   │   └── assets/
-│   └── particle/                # 粒子消除游戏
-│       ├── index.html
-│       ├── game.js
-│       ├── style.css
+│   │   ├── game.json
+│   │   └── minigame.config.json
+│   └── particle/
+│       ├── index.html            # 粒子消除游戏页面（含 AdsGram SDK）
+│       ├── game.js               # 游戏逻辑 + 广告显示
+│       ├── styles.css
 │       ├── lang.js
-│       └── assets/
-├── 📁 assets/                    # 公共资源
-│   ├── images/
-│   ├── audio/
-│   └── fonts/
-└── 📁 api/                       # API 接口
-    └── webhook.js               # Telegram Webhook
+│       ├── game.json
+│       ├── game_backup.js
+│       └── minigame.config.json
+├── api/
+│   ├── webhook.js                # Bot1 Webhook (Neon 2048)
+│   └── webhook-greedysnakes.js   # Bot2 Webhook (Particle Blast)
+├── scripts/
+│   └── set-webhook.js            # 双 Bot Webhook 设置脚本
+├── README.md
+├── FLOW.md                       # 流程文档
+├── DIRECTORY_STRUCTURE.md
+├── VERCEL_DEPLOY.md
+├── BOT_SETUP.md
+└── UPLOAD_GUIDE.md
 ```
 
 ---
 
-## 🎯 游戏功能
+## 文档索引
 
-### 2048 霓虹版
-
-- 多个游戏模式：经典、限时、挑战、无限
-- 多种难度等级
-- 撤销功能（需看广告）
-- 提示功能（需看广告）
-- 本地最高分记录
-- 自适应主题（亮色/暗色）
-
-### 粒子消除
-
-- 简单有趣的点击消除玩法
-- 连击系统
-- 限时挑战
-- 生命系统
-- 观看广告复活功能
+| 文档 | 说明 |
+|------|------|
+| [FLOW.md](./FLOW.md) | 🆕 完整流程文档（用户→Bot→游戏→广告） |
+| [DIRECTORY_STRUCTURE.md](./DIRECTORY_STRUCTURE.md) | 目录结构详解 |
+| [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md) | Vercel 部署指南 |
+| [BOT_SETUP.md](./BOT_SETUP.md) | Bot 设置指南 |
+| [UPLOAD_GUIDE.md](./UPLOAD_GUIDE.md) | GitHub 上传指南 |
 
 ---
 
-## 💰 广告变现
+## 更新日志
 
-项目集成了 [AdsGram](https://adsgram.ai) 广告平台：
+### v3.0 (2026-05-22)
+- 🔴 **关键修复**: Bot 从 `sendGame` 改为 `web_app` 按钮模式，修复广告不显示
+- 🔴 **关键修复**: AdsGram API 名称 `AdsGram` → `Adsgram`（小写 g）
+- 🔴 **关键修复**: SDK 从 `<body>` 移到 `<head>`，符合官方规范
+- ✅ 双 Bot 架构：Bot1 管 2048，Bot2 管粒子消除
+- ✅ 移除背景动画，大幅提升游戏性能
+- ✅ 简化粒子爆炸效果
+- ✅ `Telegram.WebApp.ready()` + `expand()` 只在 `<head>` 调用一次
+- ✅ 广告逻辑严格按 AdsGram 官方 API 规范
 
-| 游戏 | 激励广告 ID | 插屏广告 ID |
-|------|-----------|-----------|
-| 2048 霓虹版 | `31225` | `int-30882` |
-| 粒子消除 | `30885` | `int-30886` |
+### v2.0
+- 移除背景动画和粒子效果
+- 优化广告初始化逻辑
 
-### 广告功能
-
-- **激励广告**：获取撤销/提示/复活等功能
-- **插屏广告**：游戏结束/关卡切换时显示
-- **安全处理**：非 Telegram 环境自动跳过广告，直接给予奖励
-
-### 重要更新 (v2.0)
-
-✅ 修复了 AdsGram 初始化错误问题  
-✅ 添加了 Telegram 环境检测  
-✅ 优化了广告显示逻辑，即使广告失败也不会阻塞游戏  
-✅ 移除了背景动画，游戏性能大幅提升  
-✅ 简化了粒子消除游戏的爆炸效果  
+### v1.0
+- 初始版本
 
 ---
-
-## 🤖 机器人配置
-
-项目包含两个 Telegram 机器人：
-
-### 1. 2048 霓虹版 Bot
-- Token: `8009269765:AAFWy0fA46S6KqE7jFb34zG6rV7Y9x2c4vB`
-- 命令: `/start`, `/game2048`
-
-### 2. 粒子消除 Bot
-- Token: `7878694710:AAGX57m4dM3Ryv3bWc6rD9e2kL8pG5hJ1nQ`
-- 命令: `/start`, `/particle`
-
-详细的机器人配置指南见 [BOT_SETUP.md](./BOT_SETUP.md)。
-
----
-
-## 🌐 部署信息
-
-### 当前部署
-
-- **域名**: `https://www.mohuan.asia`
-- **平台**: Vercel
-- **状态**: ✅ 已上线
-
-### 部署文件
-
-- `vercel.json` - Vercel 配置
-- `api/webhook.js` - Webhook 接口
-- `scripts/set-webhook.js` - 快捷设置脚本
-
----
-
-## 🔧 技术栈
-
-- **前端**: HTML5, CSS3, JavaScript (Vanilla)
-- **后端**: Node.js (Vercel Serverless)
-- **云服务**: Vercel
-- **广告**: AdsGram
-- **机器人**: Telegram Bot API
-
----
-
-## 📖 相关文档
-
-- [DIRECTORY_STRUCTURE.md](./DIRECTORY_STRUCTURE.md) - 详细的目录结构和文件说明
-- [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md) - Vercel 部署和 Webhook 设置指南
-- [BOT_SETUP.md](./BOT_SETUP.md) - Telegram Bot 配置教程
-
----
-
-## 📝 更新日志
-
-### v2.0 (2026-05-22)
-- 🔧 修复 AdsGram 初始化错误问题
-- 🚀 移除背景动画，大幅提升游戏性能
-- 💫 简化粒子爆炸效果，减少渲染负担
-- 🛡️ 添加 Telegram 环境安全检测
-- 🎯 优化广告显示逻辑，失败时直接给奖励
-
-### v1.0 (更早版本)
-- 🎮 完成 2048 和粒子消除游戏
-- 🔌 集成 AdsGram 广告
-- 🤖 双机器人配置
-- 🌐 Vercel 部署上线
-
----
-
-## 📄 许可证
 
 © 2026 墨焕游戏. All rights reserved.
-
----
-
-## 📞 联系方式
-
-如有问题或建议，请通过以下方式联系：
-- Telegram Bot: [@MoHuanGamesBot](https://t.me/MoHuanGamesBot)

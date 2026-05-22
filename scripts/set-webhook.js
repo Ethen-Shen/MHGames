@@ -1,73 +1,66 @@
 const fetch = require('node-fetch');
 
-// 配置
-const BOT_TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
-const WEBHOOK_URL = 'https://www.mohuan.asia/api/webhook'; // 你的 Vercel 域名
+const BOT1_TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
+const BOT2_TOKEN = '8896711967:AAG8tStYIwVSCPMyCzx-wH22pYqQcXoet-E';
 
-async function setWebhook() {
-  console.log('🔗 设置 Telegram Bot Webhook...');
-  console.log(`📡 Webhook URL: ${WEBHOOK_URL}`);
-  
+const WEBHOOK_URL_BOT1 = 'https://www.mohuan.asia/api/webhook';
+const WEBHOOK_URL_BOT2 = 'https://www.mohuan.asia/api/webhook-greedysnakes';
+
+async function setWebhook(token, url, name) {
+  console.log('\n🔗 设置 ' + name + ' Webhook...');
+  console.log('📡 Webhook URL: ' + url);
+
   try {
     const response = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/setWebhook`,
+      'https://api.telegram.org/bot' + token + '/setWebhook',
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: WEBHOOK_URL,
-          drop_pending_updates: true
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: url, drop_pending_updates: true })
       }
     );
 
     const result = await response.json();
-    
+
     if (result.ok) {
-      console.log('✅ Webhook 设置成功！');
-      console.log('📋 结果:', result);
+      console.log('✅ ' + name + ' Webhook 设置成功！');
     } else {
-      console.error('❌ Webhook 设置失败:', result);
+      console.error('❌ ' + name + ' Webhook 设置失败:', result);
     }
   } catch (error) {
-    console.error('❌ 请求出错:', error.message);
+    console.error('❌ ' + name + ' 请求出错:', error.message);
   }
 }
 
-async function getWebhookInfo() {
-  console.log('🔍 获取当前 Webhook 信息...');
-  
+async function getWebhookInfo(token, name) {
   try {
     const response = await fetch(
-      `https://api.telegram.org/bot${BOT_TOKEN}/getWebhookInfo`
+      'https://api.telegram.org/bot' + token + '/getWebhookInfo'
     );
-
     const result = await response.json();
-    
     if (result.ok) {
-      console.log('✅ 获取成功！');
-      console.log('📋 Webhook 信息:', JSON.stringify(result.result, null, 2));
-    } else {
-      console.error('❌ 获取失败:', result);
+      console.log('📋 ' + name + ' Webhook: ' + result.result.url);
     }
   } catch (error) {
-    console.error('❌ 请求出错:', error.message);
+    console.error('❌ ' + name + ' 获取信息出错:', error.message);
   }
 }
 
-// 主函数
 async function main() {
-  const args = process.argv[2];
-  
+  var args = process.argv[2];
+
   if (args === 'info' || args === '--info') {
-    await getWebhookInfo();
+    await getWebhookInfo(BOT1_TOKEN, 'Bot1');
+    await getWebhookInfo(BOT2_TOKEN, 'Bot2');
   } else {
-    await setWebhook();
-    console.log('\n📌 5秒后查看 Webhook 状态...');
-    await new Promise(r => setTimeout(r, 5000));
-    await getWebhookInfo();
+    await setWebhook(BOT1_TOKEN, WEBHOOK_URL_BOT1, 'Bot1 (Neon 2048)');
+    await setWebhook(BOT2_TOKEN, WEBHOOK_URL_BOT2, 'Bot2 (Particle Blast)');
+
+    console.log('\n⏳ 3秒后查看 Webhook 状态...');
+    await new Promise(function(r) { setTimeout(r, 3000); });
+
+    await getWebhookInfo(BOT1_TOKEN, 'Bot1');
+    await getWebhookInfo(BOT2_TOKEN, 'Bot2');
   }
 }
 
