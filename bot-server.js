@@ -8,7 +8,7 @@ const GAME_SHORT_NAMES = {
 };
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/index.html',
+  'Xiaoxiaole': 'https://t.me/MyGame2048Bot/Xiaoxiaole',
   'particleblast': 'https://www.mohuan.asia/games/particle/index.html'
 };
 
