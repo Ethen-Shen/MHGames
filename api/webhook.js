@@ -3,11 +3,8 @@ const fetch = require('node-fetch');
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
 const API = 'https://api.telegram.org/bot' + TOKEN;
 
-const GAME_SHORT_NAME = 'Xiaoxiaole';
-
-const gameUrls = {
-  'Xiaoxiaole': 'https://mohuan.asia/games/2048/index.html'
-};
+const GAME_URL_2048 = 'https://mohuan.asia/games/2048/index.html';
+const GAME_URL_PARTICLE = 'https://mohuan.asia/games/particle/index.html';
 
 async function telegramAPI(method, body) {
   const res = await fetch(API + '/' + method, {
@@ -22,20 +19,39 @@ async function registerCommands() {
   await telegramAPI('setMyCommands', {
     commands: [
       { command: 'start', description: '开始游戏' },
-      { command: 'play', description: '开始游戏' },
-      { command: 'help', description: '帮助信息' },
-      { command: 'rank', description: '排行榜' },
-      { command: 'xiaoxiaole', description: 'Neon 2048' }
+      { command: 'play', description: '选择游戏' },
+      { command: '2048', description: 'Neon 2048' },
+      { command: 'particle', description: 'Particle Blast' },
+      { command: 'help', description: '帮助信息' }
     ]
   });
 }
 
 let commandsRegistered = false;
 
+function buildGameKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        {
+          text: '🎮 Neon 2048',
+          web_app: { url: GAME_URL_2048 }
+        }
+      ],
+      [
+        {
+          text: '💥 Particle Blast',
+          web_app: { url: GAME_URL_PARTICLE }
+        }
+      ]
+    ]
+  };
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     if (!commandsRegistered) {
-      registerCommands().then(() => { commandsRegistered = true; }).catch(() => {});
+      registerCommands().then(function() { commandsRegistered = true; }).catch(function() {});
     }
     return res.status(200).json({ status: 'ok', message: 'Telegram Bot Webhook is running' });
   }
@@ -49,62 +65,48 @@ module.exports = async (req, res) => {
       const text = (msg.text || '').trim();
 
       if (text === '/start' || text === '/start@MyGame2048Bot') {
-        await telegramAPI('sendGame', {
+        var username = msg.from.username || msg.from.first_name;
+        await telegramAPI('sendMessage', {
           chat_id: chatId,
-          game_short_name: GAME_SHORT_NAME
+          text: '🎮 欢迎 ' + username + ' 来到墨焕游戏！\n\n选择一个游戏开始吧：',
+          reply_markup: buildGameKeyboard()
         });
       }
       else if (text === '/play' || text === '/play@MyGame2048Bot') {
-        await telegramAPI('sendGame', {
+        await telegramAPI('sendMessage', {
           chat_id: chatId,
-          game_short_name: GAME_SHORT_NAME
+          text: '🎮 选择一个游戏：',
+          reply_markup: buildGameKeyboard()
         });
       }
-      else if (text === '/xiaoxiaole' || text === '/xiaoxiaole@MyGame2048Bot') {
-        await telegramAPI('sendGame', {
+      else if (text === '/2048' || text === '/2048@MyGame2048Bot') {
+        await telegramAPI('sendMessage', {
           chat_id: chatId,
-          game_short_name: GAME_SHORT_NAME
+          text: '🎮 Neon 2048 - 点击开始：',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '🎮 Play Neon 2048', web_app: { url: GAME_URL_2048 } }]
+            ]
+          }
+        });
+      }
+      else if (text === '/particle' || text === '/particle@MyGame2048Bot') {
+        await telegramAPI('sendMessage', {
+          chat_id: chatId,
+          text: '💥 Particle Blast - 点击开始：',
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '💥 Play Particle Blast', web_app: { url: GAME_URL_PARTICLE } }]
+            ]
+          }
         });
       }
       else if (text === '/help' || text === '/help@MyGame2048Bot') {
         await telegramAPI('sendMessage', {
           chat_id: chatId,
-          text: '🎮 Neon 2048 - 帮助\n\n' +
-            '/play - 开始 Neon 2048 游戏\n' +
-            '/xiaoxiaole - Neon 2048\n' +
-            '/rank - 查看排行榜\n' +
-            '/help - 显示此帮助\n\n' +
-            '💡 你也可以在聊天框输入 @MyGame2048Bot 来搜索游戏！'
+          text: '🎮 墨焕游戏 - 帮助\n\n/play - 选择游戏\n/2048 - Neon 2048\n/particle - Particle Blast\n/help - 显示此帮助'
         });
       }
-      else if (text === '/rank' || text === '/rank@MyGame2048Bot') {
-        await telegramAPI('sendMessage', {
-          chat_id: chatId,
-          text: '🏆 排行榜功能即将上线，敬请期待！'
-        });
-      }
-    }
-    else if (update.callback_query) {
-      const cb = update.callback_query;
-      const gameShortName = cb.game_short_name;
-
-      let gameUrl = gameUrls[gameShortName] || 'https://mohuan.asia/';
-
-      await telegramAPI('answerCallbackQuery', {
-        callback_query_id: cb.id,
-        url: gameUrl
-      });
-    }
-    else if (update.inline_query) {
-      const iq = update.inline_query;
-      await telegramAPI('answerInlineQuery', {
-        inline_query_id: iq.id,
-        cache_time: 0,
-        is_personal: true,
-        results: [
-          { type: 'game', id: '1', game_short_name: GAME_SHORT_NAME }
-        ]
-      });
     }
 
     res.status(200).json({ ok: true });
