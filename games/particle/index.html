@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Particle Blast</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <script>
     try {
       if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
@@ -12,7 +13,34 @@
         Telegram.WebApp.expand();
       }
     } catch (e) {
-      console.log('Telegram WebApp not available, running in standalone mode');
+      console.log('Telegram WebApp not available');
+    }
+
+    window.adReward = null;
+    window.adInterstitial = null;
+
+    function initAdsGram() {
+      if (typeof window.Adsgram === 'undefined') {
+        console.log("[AdsGram] SDK not loaded - waiting...");
+        setTimeout(initAdsGram, 300);
+        return;
+      }
+      try {
+        window.adReward = window.Adsgram.init({ blockId: "30885" });
+        window.adInterstitial = window.Adsgram.init({ blockId: "int-30886" });
+        console.log("[AdsGram] initialized:", {
+          reward: !!window.adReward,
+          interstitial: !!window.adInterstitial
+        });
+      } catch (e) {
+        console.log("[AdsGram] init failed:", e);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAdsGram);
+    } else {
+      initAdsGram();
     }
   </script>
   <link rel="stylesheet" href="styles.css">
@@ -27,7 +55,6 @@
     </div>
   </div>
   <div id="home-page" class="home-page" style="display: none;">
-    <canvas id="bg-canvas" class="bg-canvas"></canvas>
     <h1 class="game-title">PARTICLE<br>BLAST</h1>
     <div class="button-container">
       <button id="start-game" class="cyborg-btn">START GAME</button>
@@ -96,8 +123,6 @@
   <div id="level-up-overlay" class="level-up-overlay" style="display:none;">
     <div id="level-up-text" class="level-up-text">UP!</div>
   </div>
-  <canvas id="bg-canvas" class="bg-canvas"></canvas>
-  <!-- 年龄标识 -->
   <div class="age-rating-box-fixed">
     <div class="age-rating-inner">
       <div class="age-rating-number">8+</div>
@@ -105,35 +130,6 @@
     </div>
     <div class="age-rating-footer">Age Rating Prompt</div>
   </div>
-  <!-- AdsGram 广告集成 -->
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-  <script>
-    window.adReward = null;
-    window.adInterstitial = null;
-
-    function initAdsGram() {
-      if (typeof window.Adsgram === 'undefined') {
-        console.log("[AdsGram] SDK not loaded - window.Adsgram is undefined");
-        return;
-      }
-      try {
-        window.adReward = window.Adsgram.init({ blockId: "30885" });
-        window.adInterstitial = window.Adsgram.init({ blockId: "int-30886" });
-        console.log("[AdsGram] ad units initialized:", {
-          reward: !!window.adReward,
-          interstitial: !!window.adInterstitial
-        });
-      } catch (e) {
-        console.log("[AdsGram] init failed:", e);
-      }
-    }
-
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initAdsGram);
-    } else {
-      initAdsGram();
-    }
-  </script>
   <script src="lang.js"></script>
   <script src="game.js"></script>
 </body>

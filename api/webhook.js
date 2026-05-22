@@ -6,7 +6,7 @@ const API = 'https://api.telegram.org/bot' + TOKEN;
 const GAME_SHORT_NAME = 'Xiaoxiaole';
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/index.html'
+  'Xiaoxiaole': 'https://mohuan.asia/games/2048/index.html'
 };
 
 async function telegramAPI(method, body) {
@@ -88,7 +88,7 @@ module.exports = async (req, res) => {
       const cb = update.callback_query;
       const gameShortName = cb.game_short_name;
 
-      let gameUrl = gameUrls[gameShortName] || 'https://www.mohuan.asia/';
+      let gameUrl = gameUrls[gameShortName] || 'https://mohuan.asia/';
 
       await telegramAPI('answerCallbackQuery', {
         callback_query_id: cb.id,

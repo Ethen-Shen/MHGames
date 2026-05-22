@@ -1,372 +1,215 @@
-# 📁 Telegram Games 项目目录结构设计
+# 📂 Telegram Games 项目目录结构说明
 
-## 一、推荐目录结构
+> ⏰ 最后更新: 2026-05-22
+> 
+> 🏷️ 版本: v2.0
 
-```
-TelegramGames/                    # Git仓库根目录
-├── 📄 .gitignore                # Git忽略配置
-├── 📄 package.json              # 项目依赖配置（如需要）
-├── 📄 vercel.json               # Vercel部署配置
-├── 📄 README.md                 # 项目说明文档
-├── 📄 index.html                # 主页（游戏列表）
-├── 📄 404.html                  # 404页面
-├── 📄 privacy.html              # 隐私政策
-├── 📄 terms.html                # 服务条款
-├── 📁 assets/                   # 全局公共资源（所有游戏共享）
-│   ├── 📁 images/               # 公共图片
-│   │   ├── 📁 icons/           # 图标（Logo、按钮图标等）
-│   │   ├── 📁 banners/         # 横幅广告图
-│   │   ├── 📁 backgrounds/      # 背景图片
-│   │   └── 📁 placeholder/      # 占位图片
-│   ├── 📁 videos/               # 公共视频（宣传视频等）
-│   ├── 📁 audio/                # 公共音频（背景音乐、音效）
-│   └── 📁 fonts/                # 自定义字体
-├── 📁 games/                    # 游戏目录（每个游戏一个子目录）
-│   ├── 📁 2048/                 # Neon 2048 游戏
-│   │   ├── 📄 index.html        # 游戏主页面
-│   │   ├── 📄 game.js           # 游戏逻辑
-│   │   ├── 📄 style.css         # 游戏样式
-│   │   ├── 📄 game.json         # 游戏配置
-│   │   └── 📁 assets/           # 该游戏专属资源
-│   │       ├── 📁 images/       # 游戏图片素材
-│   │       ├── 📁 audio/        # 游戏音效
-│   │       └── 📁 data/         # 游戏数据（关卡、配置等）
-│   ├── 📁 particle/             # 粒子消除游戏
-│   │   ├── 📄 index.html
-│   │   ├── 📄 game.js
-│   │   ├── 📄 style.css
-│   │   └── 📁 assets/
-│   │       ├── 📁 images/
-│   │       └── 📁 audio/
-│   ├── 📁 snake/                # 贪吃蛇游戏
-│   │   └── ...
-│   └── 📁 tetris/               # 俄罗斯方块游戏
-│       └── ...
-├── 📁 js/                       # 全局JavaScript
-│   ├── 📄 main.js               # 主入口脚本
-│   ├── 📄 lang.js               # 多语言支持
-│   └── 📄 theme.js              # 主题切换逻辑
-└── 📁 css/                      # 全局样式
-    ├── 📄 main.css              # 主样式文件
-    └── 📄 responsive.css        # 响应式样式
-```
+---
 
-## 二、目录职责说明
+## 📋 根目录文件
 
-### 2.1 根目录文件
-| 文件 | 说明 | 是否必需 |
-|---|---|---|
-| `.gitignore` | 配置Git忽略规则 | ✅ 必需 |
-| `package.json` | Node.js项目配置（如有构建需求） | ⚠️ 视情况 |
-| `vercel.json` | Vercel部署配置 | ✅ 推荐 |
-| `index.html` | 游戏列表主页 | ✅ 必需 |
-| `404.html` | 页面未找到 | ✅ 推荐 |
-| `privacy.html` | 隐私政策（Telegram要求） | ✅ 必需 |
-| `terms.html` | 服务条款（Telegram要求） | ✅ 必需 |
+| 文件 | 说明 | 状态 |
+|------|------|------|
+| `README.md` | 项目总体说明文档 | ✅ 更新中 |
+| `package.json` | Node.js 项目依赖和脚本配置 | ✅ |
+| `vercel.json` | Vercel 部署配置文件 | ✅ |
+| `bot-server.js` | Telegram Bot 服务端（本地运行） | ✅ |
+| `index.html` | 首页 - 游戏选择页面 | ✅ |
+| `404.html` | 404 错误页面 | ✅ |
+| `privacy.html` | 隐私政策页面（Telegram 要求） | ✅ |
+| `terms.html` | 服务条款页面（Telegram 要求） | ✅ |
+| `DIRECTORY_STRUCTURE.md` | 本文件 - 目录结构说明 | ✅ 更新中 |
+| `VERCEL_DEPLOY.md` | Vercel 部署和 Webhook 指南 | ✅ |
+| `BOT_SETUP.md` | Telegram Bot 设置指南 | ✅ |
 
-### 2.2 assets/ - 全局资源
-用于存放**所有游戏共享**的资源：
-- **images/icons/** - Logo、UI图标等
-- **images/banners/** - 网站横幅广告
-- **images/backgrounds/** - 页面背景图
-- **videos/** - 宣传视频、开场动画
-- **audio/** - 全局背景音乐
-- **fonts/** - 自定义字体文件
+---
 
-### 2.3 games/ - 游戏目录
-每个游戏独立一个子目录：
-- **index.html** - 游戏入口页面
-- **game.js** - 游戏核心逻辑
-- **style.css** - 游戏样式
-- **game.json** - 游戏配置（名称、描述、标签等）
-- **assets/** - 该游戏专属资源（不与其他游戏共享）
+## 📁 一级目录说明
 
-## 三、静态资源存储方案对比
+### 1. `/css` - 样式文件目录
 
-### 3.1 方案对比表
+存放全站共享的 CSS 样式文件。
 
-| 方案 | 优点 | 缺点 | 适合场景 |
-|---|---|---|---|
-| **存放在Git仓库** | 简单、版本控制、部署方便 | 仓库体积大、克隆慢、带宽受限 | 小图标、配置文件、小尺寸素材 |
-| **CDN存储** | 加载快、节省带宽、支持大文件 | 需要额外配置、有成本 | 图片、视频、音频等大文件 |
-| **混合方案** | 兼顾版本控制和加载性能 | 需要维护两套存储 | 推荐！最佳实践 |
+| 文件 | 说明 |
+|------|------|
+| `style.css` | 主样式文件 |
+| `responsive.css` | 响应式样式配置 |
+| `lang.css` | 多语言支持样式 |
 
-### 3.2 推荐方案：混合存储
+### 2. `/js` - JavaScript 脚本目录
+
+存放全站共享的 JavaScript 文件。
+
+| 文件 | 说明 |
+|------|------|
+| `main.js` | 主入口脚本 - 页面初始化和通用功能 |
+| `lang.js` | 多语言翻译配置 |
+| `theme.js` | 主题切换功能（亮色/暗色） |
+
+### 3. `/assets` - 公共资源目录
+
+存放所有游戏共享的媒体资源。
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Git仓库 (代码+小资源)                     │
-│  ├── 所有HTML/CSS/JS文件                                   │
-│  ├── 小图标 (< 50KB)                                       │
-│  ├── 配置文件 (JSON)                                       │
-│  └── 游戏逻辑代码                                           │
-└─────────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────────┐
-│                    CDN (大资源)                             │
-│  ├── 游戏素材图片 (PNG/JPG/WebP)                            │
-│  ├── 视频文件 (MP4/WebM)                                   │
-│  ├── 音频文件 (MP3/OGG)                                    │
-│  └── 大尺寸背景图                                          │
-└─────────────────────────────────────────────────────────────┘
+/assets/
+├── images/          # 图片资源
+│   ├── icons/       # 图标文件
+│   ├── banners/     # 横幅广告
+│   └── backgrounds/ # 背景图片
+├── audio/           # 音频文件
+│   ├── sfx/         # 音效文件
+│   └── bgm/         # 背景音乐
+└── fonts/           # 自定义字体
 ```
 
-### 3.3 CDN选择建议
+### 4. `/games` - 游戏目录（核心）
 
-| CDN服务 | 特点 | 推荐度 |
-|---|---|---|
-| **Cloudflare R2** | 免费额度高、带宽便宜 | ⭐⭐⭐⭐⭐ |
-| **AWS S3 + CloudFront** | 功能强大、全球加速 | ⭐⭐⭐⭐ |
-| **Vercel Blob** | 与Vercel无缝集成 | ⭐⭐⭐⭐ |
-| **Imgur/Unsplash** | 图片托管（免费有局限） | ⭐⭐⭐ |
-
-## 四、Vercel部署配置
-
-### 4.1 vercel.json 配置示例
-
-```json
-{
-  "version": 2,
-  "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "games/**/*.html", "use": "@vercel/static" },
-    { "src": "assets/**/*", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/games/(.*)", "dest": "/games/$1/index.html" },
-    { "src": "/(.*)", "dest": "/404.html" }
-  ],
-  "domains": [
-    { "domain": "yourdomain.com", "redirect": false }
-  ]
-}
-```
-
-### 4.2 环境变量配置
-
-在Vercel控制台配置：
-```
-CDN_URL=https://your-cdn.com
-```
-
-### 4.3 代码中使用CDN
-
-```javascript
-// 获取CDN地址（开发环境使用本地，生产环境使用CDN）
-const CDN_URL = process.env.CDN_URL || '/assets';
-
-// 使用示例
-const gameImage = `${CDN_URL}/images/games/2048/tile.png`;
-```
-
-## 五、域名配置
-
-### 5.1 购买域名
-
-推荐平台：
-- **Namecheap** - 性价比高
-- **Cloudflare Registrar** - 免费隐私保护
-- **GoDaddy** - 老牌服务商
-
-### 5.2 配置DNS
-
-在域名管理后台添加记录：
-
-| 记录类型 | 主机名 | 值 |
-|---|---|---|
-| A | @ | 76.76.21.21 (Vercel IP) |
-| A | www | 76.76.21.21 |
-| CNAME | * | cname.vercel-dns.com |
-
-### 5.3 在Vercel添加域名
-
-1. 打开Vercel项目设置
-2. 进入Domains页面
-3. 添加你的域名（如：yourdomain.com）
-4. 按照提示配置DNS验证
-
-## 六、最佳实践建议
-
-### 6.1 文件命名规范
+每个游戏一个独立子目录，包含该游戏的所有文件。
 
 ```
-# 目录：小写+连字符
-games/neon-2048/
-assets/images/game-icons/
-
-# 文件：小写+连字符
-game-over-screen.png
-background-music.mp3
-
-# 避免空格和特殊字符
-❌ Game Over Screen.png
-✅ game-over-screen.png
+/games/
+├── 2048/            # 2048 霓虹版游戏
+│   ├── index.html   # 游戏主页面
+│   ├── game.js      # 游戏核心逻辑 ⭐
+│   ├── style.css    # 游戏样式
+│   ├── lang.js      # 游戏语言文件
+│   └── assets/      # 该游戏专属资源
+└── particle/        # 粒子消除游戏
+    ├── index.html   # 游戏主页面
+    ├── game.js      # 游戏核心逻辑 ⭐
+    ├── style.css    # 游戏样式
+    ├── lang.js      # 游戏语言文件
+    └── assets/      # 该游戏专属资源
 ```
 
-### 6.2 图片优化
+### 5. `/api` - API 接口目录
 
-```
-# 使用现代格式
-优先使用 WebP (比JPG小30%)
+存放 Vercel Serverless Functions。
 
-# 多尺寸适配
-hero-mobile.webp
-hero-desktop.webp
+| 文件 | 说明 |
+|------|------|
+| `webhook.js` | Telegram Webhook 接收处理 |
 
-# 压缩工具
-- Squoosh (在线)
-- Sharp (Node.js)
-- ImageOptim (Mac)
-```
+### 6. `/scripts` - 工具脚本目录
 
-### 6.3 视频优化
+| 文件 | 说明 |
+|------|------|
+| `set-webhook.js` | 快捷设置 Webhook 的脚本 |
 
-```
-# 格式选择
-- MP4 (H.264) - 兼容性好
-- WebM (VP9) - 体积小
+---
 
-# 分辨率
-- 1080p 用于桌面
-- 720p 用于移动端
+## 🎮 游戏目录详细说明
 
-# 压缩工具
-- FFmpeg
-- HandBrake
-```
+### `/games/2048/` - 2048 霓虹版
 
-### 6.4 Git最佳实践
+| 文件 | 核心功能 |
+|------|---------|
+| `index.html` | 游戏页面结构，包含 AdsGram SDK 引入和初始化 |
+| `game.js` | 游戏逻辑：<br> • 数字合并逻辑<br> • 游戏状态管理<br> • AdsGram 广告显示（激励/插屏）<br> • 历史记录和最高分<br> • 道具功能（撤销/提示） |
+| `style.css` | 霓虹风格的游戏界面样式 |
+| `lang.js` | 游戏界面的中英文翻译 |
 
-```gitignore
-# .gitignore 配置
-# 忽略大文件
-*.mp4
-*.webm
-*.mp3
-*.ogg
-*.zip
-*.rar
+**重要更新 (v2.0):**
+- ✅ 移除了 `bg-canvas` 背景动画
+- ✅ 优化了 AdsGram 初始化逻辑
+- ✅ 添加了 Telegram 环境检测
+- ✅ 广告失败时直接给予奖励
 
-# 忽略系统文件
-.DS_Store
-Thumbs.db
-*.swp
+### `/games/particle/` - 粒子消除游戏
 
-# 忽略环境变量
-.env
-.env.local
+| 文件 | 核心功能 |
+|------|---------|
+| `index.html` | 游戏页面结构，包含 AdsGram SDK 引入和初始化 |
+| `game.js` | 游戏逻辑：<br> • 粒子消除算法<br> • 游戏时间和生命管理<br> • AdsGram 广告显示（激励视频复活）<br> • 连击和分数系统 |
+| `style.css` | 粒子游戏的界面样式 |
+| `lang.js` | 游戏界面的中英文翻译 |
 
-# 忽略构建产物
-dist/
-build/
-```
+**重要更新 (v2.0):**
+- ✅ 移除了 `bg-canvas` 背景动画
+- ✅ 简化了粒子爆炸效果（移除 canvas 粒子渲染）
+- ✅ 优化了 AdsGram 初始化逻辑
+- ✅ 添加了 Telegram 环境检测
 
-## 七、资源加载策略
+---
 
-### 7.1 懒加载
+## 🔌 AdsGram 广告集成说明
 
-```html
-<!-- HTML -->
-<img 
-  src="placeholder.jpg" 
-  data-src="actual-image.webp" 
-  class="lazy"
-  loading="lazy"
->
+### 广告初始化位置
 
-<script>
-// JavaScript 懒加载
-document.addEventListener('DOMContentLoaded', () => {
-  const lazyImages = document.querySelectorAll('img.lazy');
-  
-  if ('IntersectionObserver' in window) {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          img.src = img.dataset.src;
-          img.classList.remove('lazy');
-          observer.unobserve(img);
-        }
-      });
-    });
-    
-    lazyImages.forEach(img => imageObserver.observe(img));
-  }
-});
-</script>
-```
+每个游戏的 `index.html` 中都包含：
+1. AdsGram SDK 引入：`<script src="https://sad.adsgram.ai/js/sad.min.js"></script>`
+2. 广告初始化代码，检测是否在 Telegram 环境中
 
-### 7.2 预加载关键资源
+### 广告显示逻辑
 
-```html
-<link rel="preload" href="critical-image.webp" as="image">
-<link rel="preload" href="background-music.mp3" as="audio">
-<link rel="preload" href="game.js" as="script">
-```
+在 `game.js` 中：
+- `showAd()` - 显示激励视频广告
+- `showInterstitialAd()` - 显示插屏广告
+- 新增安全检测：非 Telegram 环境自动跳过广告，直接给予奖励
 
-## 八、扩展建议
+### 广告 Block ID 配置
 
-### 8.1 游戏元数据管理
+| 游戏 | 激励广告 | 插屏广告 |
+|------|---------|---------|
+| 2048 | `31225` | `int-30882` |
+| 粒子 | `30885` | `int-30886` |
 
-创建 `games.json` 统一管理所有游戏信息：
+---
 
-```json
-{
-  "games": [
-    {
-      "id": "neon-2048",
-      "name": "Neon 2048",
-      "name_zh": "霓虹2048",
-      "description": "Classic 2048 with neon style",
-      "description_zh": "霓虹风格经典2048",
-      "tags": ["puzzle", "strategy", "casual"],
-      "tags_zh": ["益智", "策略", "休闲"],
-      "thumbnail": "neon-2048-thumb.webp",
-      "category": "puzzle",
-      "difficulty": "easy"
-    }
-  ]
-}
-```
+## 📊 文件修改历史 (v2.0)
 
-### 8.2 国际化支持
+### 已修改的文件
 
-使用 `lang.js` 集中管理翻译：
+1. **`games/2048/index.html`**
+   - 移除 `bg-canvas` 元素
+   - 优化 AdsGram 初始化，添加 Telegram 环境检测
 
-```javascript
-const translations = {
-  'zh': {
-    'title': '游戏中心',
-    'play': '开始游戏'
-  },
-  'en': {
-    'title': 'Game Center', 
-    'play': 'Play Now'
-  }
-};
-```
+2. **`games/2048/game.js`**
+   - 移除背景动画相关函数
+   - 优化广告显示逻辑，添加超时和降级处理
 
-## 九、总结
+3. **`games/particle/index.html`**
+   - 移除 `bg-canvas` 元素
+   - 优化 AdsGram 初始化
 
-### 资源存储决策树
+4. **`games/particle/game.js`**
+   - 移除背景动画和粒子爆炸效果
+   - 简化消除动画逻辑
+   - 优化广告显示逻辑
 
-```
-资源类型?
-    ├── 代码文件 (.html/.css/.js/.json) → Git仓库 ✅
-    ├── 小图标 (< 50KB) → Git仓库 ✅
-    ├── 大图片/视频/音频 → CDN ✅
-    └── 配置文件 → Git仓库 ✅
-```
+5. **文档更新**
+   - `README.md` - 更新项目说明和版本日志
+   - `DIRECTORY_STRUCTURE.md` - 本文件，更新结构说明
+   - `VERCEL_DEPLOY.md` - 待更新
+   - `BOT_SETUP.md` - 待更新
 
-### 关键要点
+---
 
-1. **Git仓库存放代码和小资源**（便于版本控制）
-2. **CDN存放大媒体文件**（提升加载速度）
-3. **使用Vercel Blob或Cloudflare R2**（性价比高）
-4. **配置环境变量**（开发/生产分离）
-5. **图片使用WebP格式**（节省带宽）
-6. **实现懒加载**（优化首屏性能）
+## 🎯 快速查找指南
 
-这样的架构既保持了代码的可维护性，又保证了资源的加载性能，非常适合长期发展！
+### 寻找广告相关代码
+- 📍 `games/*/index.html` - 初始化
+- 📍 `games/*/game.js` - 显示逻辑
+
+### 寻找游戏核心逻辑
+- 📍 `games/*/game.js` - 游戏主逻辑
+
+### 寻找样式
+- 📍 `css/style.css` - 全局样式
+- 📍 `games/*/style.css` - 游戏专属样式
+
+### 寻找多语言
+- 📍 `js/lang.js` - 全局语言
+- 📍 `games/*/lang.js` - 游戏语言
+
+---
+
+## 📝 备注
+
+- 🚀 所有背景动画已移除以提升性能
+- 🛡️ 广告模块已添加安全检测，非 Telegram 环境不会报错
+- 📱 所有页面都是响应式设计，适配各种屏幕
+
+---
+
+**下一个文档更新**: [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md)

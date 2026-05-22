@@ -246,27 +246,26 @@ function showAd(callback) {
     isUsingProp = false;
   }
 
-  console.log("[AdsGram] trying reward ad, adReward exists:", !!window.adReward);
+  if (!window.adReward) {
+    console.log("[AdsGram] adReward not available");
+    handleCancel();
+    return;
+  }
 
-  if (window.adReward) {
-    try {
-      window.adReward.show().then(function(result) {
-        console.log("[AdsGram] reward result:", JSON.stringify(result));
-        if (result && result.done) {
-          handleReward();
-        } else {
-          handleCancel();
-        }
-      }).catch(function(e) {
-        console.log("[AdsGram] reward ad failed:", e);
+  try {
+    window.adReward.show().then(function(result) {
+      console.log("[AdsGram] reward result:", JSON.stringify(result));
+      if (result && result.done) {
+        handleReward();
+      } else {
         handleCancel();
-      });
-    } catch (e) {
-      console.log("[AdsGram] reward ad error:", e);
+      }
+    }).catch(function(result) {
+      console.log("[AdsGram] reward ad error:", JSON.stringify(result));
       handleCancel();
-    }
-  } else {
-    console.log("[AdsGram] adReward not available, skipping reward");
+    });
+  } catch (e) {
+    console.log("[AdsGram] reward ad exception:", e);
     handleCancel();
   }
 }
@@ -276,18 +275,19 @@ function showRewardedAd(callback) {
 }
 
 function showInterstitialAd() {
-  console.log("[AdsGram] trying interstitial ad, adInterstitial exists:", !!window.adInterstitial);
+  if (!window.adInterstitial) {
+    console.log("[AdsGram] interstitial not available");
+    return;
+  }
 
-  if (window.adInterstitial) {
-    try {
-      window.adInterstitial.show().then(function(result) {
-        console.log("[AdsGram] interstitial result:", JSON.stringify(result));
-      }).catch(function(e) {
-        console.log("[AdsGram] interstitial failed:", e);
-      });
-    } catch (e) {
-      console.log("[AdsGram] interstitial error:", e);
-    }
+  try {
+    window.adInterstitial.show().then(function(result) {
+      console.log("[AdsGram] interstitial result:", JSON.stringify(result));
+    }).catch(function(result) {
+      console.log("[AdsGram] interstitial error:", JSON.stringify(result));
+    });
+  } catch (e) {
+    console.log("[AdsGram] interstitial exception:", e);
   }
 }
 
@@ -925,109 +925,6 @@ function getHistoryTotalTiles() {
 }
 
 function reportLoadingProgress(progress) {
-  if (progress >= 1) {
-    try {
-      Telegram.WebApp.ready();
-    } catch (e) {}
-  }
-}
-
-var bgAnimFrame = null;
-var fallingNumbers = [];
-var bgCanvas, bgCtx;
-
-function initBgAnimation() {
-  bgCanvas = document.getElementById('bg-canvas');
-  if (!bgCanvas) return;
-  bgCtx = bgCanvas.getContext('2d');
-  resizeBgCanvas();
-  window.addEventListener('resize', resizeBgCanvas);
-  for (var i = 0; i < 18; i++) {
-    fallingNumbers.push(createFallingNumber(true));
-  }
-  animateBg();
-}
-
-function resizeBgCanvas() {
-  if (!bgCanvas) return;
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
-}
-
-function createFallingNumber(randomY) {
-  var nums = [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048];
-  var value = nums[Math.floor(Math.random() * nums.length)];
-  var alpha = 0.08 + Math.random() * 0.12;
-  var cellSize = 28 + Math.random() * 24;
-  if (value >= 128) cellSize += 8;
-  if (value >= 1024) cellSize += 6;
-  var hue = (value <= 4) ? 220 : (value <= 16) ? 200 : (value <= 64) ? 180 : (value <= 256) ? 160 : 140;
-  var lightness = 15 + Math.floor(Math.random() * 10);
-  var fontSize = cellSize * 0.35;
-  if (value >= 128) fontSize = cellSize * 0.32;
-  if (value >= 1024) fontSize = cellSize * 0.28;
-  return {
-    x: Math.random() * window.innerWidth,
-    y: randomY ? Math.random() * window.innerHeight : -cellSize,
-    value: value,
-    alpha: alpha,
-    cellSize: cellSize,
-    fontSize: fontSize,
-    speed: 0.3 + Math.random() * 0.6,
-    drift: (Math.random() - 0.5) * 0.3,
-    rotation: (Math.random() - 0.5) * 0.15,
-    hue: hue,
-    bgColor: 'hsl(' + hue + ', 60%, ' + lightness + '%)',
-    borderColor: 'hsl(' + hue + ', 80%, 50%)',
-    textColor: 'hsl(' + hue + ', 80%, 70%)'
-  };
-}
-
-function animateBg() {
-  if (!bgCtx || !bgCanvas) return;
-  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-  for (var i = 0; i < fallingNumbers.length; i++) {
-    var n = fallingNumbers[i];
-    n.y += n.speed;
-    n.x += n.drift;
-    if (n.y > bgCanvas.height + n.cellSize) {
-      fallingNumbers[i] = createFallingNumber(false);
-      continue;
-    }
-    if (n.x < -50) n.x = bgCanvas.width + 50;
-    if (n.x > bgCanvas.width + 50) n.x = -50;
-    bgCtx.save();
-    bgCtx.globalAlpha = n.alpha;
-    bgCtx.translate(n.x, n.y);
-    bgCtx.rotate(n.rotation);
-    var half = n.cellSize / 2;
-    var r = 4;
-    bgCtx.beginPath();
-    bgCtx.moveTo(-half + r, -half);
-    bgCtx.lineTo(half - r, -half);
-    bgCtx.quadraticCurveTo(half, -half, half, -half + r);
-    bgCtx.lineTo(half, half - r);
-    bgCtx.quadraticCurveTo(half, half, half - r, half);
-    bgCtx.lineTo(-half + r, half);
-    bgCtx.quadraticCurveTo(-half, half, -half, half - r);
-    bgCtx.lineTo(-half, -half + r);
-    bgCtx.quadraticCurveTo(-half, -half, -half + r, -half);
-    bgCtx.closePath();
-    bgCtx.fillStyle = n.bgColor;
-    bgCtx.fill();
-    bgCtx.strokeStyle = n.borderColor;
-    bgCtx.lineWidth = 1.5;
-    bgCtx.stroke();
-    bgCtx.shadowColor = n.textColor;
-    bgCtx.shadowBlur = 6;
-    bgCtx.font = 'bold ' + n.fontSize + 'px "Courier New", monospace';
-    bgCtx.textAlign = 'center';
-    bgCtx.textBaseline = 'middle';
-    bgCtx.fillStyle = n.textColor;
-    bgCtx.fillText(n.value, 0, 0);
-    bgCtx.restore();
-  }
-  bgAnimFrame = requestAnimationFrame(animateBg);
 }
 
 function checkDailyReward() {
@@ -1154,6 +1051,4 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (e) {}
     });
   }
-
-  initBgAnimation();
 });

@@ -5,7 +5,7 @@ const TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
 const GAME_SHORT_NAME = 'Xiaoxiaole';
 
 const gameUrls = {
-  'Xiaoxiaole': 'https://www.mohuan.asia/games/2048/index.html'
+  'Xiaoxiaole': 'https://mohuan.asia/games/2048/index.html'
 };
 
 const bot = new TelegramBot(TOKEN, {
@@ -84,7 +84,7 @@ bot.on('callback_query', (callbackQuery) => {
 
     console.log(`🎮 用户 ${userId} 点击游戏 ${gameShortName}`);
 
-    let gameUrl = gameUrls[gameShortName] || 'https://www.mohuan.asia/';
+    let gameUrl = gameUrls[gameShortName] || 'https://mohuan.asia/';
 
     console.log(`🔗 打开游戏URL: ${gameUrl}`);
 

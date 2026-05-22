@@ -8,7 +8,7 @@ const GAME_SHORT_NAMES = {
 };
 
 const gameUrls = {
-  'Greedysnakes': 'https://www.mohuan.asia/games/particle/index.html'
+  'Greedysnakes': 'https://mohuan.asia/games/particle/index.html'
 };
 
 async function telegramAPI(method, body) {
@@ -90,7 +90,7 @@ module.exports = async (req, res) => {
       const cb = update.callback_query;
       const gameShortName = cb.game_short_name;
 
-      let gameUrl = gameUrls[gameShortName] || 'https://www.mohuan.asia/';
+      let gameUrl = gameUrls[gameShortName] || 'https://mohuan.asia/';
 
       await telegramAPI('answerCallbackQuery', {
         callback_query_id: cb.id,

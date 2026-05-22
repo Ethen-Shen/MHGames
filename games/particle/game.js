@@ -208,13 +208,7 @@ function toggleSound() {
   if (btn) btn.textContent = soundMuted ? '🔇' : '📢';
 }
 
-var explosionParticles = [];
-var dropAnimations = [];
 var isAnimating = false;
-var animFrameId = null;
-
-var levelUpParticles = [];
-var levelUpAnimFrame = null;
 
 function showAgeRating() {
   var ageRating = document.querySelector('.age-rating-box-fixed');
@@ -265,27 +259,26 @@ function showAd(onReward) {
     }
   }
 
-  console.log("[AdsGram] trying reward ad, adReward exists:", !!window.adReward);
+  if (!window.adReward) {
+    console.log("[AdsGram] adReward not available");
+    handleCancel();
+    return;
+  }
 
-  if (window.adReward) {
-    try {
-      window.adReward.show().then(function(result) {
-        console.log("[AdsGram] reward result:", JSON.stringify(result));
-        if (result && result.done) {
-          handleReward();
-        } else {
-          handleCancel();
-        }
-      }).catch(function(e) {
-        console.log("[AdsGram] reward ad failed:", e);
+  try {
+    window.adReward.show().then(function(result) {
+      console.log("[AdsGram] reward result:", JSON.stringify(result));
+      if (result && result.done) {
+        handleReward();
+      } else {
         handleCancel();
-      });
-    } catch (e) {
-      console.log("[AdsGram] reward ad error:", e);
+      }
+    }).catch(function(result) {
+      console.log("[AdsGram] reward ad error:", JSON.stringify(result));
       handleCancel();
-    }
-  } else {
-    console.log("[AdsGram] adReward not available, skipping reward");
+    });
+  } catch (e) {
+    console.log("[AdsGram] reward ad exception:", e);
     handleCancel();
   }
 }
@@ -295,22 +288,22 @@ function showRewardedVideoAd(onReward) {
 }
 
 function showInterstitialAd(callback) {
-  console.log("[AdsGram] trying interstitial ad, adInterstitial exists:", !!window.adInterstitial);
+  if (!window.adInterstitial) {
+    console.log("[AdsGram] interstitial not available");
+    if (callback) callback();
+    return;
+  }
 
-  if (window.adInterstitial) {
-    try {
-      window.adInterstitial.show().then(function(result) {
-        console.log("[AdsGram] interstitial result:", JSON.stringify(result));
-        if (callback) callback();
-      }).catch(function(e) {
-        console.log("[AdsGram] interstitial failed:", e);
-        if (callback) callback();
-      });
-    } catch (e) {
-      console.log("[AdsGram] interstitial error:", e);
+  try {
+    window.adInterstitial.show().then(function(result) {
+      console.log("[AdsGram] interstitial result:", JSON.stringify(result));
       if (callback) callback();
-    }
-  } else {
+    }).catch(function(result) {
+      console.log("[AdsGram] interstitial error:", JSON.stringify(result));
+      if (callback) callback();
+    });
+  } catch (e) {
+    console.log("[AdsGram] interstitial exception:", e);
     if (callback) callback();
   }
 }
@@ -332,9 +325,6 @@ function initGame() {
   isReviving = false;
   isAnimating = false;
   gameOverReason = '';
-  explosionParticles = [];
-  dropAnimations = [];
-  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
   highScore = getHighScore();
   grid = initGrid();
   updateUI();
@@ -459,36 +449,7 @@ function handleBlockClick(x, y) {
 
 function startEliminateAnimation(blocks) {
   isAnimating = true;
-  explosionParticles = [];
-  var totalParticles = 6;
-  var particlesPerBlock = Math.max(1, Math.floor(totalParticles / Math.max(1, blocks.length)));
-  var createdParticles = 0;
-
-  for (var i = 0; i < blocks.length && createdParticles < totalParticles; i++) {
-    var bx = blocks[i].x;
-    var by = blocks[i].y;
-    var color = grid[by][bx].color;
-    var cx = bx * config.cellSize + config.cellSize / 2;
-    var cy = by * config.cellSize + config.cellSize / 2;
-
-    var maxParticlesForBlock = Math.min(particlesPerBlock, totalParticles - createdParticles);
-    for (var j = 0; j < maxParticlesForBlock; j++) {
-      var angle = (Math.PI * 2 / maxParticlesForBlock) * j + Math.random() * 0.5;
-      var speed = 2 + Math.random() * 3;
-      explosionParticles.push({
-        x: cx,
-        y: cy,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        size: 2 + Math.random() * 2,
-        color: color,
-        alpha: 1,
-        decay: 0.02 + Math.random() * 0.01
-      });
-      createdParticles++;
-    }
-  }
-
+  // 移除粒子爆炸效果，只保留方块消除
   for (var i = 0; i < blocks.length; i++) {
     var bx = blocks[i].x;
     var by = blocks[i].y;
@@ -499,10 +460,7 @@ function startEliminateAnimation(blocks) {
     }
   }
 
-  animateParticles();
-}
-
-function animateParticles() {
+  // 简单的动画，没有粒子
   dropBlocks();
   generateNewBlocks();
 
@@ -525,24 +483,13 @@ function animateParticles() {
     }
   }
 
+  // 简单的下落动画
   var animStart = Date.now();
-  var particleDuration = 200;
   var dropDuration = 150;
 
-  function animateFrame() {
+  function animateDrop() {
     var elapsed = Date.now() - animStart;
-    var particleProgress = Math.min(1, elapsed / particleDuration);
     var dropProgress = Math.min(1, elapsed / dropDuration);
-
-    for (var i = explosionParticles.length - 1; i >= 0; i--) {
-      var p = explosionParticles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.2;
-      p.alpha -= p.decay;
-      p.size *= 0.95;
-      if (p.alpha <= 0) explosionParticles.splice(i, 1);
-    }
 
     if (dropProgress < 1) {
       var dropEased = 1 - Math.pow(1 - dropProgress, 2);
@@ -554,20 +501,18 @@ function animateParticles() {
           }
         }
       }
-    }
-
-    drawGame();
-
-    if (particleProgress >= 1 && explosionParticles.length === 0) {
-      isAnimating = false;
-      explosionParticles = [];
-      updateUI();
+      drawGame();
+      requestAnimationFrame(animateDrop);
     } else {
-      animFrameId = requestAnimationFrame(animateFrame);
+      isAnimating = false;
+      drawGame();
+      updateUI();
     }
   }
-  animateFrame();
+  animateDrop();
 }
+
+
 
 function findConnectedBlocks(startX, startY, color) {
   var connected = [];
@@ -660,18 +605,6 @@ function drawGame() {
         ctx.stroke();
       }
     }
-  }
-  for (var i = 0; i < explosionParticles.length; i++) {
-    var p = explosionParticles[i];
-    ctx.save();
-    ctx.globalAlpha = p.alpha;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 6;
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
   }
 }
 
@@ -952,76 +885,6 @@ function updateItemsUI() {
 }
 
 function reportLoadingProgress(progress) {
-  if (progress >= 1) {
-    try { Telegram.WebApp.ready(); } catch (e) {}
-  }
-}
-
-var bgAnimFrame = null;
-var bgCanvas, bgCtx;
-var bgCols = 12;
-var bgCellSize = 0;
-var fallingBlocks = [];
-
-function initBgAnimation() {
-  bgCanvas = document.getElementById('bg-canvas');
-  if (!bgCanvas) return;
-  bgCtx = bgCanvas.getContext('2d');
-  resizeBgCanvas();
-  window.addEventListener('resize', resizeBgCanvas);
-  fallingBlocks = [];
-  animateBg();
-}
-
-function resizeBgCanvas() {
-  if (!bgCanvas) return;
-  bgCanvas.width = window.innerWidth;
-  bgCanvas.height = window.innerHeight;
-  bgCellSize = Math.floor(bgCanvas.width / bgCols);
-  fallingBlocks = [];
-}
-
-function spawnBgBlock() {
-  var colorIndex = Math.floor(Math.random() * config.colors.length);
-  var col = Math.floor(Math.random() * bgCols);
-  return {
-    x: col * bgCellSize,
-    y: -bgCellSize,
-    size: bgCellSize * (0.8 + Math.random() * 0.4),
-    speed: 1 + Math.random() * 2,
-    color: config.colors[colorIndex]
-  };
-}
-
-function animateBg() {
-  if (!bgCtx || !bgCanvas) return;
-  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-
-  if (Math.random() < 0.1) {
-    fallingBlocks.push(spawnBgBlock());
-  }
-
-  for (var i = fallingBlocks.length - 1; i >= 0; i--) {
-    var block = fallingBlocks[i];
-    block.y += block.speed;
-
-    bgCtx.save();
-    bgCtx.shadowColor = block.color;
-    bgCtx.shadowBlur = 8;
-    bgCtx.fillStyle = block.color;
-    bgCtx.globalAlpha = 0.2;
-    bgCtx.fillRect(block.x + 2, block.y + 2, block.size - 4, block.size - 4);
-    bgCtx.strokeStyle = block.color;
-    bgCtx.globalAlpha = 0.4;
-    bgCtx.strokeRect(block.x + 2, block.y + 2, block.size - 4, block.size - 4);
-    bgCtx.restore();
-
-    if (block.y > bgCanvas.height) {
-      fallingBlocks.splice(i, 1);
-    }
-  }
-
-  bgAnimFrame = requestAnimationFrame(animateBg);
 }
 
 function checkDailyReward() {
@@ -1169,6 +1032,4 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
-
-  initBgAnimation();
 });
