@@ -88,13 +88,9 @@ module.exports = async (req, res) => {
     }
     else if (update.callback_query) {
       const cb = update.callback_query;
-      const gameShortName = cb.game_short_name;
-
-      let gameUrl = gameUrls[gameShortName] || 'https://www.mohuan.asia/';
 
       await telegramAPI('answerCallbackQuery', {
-        callback_query_id: cb.id,
-        url: gameUrl
+        callback_query_id: cb.id
       });
     }
     else if (update.inline_query) {
