@@ -140,16 +140,23 @@
     <!-- AdsGram 广告集成 -->
     <script src="https://sdk.adsgram.ai/v1/adsgram.js"></script>
     <script>
-      // 初始化 AdsGram，你需要替换为你自己的广告位 ID
-      // 在 AdsGram 后台创建广告位后获取
-      let adsgram;
+      window.adReward = null;
+      window.adInterstitial = null;
+      window.adTask = null;
+
       try {
-        adsgram = new Adsgram({
-          blockId: "your-block-id-here" // 请替换为你的广告位 ID
+        window.adReward = window.Adsgram.init({
+          blockId: "30881"
         });
+        window.adInterstitial = window.Adsgram.init({
+          blockId: "int-30882"
+        });
+        window.adTask = window.Adsgram.init({
+          blockId: "task-30883"
+        });
+        console.log("AdsGram: 3 ad units initialized");
       } catch (e) {
-        console.log("AdsGram initialization failed:", e);
-        adsgram = null;
+        console.log("AdsGram init failed:", e);
       }
     </script>
     <script src="lang.js"></script>

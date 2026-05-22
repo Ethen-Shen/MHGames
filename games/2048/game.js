@@ -5,6 +5,7 @@ var highScore = 0;
 var gameMode = 'classic';
 var isGameOver = false;
 var isUsingProp = false;
+var gameOverCount = 0;
 var isReviving = false;
 var canvas, ctx;
 var cellSize = 80;
@@ -237,25 +238,23 @@ function showAd(callback) {
     isUsingProp = false;
   }
 
-  // 优先使用 AdsGram 激励视频广告
-  if (window.adsgram) {
+  if (window.adReward) {
     try {
-      adsgram.showRewardedAd().then(function(result) {
-        if (result && result.completed) {
+      window.adReward.show().then(function(result) {
+        if (result && result.done) {
           handleReward();
         } else {
           handleCancel();
         }
       }).catch(function(e) {
-        console.log("AdsGram ad error:", e);
+        console.log("AdsGram reward ad error:", e);
         handleCancel();
       });
     } catch (e) {
-      console.log("AdsGram ad error:", e);
+      console.log("AdsGram reward ad error:", e);
       handleCancel();
     }
-  } 
-  // 备用方案：使用原来的支付方式
+  }
   else if (window.Telegram && Telegram.WebApp && Telegram.WebApp.openInvoice) {
     var invoiceUrl = API_BASE + '/api/createInvoice?game=2048&type=item&user_id=' + (tgUser ? tgUser.id : '0');
     fetch(invoiceUrl)
@@ -283,6 +282,20 @@ function showAd(callback) {
 
 function showRewardedAd(callback) {
   showAd(callback);
+}
+
+function showInterstitialAd() {
+  if (window.adInterstitial) {
+    try {
+      window.adInterstitial.show().then(function(result) {
+        console.log("AdsGram interstitial done:", result.done);
+      }).catch(function(e) {
+        console.log("AdsGram interstitial error:", e);
+      });
+    } catch (e) {
+      console.log("AdsGram interstitial error:", e);
+    }
+  }
 }
 
 function initGame(mode, level) {
@@ -848,6 +861,13 @@ function showGameOver(isWin) {
   document.getElementById('game-over-page').style.display = 'flex';
   showAgeRating();
   stopBgMusic();
+
+  if (!isWin) {
+    gameOverCount++;
+    if (gameOverCount % 3 === 0) {
+      setTimeout(function() { showInterstitialAd(); }, 1500);
+    }
+  }
 }
 
 function saveScore(score) {
