@@ -33,11 +33,10 @@ module.exports = async (req, res) => {
       const chatId = msg.chat.id;
       const text = msg.text || '';
 
-      if (text === '/start') {
-        const username = msg.from.username || msg.from.first_name;
-        await telegramAPI('sendMessage', {
+      if (text === '/start' || text === '/play') {
+        await telegramAPI('sendGame', {
           chat_id: chatId,
-          text: '🎮 欢迎 ' + username + ' 来到墨焕游戏！\n\n选择你想玩的游戏：\n\n/greedysnakes - Greedy Snakes\n\n或者直接在聊天框输入：\n@gameplay_888bot 来搜索游戏！'
+          game_short_name: GAME_SHORT_NAMES['particle']
         });
       }
       else if (text === '/greedysnakes') {
@@ -50,18 +49,12 @@ module.exports = async (req, res) => {
     else if (update.callback_query) {
       const cb = update.callback_query;
       const gameShortName = cb.game_short_name;
-      const userId = cb.from.id;
-      let chatId = null;
-      if (cb.message && cb.message.chat) {
-        chatId = cb.message.chat.id;
-      }
 
       let gameUrl = gameUrls[gameShortName] || 'https://www.mohuan.asia/';
-      const fullUrl = gameUrl + '?user_id=' + userId + (chatId ? '&chat_id=' + chatId : '');
 
       await telegramAPI('answerCallbackQuery', {
         callback_query_id: cb.id,
-        url: fullUrl
+        url: gameUrl
       });
     }
     else if (update.inline_query) {
