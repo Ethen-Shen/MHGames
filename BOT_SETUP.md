@@ -1,18 +1,18 @@
-# 🤖 双 Bot 设置指南
+# 🤖 三 Bot 设置指南
 
-> ⏰ 最后更新: 2026-05-22 | 🏷️ 版本: v3.0
+> ⏰ 最后更新: 2026-06-11 | 🏷️ 版本: v4.0
 
 ---
 
 ## Bot 信息
 
-| | Bot1 (Neon 2048) | Bot2 (Particle Blast) |
-|---|---|---|
-| Token | `8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk` | `8896711967:AAG8tStYIwVSCPMyCzx-wH22pYqQcXoet-E` |
-| 游戏 URL | `https://mohuan.asia/games/2048/index.html` | `https://mohuan.asia/games/particle/index.html` |
-| Webhook | `/api/webhook` | `/api/webhook-greedysnakes` |
-| 激励广告 | `31225` | `30885` |
-| 插屏广告 | `int-30882` | `int-30886` |
+| | Bot1 (Neon 2048) | Bot2 (Particle Blast) | Bot3 (Find the Bull) |
+|---|---|---|---|
+| Token | `8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk` | `8896711967:AAG8tStYIwVSCPMyCzx-wH22pYqQcXoet-E` | `8888888888:PLACEHOLDER_BOT3_TOKEN_FINDCOW` |
+| 游戏 URL | `https://mohuan.asia/games/2048/index.html` | `https://mohuan.asia/games/particle/index.html` | `https://mohuan.asia/games/findcow/index.html` |
+| Webhook | `/api/webhook` | `/api/webhook-greedysnakes` | `/api/webhook-findcow` |
+| 激励广告 | `31225` | `30885` | `31500` |
+| 插屏广告 | `int-30882` | `int-30886` | `int-31501` |
 
 ---
 
@@ -20,7 +20,7 @@
 
 ### 1. 设置 Bot 描述
 
-对两个 Bot 分别在 @BotFather 中执行：
+对三个 Bot 分别在 @BotFather 中执行：
 
 **Bot1:**
 ```
@@ -34,9 +34,15 @@
 /setabouttext → 选择 Bot2 → 💥 Particle Blast Mini App
 ```
 
+**Bot3:**
+```
+/setdescription → 选择 Bot3 → Find the Bull - 找牛牛找物品游戏！
+/setabouttext → 选择 Bot3 → 🐂 Find the Bull Mini App
+```
+
 ### 2. 设置 Bot 命令
 
-对两个 Bot 分别执行 `/setcommands`：
+对三个 Bot 分别执行 `/setcommands`：
 
 ```
 start - 开始游戏
@@ -53,6 +59,7 @@ help - 帮助信息
 
 - Bot1: 按钮文字 `🎮 Play 2048`，URL `https://mohuan.asia/games/2048/index.html`
 - Bot2: 按钮文字 `💥 Play Particle`，URL `https://mohuan.asia/games/particle/index.html`
+- Bot3: 按钮文字 `🐂 Play Find the Bull`，URL `https://mohuan.asia/games/findcow/index.html`
 
 ### 4. 设置 Mini App（推荐）
 
@@ -73,7 +80,7 @@ help - 帮助信息
 npm start
 ```
 
-`bot-server.js` 同时运行两个 Bot，使用 long polling 接收消息。
+`bot-server.js` 同时运行三个 Bot，使用 long polling 接收消息。
 
 ### 模式 B：Vercel Webhook（生产用）
 
@@ -85,9 +92,10 @@ npm run webhook:set
 npm run webhook:info
 ```
 
-两个 Webhook 端点：
+三个 Webhook 端点：
 - `https://www.mohuan.asia/api/webhook` → Bot1
 - `https://www.mohuan.asia/api/webhook-greedysnakes` → Bot2
+- `https://www.mohuan.asia/api/webhook-findcow` → Bot3
 
 > ⚠️ Polling 和 Webhook 不能同时使用。生产环境用 Webhook 时不要运行 `npm start`。
 
@@ -95,7 +103,7 @@ npm run webhook:info
 
 ## Bot 发送消息的方式
 
-### ✅ 当前方式：`web_app` 按钮（v3.0）
+### ✅ 当前方式：`web_app` 按钮（v3.0+）
 
 ```javascript
 bot.sendMessage(chatId, '点击开始游戏：', {
@@ -123,15 +131,16 @@ bot.sendGame(chatId, 'neon2048');
 
 - [ ] Bot1 `/start` → 收到 🎮 按钮
 - [ ] Bot2 `/start` → 收到 💥 按钮
+- [ ] Bot3 `/start` → 收到 🐂 按钮
 - [ ] 点击按钮 → Telegram 内打开游戏
 - [ ] 游戏中广告正常显示
-- [ ] Bot1 `/help` → 显示帮助
-- [ ] Bot2 `/help` → 显示帮助
+- [ ] 三个 Bot `/help` → 显示帮助
 
 ---
 
 ## 相关文档
 
+- [README.md](./README.md) — 项目总览
 - [FLOW.md](./FLOW.md) — 完整流程文档
 - [VERCEL_DEPLOY.md](./VERCEL_DEPLOY.md) — 部署指南
 - [DIRECTORY_STRUCTURE.md](./DIRECTORY_STRUCTURE.md) — 目录结构

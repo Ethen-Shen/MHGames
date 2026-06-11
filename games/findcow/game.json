@@ -1,0 +1,19 @@
+{
+  "platform": "telegram",
+  "name": "Find the Bull",
+  "version": "1.0.0",
+  "description": "Find the Bull - 找牛牛找物品游戏 for Telegram Mini App",
+  "author": "MHGames",
+  "gameUrl": "/games/findcow/",
+  "adProvider": "adsgram",
+  "features": {
+    "fullscreen": true,
+    "highscores": true,
+    "starsPayment": true,
+    "homeScreenShortcut": true,
+    "cloudStorage": true,
+    "dailyCheckin": true,
+    "shop": true,
+    "props": true
+  }
+}

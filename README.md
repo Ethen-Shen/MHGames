@@ -1,17 +1,18 @@
 # 墨焕游戏 Telegram Mini App
 
-> 🎮 Telegram 小游戏平台 — Neon 2048 & Particle Blast
+> 🎮 Telegram 小游戏平台 — Neon 2048 & Particle Blast & Find the Bull
 > 
-> ⏰ 最后更新: 2026-05-22 | 🏷️ 版本: v3.0
+> ⏰ 最后更新: 2026-06-11 | 🏷️ 版本: v4.0
 
 ## 项目简介
 
-基于 Telegram Web App 的双游戏平台，通过两个独立 Bot 分别管理两个游戏，集成 AdsGram 广告变现。
+基于 Telegram Web App 的三游戏平台，通过三个独立 Bot 分别管理三个游戏，集成 AdsGram 广告变现。
 
 | 游戏 | Bot | 入口按钮 |
 |------|-----|---------|
 | Neon 2048 | Bot1 (`@xxxBot`) | 🎮 Play Neon 2048 |
 | Particle Blast | Bot2 (`@xxxBot`) | 💥 Play Particle Blast |
+| Find the Bull | Bot3 (`@xxxBot`) | 🐂 Play Find the Bull |
 
 ### 核心特性
 
@@ -42,16 +43,16 @@ npm run webhook:info
 
 ---
 
-## 双 Bot 配置
+## 三 Bot 配置
 
-| | Bot1 (Neon 2048) | Bot2 (Particle Blast) |
-|---|---|---|
-| Token | `8979472034:AAF4E2q...` | `8896711967:AAG8tStYI...` |
-| Webhook 路径 | `/api/webhook` | `/api/webhook-greedysnakes` |
-| 游戏页面 | `/games/2048/index.html` | `/games/particle/index.html` |
-| 激励广告 BlockId | `31225` | `30885` |
-| 插屏广告 BlockId | `int-30882` | `int-30886` |
-| 命令 | `/start` `/play` `/help` | `/start` `/play` `/help` |
+| | Bot1 (Neon 2048) | Bot2 (Particle Blast) | Bot3 (Find the Bull) |
+|---|---|---|---|
+| Token | `8979472034:AAF4E2q...` | `8896711967:AAG8tStYI...` | `8888888888:PLACEHOLDER_FINDCOW` |
+| Webhook 路径 | `/api/webhook` | `/api/webhook-greedysnakes` | `/api/webhook-findcow` |
+| 游戏页面 | `/games/2048/index.html` | `/games/particle/index.html` | `/games/findcow/index.html` |
+| 激励广告 BlockId | `31225` | `30885` | `31500` |
+| 插屏广告 BlockId | `int-30882` | `int-30886` | `int-31501` |
+| 命令 | `/start` `/play` `/help` | `/start` `/play` `/help` | `/start` `/play` `/help` |
 
 ---
 
@@ -87,7 +88,7 @@ npm run webhook:info
 ```
 TelegramGames/
 ├── index.html                    # 首页（游戏选择）
-├── bot-server.js                 # 双 Bot 本地服务（polling 模式）
+├── bot-server.js                 # 三 Bot 本地服务（polling 模式）
 ├── package.json
 ├── vercel.json
 ├── games/
@@ -98,19 +99,28 @@ TelegramGames/
 │   │   ├── lang.js
 │   │   ├── game.json
 │   │   └── minigame.config.json
-│   └── particle/
-│       ├── index.html            # 粒子消除游戏页面（含 AdsGram SDK）
-│       ├── game.js               # 游戏逻辑 + 广告显示
+│   ├── particle/
+│   │   ├── index.html            # 粒子消除游戏页面（含 AdsGram SDK）
+│   │   ├── game.js               # 游戏逻辑 + 广告显示
+│   │   ├── styles.css
+│   │   ├── lang.js
+│   │   ├── game.json
+│   │   ├── game_backup.js
+│   │   └── minigame.config.json
+│   └── findcow/                  # 找牛牛（Find the Bull）
+│       ├── index.html            # 找牛游戏页面（含 AdsGram SDK）
+│       ├── game.js               # 游戏核心 + 道具 + 签到 + 商店
 │       ├── styles.css
 │       ├── lang.js
+│       ├── levels.js             # 30 关卡数据
 │       ├── game.json
-│       ├── game_backup.js
 │       └── minigame.config.json
 ├── api/
 │   ├── webhook.js                # Bot1 Webhook (Neon 2048)
-│   └── webhook-greedysnakes.js   # Bot2 Webhook (Particle Blast)
+│   ├── webhook-greedysnakes.js   # Bot2 Webhook (Particle Blast)
+│   └── webhook-findcow.js        # Bot3 Webhook (Find the Bull)
 ├── scripts/
-│   └── set-webhook.js            # 双 Bot Webhook 设置脚本
+│   └── set-webhook.js            # 三 Bot Webhook 设置脚本
 ├── README.md
 ├── FLOW.md                       # 流程文档
 ├── DIRECTORY_STRUCTURE.md
@@ -134,6 +144,15 @@ TelegramGames/
 ---
 
 ## 更新日志
+
+### v4.0 (2026-06-11)
+- 🆕 **新增游戏**: 找牛牛 (Find the Bull) - 30+ 关卡找物品游戏
+- 🆕 **新增 Bot3**: 独立 Webhook `/api/webhook-findcow`
+- 🆕 **道具系统**: 🔍 放大镜 / ⏰ +15s / 💣 排除 / ❄️ 冰冻
+- 🆕 **每日签到**: 7 天循环奖励
+- 🆕 **商店系统**: 3 个 Stars 道具包
+- 🆕 **首页追加** 找牛牛游戏卡片
+- ✅ 现有 2048 / Particle 完全无改动
 
 ### v3.0 (2026-05-22)
 - 🔴 **关键修复**: Bot 从 `sendGame` 改为 `web_app` 按钮模式，修复广告不显示

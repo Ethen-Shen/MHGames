@@ -2,9 +2,11 @@ const fetch = require('node-fetch');
 
 const BOT1_TOKEN = '8979472034:AAF4E2qOXRiTsZWjlX5Kepxb47Eyy_QvHwk';
 const BOT2_TOKEN = '8896711967:AAG8tStYIwVSCPMyCzx-wH22pYqQcXoet-E';
+const BOT3_TOKEN = process.env.TELEGRAM_BOT_TOKEN_FINDCOW || '8888888888:PLACEHOLDER_BOT3_TOKEN_FINDCOW';
 
 const WEBHOOK_URL_BOT1 = 'https://www.mohuan.asia/api/webhook';
 const WEBHOOK_URL_BOT2 = 'https://www.mohuan.asia/api/webhook-greedysnakes';
+const WEBHOOK_URL_FINDCOW = 'https://mohuan.asia/api/webhook-findcow';
 
 async function setWebhook(token, url, name) {
   console.log('\n🔗 设置 ' + name + ' Webhook...');
@@ -52,15 +54,18 @@ async function main() {
   if (args === 'info' || args === '--info') {
     await getWebhookInfo(BOT1_TOKEN, 'Bot1');
     await getWebhookInfo(BOT2_TOKEN, 'Bot2');
+    await getWebhookInfo(BOT3_TOKEN, 'Bot3 (Find the Bull)');
   } else {
     await setWebhook(BOT1_TOKEN, WEBHOOK_URL_BOT1, 'Bot1 (Neon 2048)');
     await setWebhook(BOT2_TOKEN, WEBHOOK_URL_BOT2, 'Bot2 (Particle Blast)');
+    await setWebhook(BOT3_TOKEN, WEBHOOK_URL_FINDCOW, 'Bot3 (Find the Bull)');
 
     console.log('\n⏳ 3秒后查看 Webhook 状态...');
     await new Promise(function(r) { setTimeout(r, 3000); });
 
     await getWebhookInfo(BOT1_TOKEN, 'Bot1');
     await getWebhookInfo(BOT2_TOKEN, 'Bot2');
+    await getWebhookInfo(BOT3_TOKEN, 'Bot3 (Find the Bull)');
   }
 }
 

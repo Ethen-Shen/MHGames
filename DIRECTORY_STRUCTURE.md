@@ -1,6 +1,6 @@
 # 📂 项目目录结构说明
 
-> ⏰ 最后更新: 2026-05-22 | 🏷️ 版本: v3.0
+> ⏰ 最后更新: 2026-06-11 | 🏷️ 版本: v4.0
 
 ---
 
@@ -8,9 +8,9 @@
 
 | 文件 | 说明 |
 |------|------|
-| `index.html` | 首页 — 游戏选择页面 |
+| `index.html` | 首页 — 游戏选择页面（3 个游戏卡片） |
 | `setup.html` | 初始设置页面 |
-| `bot-server.js` | 双 Bot 本地服务（Bot1 + Bot2，polling 模式） |
+| `bot-server.js` | 三 Bot 本地服务（Bot1 + Bot2 + Bot3，polling 模式） |
 | `package.json` | 项目依赖和脚本 |
 | `vercel.json` | Vercel 部署配置 |
 | `README.md` | 项目说明 |
@@ -69,8 +69,9 @@
 |------|------|---------|
 | `webhook.js` | Bot1 Webhook 处理 | Neon 2048 (`8979472034`) |
 | `webhook-greedysnakes.js` | Bot2 Webhook 处理 | Particle Blast (`8896711967`) |
+| `webhook-findcow.js` | Bot3 Webhook 处理 | Find the Bull (`8888888888`) |
 
-两个 Webhook 都使用 `sendMessage` + `InlineKeyboardButton web_app` 模式发送游戏入口。
+三个 Webhook 都使用 `sendMessage` + `InlineKeyboardButton web_app` 模式发送游戏入口。
 
 ---
 
@@ -94,6 +95,14 @@
 | 修改样式 | `games/*/styles.css` | CSS 文件 |
 
 ---
+
+## v4.0 变更记录
+
+- 新增 `games/findcow/` 目录（找牛牛游戏）
+- 新增 `api/webhook-findcow.js`（Bot3 webhook）
+- `bot-server.js` 扩展为三 Bot
+- `scripts/set-webhook.js` 追加 Bot3
+- `index.html` 首页追加找牛牛游戏卡片
 
 ## v3.0 变更记录
 

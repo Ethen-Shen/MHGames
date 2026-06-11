@@ -537,6 +537,24 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="game-card">
+                    <div class="game-image">
+                        <span class="game-icon">🐂</span>
+                    </div>
+                    <div class="game-info">
+                        <h3 class="game-title" id="game3-title">Find the Bull · 找牛牛</h3>
+                        <p class="game-description" id="game3-desc">在限定时间内从场景中找出所有牛！30+ 关卡 + 道具 + 签到 + 商店。</p>
+                        <div class="game-tags">
+                            <span class="tag" id="tag3-1">找物</span>
+                            <span class="tag" id="tag3-2">眼力</span>
+                            <span class="tag" id="tag3-3">休闲</span>
+                        </div>
+                        <button class="btn-play" onclick="openGame('findcow')" id="game3-btn">
+                            <span id="play-text3">开始游戏</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
@@ -566,8 +584,14 @@
                 'tag2-1': '消除',
                 'tag2-2': '街机',
                 'tag2-3': '挑战',
+                'game3-title': 'Find the Bull · 找牛牛',
+                'game3-desc': '在限定时间内从场景中找出所有牛！30+ 关卡 + 道具 + 签到 + 商店。',
+                'tag3-1': '找物',
+                'tag3-2': '眼力',
+                'tag3-3': '休闲',
                 'play-text': '开始游戏',
                 'play-text2': '开始游戏',
+                'play-text3': '开始游戏',
                 'footer-text': '© 2024 <a href="#" class="footer-link">墨焕科技 MH Games</a>. All rights reserved.'
             },
             'en': {
@@ -588,8 +612,14 @@
                 'tag2-1': 'Match 3',
                 'tag2-2': 'Arcade',
                 'tag2-3': 'Challenge',
+                'game3-title': 'Find the Bull · 找牛牛',
+                'game3-desc': 'Find all the hidden cows in the scene before time runs out! 30+ levels, props, daily check-in, and a shop.',
+                'tag3-1': 'Hidden Object',
+                'tag3-2': 'Spotting',
+                'tag3-3': 'Casual',
                 'play-text': 'Play Now',
                 'play-text2': 'Play Now',
+                'play-text3': 'Play Now',
                 'footer-text': '© 2024 <a href="#" class="footer-link">MH Games</a>. All rights reserved.'
             }
         };
@@ -643,7 +673,8 @@
         function openGame(game) {
             const urls = {
                 '2048': 'games/2048/index.html',
-                'particle': 'games/particle/index.html'
+                'particle': 'games/particle/index.html',
+                'findcow': 'games/findcow/index.html'
             };
             window.open(urls[game], '_blank');
         }

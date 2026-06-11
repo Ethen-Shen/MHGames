@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Find the Cow</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+    <script>
+      try {
+        if (typeof Telegram !== "undefined" && Telegram.WebApp) {
+          Telegram.WebApp.ready();
+          Telegram.WebApp.expand();
+        }
+      } catch (e) {
+        console.log("Telegram WebApp not available");
+      }
+
+      window.adReward = null;
+      window.adInterstitial = null;
+
+      function initAdsGram() {
+        if (typeof window.Adsgram === "undefined") {
+          setTimeout(initAdsGram, 300);
+          return;
+        }
+        try {
+          window.adReward = window.Adsgram.init({ blockId: "31500" });
+          window.adInterstitial = window.Adsgram.init({ blockId: "int-31501" });
+        } catch (e) {
+          console.log("[AdsGram] init failed:", e);
+        }
+      }
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initAdsGram);
+      else initAdsGram();
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="loading-page" class="loading-page">
+      <div class="loading-content">
+        <div class="logo">MHGames</div>
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+      </div>
+    </div>
+
+    <div id="home-page" class="page home-page" style="display: none">
+      <h1 class="game-title" data-i18n="title">Find the Cow</h1>
+      <div class="game-subtitle" data-i18n="titleEn">Logic Cow Puzzle</div>
+      <div class="rules-card" data-i18n="rules"></div>
+      <div class="home-stats">
+        <span><span data-i18n="maxLevel"></span>: <b id="home-max-level">1</b></span>
+        <span>★ <b id="home-stars">0</b></span>
+      </div>
+      <div class="button-stack">
+        <button id="btn-play" class="cyborg-btn" data-i18n="play">PLAY</button>
+        <button id="btn-signin" class="cyborg-btn" data-i18n="signin">DAILY</button>
+        <button id="btn-shop" class="cyborg-btn" data-i18n="shop">SHOP</button>
+        <button id="btn-settings" class="cyborg-btn" data-i18n="settings">SETTINGS</button>
+        <button id="btn-add-home" class="cyborg-btn cyborg-btn-pink" data-i18n="addToHome">ADD TO HOME</button>
+      </div>
+    </div>
+
+    <div id="levels-page" class="page levels-page" style="display: none">
+      <h2 class="cyber-title" data-i18n="selectLevel">SELECT LEVEL</h2>
+      <div id="levels-grid" class="levels-grid"></div>
+      <button id="btn-levels-back" class="cyborg-btn-sm wide" data-i18n="back">BACK</button>
+    </div>
+
+    <div id="game-page" class="page game-page" style="display: none">
+      <div class="topbar">
+        <button id="btn-pause" class="pause-btn" type="button">II</button>
+        <div class="level-text"><span data-i18n="levelLabel">LEVEL</span> <span id="game-level-num">1</span></div>
+        <div class="time-text" id="game-time">0:00</div>
+      </div>
+      <div class="game-stats">
+        <span><span data-i18n="moves">MOVES</span>: <b id="move-count">0</b></span>
+        <span><span data-i18n="findCount">COWS</span>: <b id="cow-count">0 / 5</b></span>
+      </div>
+      <div class="mode-row">
+        <button id="mode-cow" class="mode-btn active" type="button"><span>🐮</span><b data-i18n="modeCow">COW</b></button>
+        <button id="mode-mark" class="mode-btn" type="button"><span>×</span><b data-i18n="modeMark">MARK</b></button>
+      </div>
+      <div class="board-wrap">
+        <div id="puzzle-board" class="puzzle-board" aria-label="Find the Cow board"></div>
+      </div>
+      <div id="board-status" class="board-status" data-i18n="rules"></div>
+      <div class="props-bar">
+        <button class="prop-btn" data-prop="magnifier" type="button">
+          <span class="icon">?</span><span class="prop-label" data-i18n="hint">HINT</span><span class="count" id="count-magnifier">0</span>
+        </button>
+        <button class="prop-btn" data-prop="addTime" type="button">
+          <span class="icon">✓</span><span class="prop-label" data-i18n="check">CHECK</span><span class="count" id="count-addTime">∞</span>
+        </button>
+        <button class="prop-btn" data-prop="bomb" type="button">
+          <span class="icon">⌫</span><span class="prop-label" data-i18n="clearWrong">CLEAN</span><span class="count" id="count-bomb">0</span>
+        </button>
+        <button class="prop-btn" data-prop="freeze" type="button">
+          <span class="icon">↶</span><span class="prop-label" data-i18n="undo">UNDO</span><span class="count" id="count-freeze">∞</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="pause-overlay" class="pause-overlay" style="display: none">
+      <h2 class="cyber-title" data-i18n="pause">PAUSE</h2>
+      <div class="button-stack">
+        <button id="btn-continue" class="cyborg-btn" data-i18n="continue">CONTINUE</button>
+        <button id="btn-restart" class="cyborg-btn cyborg-btn-pink" data-i18n="restart">RESTART</button>
+        <button id="btn-pause-home" class="cyborg-btn cyborg-btn-sm" data-i18n="home">HOME</button>
+      </div>
+    </div>
+
+    <div id="result-page" class="page result-page" style="display: none">
+      <h2 class="cyber-title" id="result-title" data-i18n="victory">CLEARED!</h2>
+      <div class="result-stats" id="result-find"></div>
+      <div class="result-stats reward" id="result-reward"></div>
+      <div id="result-revive" class="revive-section" style="display: none">
+        <button id="btn-revive" class="cyborg-btn cyborg-btn-pink" data-i18n="revive">REVIVE</button>
+      </div>
+      <div class="result-buttons">
+        <button id="btn-next" class="cyborg-btn cyborg-btn-green" data-i18n="next" style="display: none">NEXT</button>
+        <button id="btn-again" class="cyborg-btn" data-i18n="again">PLAY AGAIN</button>
+        <button id="btn-result-home" class="cyborg-btn cyborg-btn-sm" data-i18n="home">HOME</button>
+      </div>
+    </div>
+
+    <div id="shop-page" class="page shop-page" style="display: none">
+      <h2 class="cyber-title" data-i18n="shop">SHOP</h2>
+      <div class="shop-list" id="shop-list"></div>
+      <button id="btn-shop-back" class="cyborg-btn-sm wide" data-i18n="back">BACK</button>
+    </div>
+
+    <div id="signin-page" class="page signin-page" style="display: none">
+      <h2 class="cyber-title" data-i18n="signin">DAILY</h2>
+      <div class="signin-streak">
+        <span data-i18n="streak">STREAK</span>: <span id="signin-streak-num">0</span><span data-i18n="days">d</span>
+      </div>
+      <div id="signin-grid" class="signin-grid"></div>
+      <button id="btn-checkin" class="cyborg-btn cyborg-btn-green wide" data-i18n="checkin">CHECK IN</button>
+      <button id="btn-signin-back" class="cyborg-btn-sm wide" data-i18n="back">BACK</button>
+    </div>
+
+    <div id="settings-page" class="page settings-page" style="display: none">
+      <h2 class="cyber-title" data-i18n="settings">SETTINGS</h2>
+      <div class="settings-section">
+        <h3 data-i18n="language">Language</h3>
+        <div class="lang-row">
+          <button id="lang-zh" class="cyborg-btn-sm">中文</button>
+          <button id="lang-en" class="cyborg-btn-sm">English</button>
+        </div>
+      </div>
+      <div class="settings-section about-box">
+        <div class="game-version" data-i18n="title">Find the Cow</div>
+        <div data-i18n="aboutText">MHGames · v2.0</div>
+      </div>
+      <button id="btn-settings-back" class="cyborg-btn-sm wide" data-i18n="back">BACK</button>
+    </div>
+
+    <div class="age-rating-box-fixed">
+      <div class="age-rating-inner">
+        <div class="age-rating-number">8+</div>
+        <div class="age-rating-label">CADPA</div>
+      </div>
+      <div class="age-rating-footer">Age Rating Prompt</div>
+    </div>
+
+    <script src="lang.js"></script>
+    <script src="levels.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
