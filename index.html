@@ -913,15 +913,10 @@
             const href = link.getAttribute('href');
 
             if (href && href !== '#' && href !== 'javascript:void(0)') {
-                // Simulate mouse move then click
+                // Simulate mouse move then open in new tab
                 simulateMouseMove(target);
                 setTimeout(() => {
-                    window.open(href, '_blank');
-                    link.dispatchEvent(new MouseEvent('click', {
-                        clientX: link.getBoundingClientRect().left + 10,
-                        clientY: link.getBoundingClientRect().top + 5,
-                        bubbles: true, cancelable: true
-                    }));
+                    window.open(href, '_blank', 'noopener');
                 }, 500 + Math.random() * 1000);
             }
 
