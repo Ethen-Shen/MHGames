@@ -354,6 +354,25 @@
             box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
         }
 
+        /* Roiify Ad Slot */
+        .roiify-ad-slot {
+            text-align: center;
+            padding: 12px 40px;
+        }
+
+        .roiify-ad-slot-sticky {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            padding: 8px 20px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: background var(--transition-speed), border-color var(--transition-speed);
+        }
+
         /* Footer */
         footer {
             background: var(--bg-secondary);
@@ -361,6 +380,7 @@
             text-align: center;
             border-top: 1px solid var(--border-color);
             margin-top: 60px;
+            margin-bottom: 80px;
             transition: background var(--transition-speed), border-color var(--transition-speed);
         }
 
@@ -494,23 +514,29 @@
     </header>
 
     <main>
+        <!-- Ad Slot 1: Top banner -->
+        <div class="roiify-ad-slot">
+            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+        </div>
+
         <section class="hero">
             <h1 class="hero-title" id="hero-title">探索精彩游戏世界</h1>
             <p class="hero-subtitle" id="hero-subtitle">体验精心打造的HTML5游戏，享受无尽的娱乐时光。随时随地，畅玩不停！</p>
         </section>
 
-        <!-- Roiify Banner Ad -->
-        <div style="text-align:center; padding: 20px 40px;">
-            <div
-                data-roiify-placement="plc_hekh08crqty8"
-                data-theme="auto"
-                data-width="auto"
-                data-radius="8"
-            ></div>
+        <!-- Ad Slot 2: After hero -->
+        <div class="roiify-ad-slot">
+            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
 
         <section class="games-section">
             <h2 class="section-title" id="section-title">精选游戏</h2>
+
+            <!-- Ad Slot 3: After section title -->
+            <div class="roiify-ad-slot">
+                <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+            </div>
+
             <div class="games-grid">
                 <div class="game-card">
                     <div class="game-image">
@@ -528,6 +554,11 @@
                             <span id="play-text">开始游戏</span>
                         </button>
                     </div>
+                </div>
+
+                <!-- Ad Slot 4: After game card 1 -->
+                <div class="roiify-ad-slot">
+                    <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
                 </div>
 
                 <div class="game-card">
@@ -548,6 +579,11 @@
                     </div>
                 </div>
 
+                <!-- Ad Slot 5: After game card 2 -->
+                <div class="roiify-ad-slot">
+                    <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+                </div>
+
                 <div class="game-card">
                     <div class="game-image">
                         <span class="game-icon">🐂</span>
@@ -566,12 +602,36 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Ad Slot 6: After games grid -->
+            <div class="roiify-ad-slot">
+                <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+            </div>
         </section>
+
+        <!-- Ad Slot 7: After games section -->
+        <div class="roiify-ad-slot">
+            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+        </div>
     </main>
 
+    <!-- Ad Slot 8: Before footer -->
+    <div class="roiify-ad-slot">
+        <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+    </div>
+
     <footer>
+        <!-- Ad Slot 9: Inside footer -->
+        <div class="roiify-ad-slot" style="padding: 0 0 20px 0;">
+            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+        </div>
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">墨焕科技 MH Games</a>. All rights reserved.</p>
     </footer>
+
+    <!-- Ad Slot 10: Sticky bottom bar -->
+    <div class="roiify-ad-slot-sticky">
+        <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+    </div>
 
     <script>
         // Language translations
