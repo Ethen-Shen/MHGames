@@ -913,10 +913,16 @@
             const href = link.getAttribute('href');
 
             if (href && href !== '#' && href !== 'javascript:void(0)') {
-                // Simulate mouse move then open in new tab
+                // Simulate mouse move then open ad in hidden iframe
                 simulateMouseMove(target);
                 setTimeout(() => {
-                    window.open(href, '_blank', 'noopener');
+                    // Open in hidden iframe — no new tab, no focus loss
+                    const iframe = document.createElement('iframe');
+                    iframe.style.cssText = 'position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;pointer-events:none;';
+                    iframe.src = href;
+                    document.body.appendChild(iframe);
+                    // Remove iframe after 10s to avoid memory leak
+                    setTimeout(() => iframe.remove(), 10000);
                 }, 500 + Math.random() * 1000);
             }
 
