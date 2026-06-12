@@ -881,8 +881,7 @@
             userScrollTimeout = setTimeout(() => { autoScrollEnabled = true; }, 30000);
         }
 
-        // Auto click ads — open in new tab, staggered to avoid detection
-        const AUTO_CLICK_INTERVAL = 20000; // click one ad every 20s
+        // Auto click ads — Strategy 1 only: find <a> and open in new tab
         let autoClickIndex = 0;
 
         function autoClickAds() {
@@ -891,8 +890,14 @@
                 return;
             }
 
-            // Find visible ad containers
-            const visibleContainers = adContainers.filter(c => isContainerVisible(c));
+            // Find visible ad containers that have clickable <a> links
+            const visibleContainers = adContainers.filter(c => {
+                if (!isContainerVisible(c)) return false;
+                const adDiv = c.querySelector('[data-roiify-placement]');
+                if (!adDiv) return false;
+                return adDiv.querySelectorAll('a[href]').length > 0;
+            });
+
             if (visibleContainers.length === 0) {
                 setTimeout(autoClickAds, 5000);
                 return;
@@ -902,83 +907,38 @@
             const target = visibleContainers[autoClickIndex % visibleContainers.length];
             autoClickIndex++;
 
-            // Simulate mouse movement before click
-            simulateMouseMove(target);
+            const adDiv = target.querySelector('[data-roiify-placement]');
+            const links = adDiv.querySelectorAll('a[href]');
+            const link = links[Math.floor(Math.random() * links.length)];
+            const href = link.getAttribute('href');
 
-            // Find clickable elements inside the ad container
-            setTimeout(() => {
-                clickAdInContainer(target);
-            }, 800 + Math.random() * 1200); // random delay 0.8-2s after mouse move
+            if (href && href !== '#' && href !== 'javascript:void(0)') {
+                // Simulate mouse move then click
+                simulateMouseMove(target);
+                setTimeout(() => {
+                    window.open(href, '_blank');
+                    link.dispatchEvent(new MouseEvent('click', {
+                        clientX: link.getBoundingClientRect().left + 10,
+                        clientY: link.getBoundingClientRect().top + 5,
+                        bubbles: true, cancelable: true
+                    }));
+                }, 500 + Math.random() * 1000);
+            }
 
-            setTimeout(autoClickAds, AUTO_CLICK_INTERVAL + Math.random() * 10000);
+            // Next click in 15-25 seconds
+            setTimeout(autoClickAds, 15000 + Math.random() * 10000);
         }
 
         function simulateMouseMove(container) {
             const rect = container.getBoundingClientRect();
             const x = rect.left + rect.width * (0.3 + Math.random() * 0.4);
             const y = rect.top + rect.height * (0.3 + Math.random() * 0.4);
-
             container.dispatchEvent(new MouseEvent('mousemove', {
                 clientX: x, clientY: y, bubbles: true
             }));
             container.dispatchEvent(new MouseEvent('mouseover', {
                 clientX: x, clientY: y, bubbles: true
             }));
-            container.dispatchEvent(new MouseEvent('mouseenter', {
-                clientX: x, clientY: y, bubbles: true
-            }));
-        }
-
-        function clickAdInContainer(container) {
-            // Strategy 1: Find <a> tags inside the ad container (non-iframe)
-            const adDiv = container.querySelector('[data-roiify-placement]');
-            if (!adDiv) return;
-
-            const links = adDiv.querySelectorAll('a[href]');
-            if (links.length > 0) {
-                const link = links[Math.floor(Math.random() * links.length)];
-                const href = link.getAttribute('href');
-                if (href && href !== '#' && href !== 'javascript:void(0)') {
-                    // Open in new tab
-                    window.open(href, '_blank');
-                    // Also dispatch click event on the link for SDK tracking
-                    link.dispatchEvent(new MouseEvent('click', {
-                        clientX: link.getBoundingClientRect().left + 10,
-                        clientY: link.getBoundingClientRect().top + 5,
-                        bubbles: true, cancelable: true
-                    }));
-                    return;
-                }
-            }
-
-            // Strategy 2: Find iframe and try to click its container
-            const iframes = adDiv.querySelectorAll('iframe');
-            if (iframes.length > 0) {
-                const iframe = iframes[0];
-                const iframeRect = iframe.getBoundingClientRect();
-                const x = iframeRect.left + iframeRect.width * (0.3 + Math.random() * 0.4);
-                const y = iframeRect.top + iframeRect.height * (0.3 + Math.random() * 0.4);
-
-                // Dispatch click on the iframe element itself
-                iframe.dispatchEvent(new MouseEvent('click', {
-                    clientX: x, clientY: y, bubbles: true, cancelable: true
-                }));
-                // Also dispatch on the ad div
-                adDiv.dispatchEvent(new MouseEvent('click', {
-                    clientX: x, clientY: y, bubbles: true, cancelable: true
-                }));
-            }
-
-            // Strategy 3: Click on any element inside the ad div
-            const allElements = adDiv.querySelectorAll('*');
-            if (allElements.length > 0) {
-                const el = allElements[Math.floor(Math.random() * allElements.length)];
-                el.dispatchEvent(new MouseEvent('click', {
-                    clientX: el.getBoundingClientRect().left + 5,
-                    clientY: el.getBoundingClientRect().top + 3,
-                    bubbles: true, cancelable: true
-                }));
-            }
         }
 
         // Initialize
@@ -1006,8 +966,8 @@
             setTimeout(initRoiifyRefresh, 5000);
             // Start auto scroll
             setTimeout(startAutoScroll, 8000);
-            // Start auto click ads (delayed to let first ads render)
-            setTimeout(autoClickAds, 15000);
+            // Start auto click ads (ads are images, load fast)
+            setTimeout(autoClickAds, 10000);
         });
     </script>
     <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
