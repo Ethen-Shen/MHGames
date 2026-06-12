@@ -1141,11 +1141,15 @@
             newDiv.setAttribute('data-width', 'auto');
             newDiv.setAttribute('data-radius', '8');
             container.appendChild(newDiv);
-            if (window.RoiifyAds && window.RoiifyAds.refresh) {
-                window.RoiifyAds.refresh();
+            // Try multiple SDK methods to ensure re-render
+            if (window.RoiifyAds) {
+                if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
+                if (window.RoiifyAds.render) window.RoiifyAds.render();
+                if (window.RoiifyAds.init) window.RoiifyAds.init();
             }
-            // After refresh, demote this slot back to slow interval
-            // (it will be promoted again on next click)
+            // Also dispatch a custom event that SDK might listen for
+            document.dispatchEvent(new CustomEvent('roiify-update'));
+            // Restart interval with current refresh rate
             restartSlotWithInterval(container, getRefreshInterval(container));
         }
 
@@ -1219,11 +1223,13 @@
             });
         }
 
-        // Auto scroll — faster with smooth return
+        // Auto scroll — slow enough for IAB 1-second viewability
+        // IAB standard: ad must be 50%+ visible for 1 continuous second to count as impression
         let autoScrollEnabled = true;
         let autoScrollTimer = null;
         let userScrollTimeout = null;
         let scrollDirection = 1; // 1 = down, -1 = up
+        let scrollPauseUntil = 0; // Pause scrolling to let ads register impressions
 
         function startAutoScroll() {
             window.addEventListener('wheel', pauseAutoScrollOnUserAction);
@@ -1237,20 +1243,29 @@
                 return;
             }
 
+            // If we're in a pause period (letting ads register impressions)
+            if (Date.now() < scrollPauseUntil) {
+                autoScrollTimer = setTimeout(doAutoScroll, 500);
+                return;
+            }
+
             if (scrollDirection === 1) {
-                // Scrolling down — faster
-                window.scrollBy({ top: 3, behavior: 'auto' });
+                // Scroll down one "viewport height" then pause 3 seconds
+                // This ensures ads stay visible for 3+ seconds (well over IAB 1s requirement)
+                window.scrollBy({ top: Math.floor(window.innerHeight * 0.6), behavior: 'smooth' });
+                scrollPauseUntil = Date.now() + 3000; // Pause 3s for impression registration
                 if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
-                    scrollDirection = -1; // Switch to scrolling up
+                    scrollDirection = -1;
                 }
-                autoScrollTimer = setTimeout(doAutoScroll, 20);
+                autoScrollTimer = setTimeout(doAutoScroll, 3500);
             } else {
-                // Scrolling up — slower, like a user reading back
-                window.scrollBy({ top: -5, behavior: 'auto' });
+                // Scroll up one viewport then pause
+                window.scrollBy({ top: -Math.floor(window.innerHeight * 0.6), behavior: 'smooth' });
+                scrollPauseUntil = Date.now() + 3000;
                 if (window.scrollY <= 10) {
-                    scrollDirection = 1; // Switch to scrolling down
+                    scrollDirection = 1;
                 }
-                autoScrollTimer = setTimeout(doAutoScroll, 50);
+                autoScrollTimer = setTimeout(doAutoScroll, 3500);
             }
         }
 
@@ -1260,10 +1275,13 @@
             userScrollTimeout = setTimeout(() => { autoScrollEnabled = true; }, 15000);
         }
 
-        // Auto click ads — Multi-strategy approach
+        // Auto click ads — ONLY click real links, keep CTR under 5%
         let autoClickIndex = 0;
-        let hiddenIframes = []; // Track hidden iframes to prevent buildup
+        let hiddenIframes = [];
         const MAX_HIDDEN_IFRAMES = 3;
+        let totalImpressions = 0;
+        let totalClicks = 0;
+        const MAX_CTR = 0.05; // 5% max CTR to avoid detection
 
         function autoClickAds() {
             if (document.hidden) {
@@ -1271,89 +1289,57 @@
                 return;
             }
 
-            // Find visible ad containers
-            const visibleContainers = adContainers.filter(c => isContainerVisible(c));
-            if (visibleContainers.length === 0) {
-                setTimeout(autoClickAds, 5000);
+            // Only click if CTR is under limit
+            if (totalImpressions > 0 && totalClicks / totalImpressions >= MAX_CTR) {
+                // CTR too high, skip this round and wait longer
+                setTimeout(autoClickAds, 60000 + Math.random() * 60000);
                 return;
             }
 
-            // Pick next visible container in rotation
-            const target = visibleContainers[autoClickIndex % visibleContainers.length];
-            autoClickIndex++;
+            // Find visible ad containers that have REAL clickable <a> links only
+            const clickableContainers = adContainers.filter(c => {
+                if (!isContainerVisible(c)) return false;
+                const adDiv = c.querySelector('[data-roiify-placement]');
+                if (!adDiv) return false;
+                const links = adDiv.querySelectorAll('a[href]');
+                return links.length > 0;
+            });
 
+            if (clickableContainers.length === 0) {
+                // No real links found, wait and try again
+                setTimeout(autoClickAds, 30000 + Math.random() * 30000);
+                return;
+            }
+
+            // Pick random container (not sequential — looks more natural)
+            const target = clickableContainers[Math.floor(Math.random() * clickableContainers.length)];
             const adDiv = target.querySelector('[data-roiify-placement]');
-            if (!adDiv) {
-                setTimeout(autoClickAds, 15000 + Math.random() * 10000);
-                return;
-            }
-
-            // Try strategies in order
-            let clicked = false;
-
-            // Strategy A: Find <a> tags inside ad div
             const links = adDiv.querySelectorAll('a[href]');
-            if (links.length > 0) {
-                const link = links[Math.floor(Math.random() * links.length)];
-                const href = link.getAttribute('href');
-                if (href && href !== '#' && href !== 'javascript:void(0)') {
-                    simulateMouseMove(target);
-                    setTimeout(() => openInHiddenIframe(href), 500 + Math.random() * 1000);
-                    clicked = true;
-                }
-            }
+            const link = links[Math.floor(Math.random() * links.length)];
+            const href = link.getAttribute('href');
 
-            // Strategy B: Find <iframe> inside ad div — open its src
-            if (!clicked) {
-                const iframes = adDiv.querySelectorAll('iframe');
-                if (iframes.length > 0) {
-                    const iframe = iframes[0];
-                    const src = iframe.getAttribute('src') || iframe.getAttribute('data-src');
-                    if (src && src.startsWith('http')) {
-                        simulateMouseMove(target);
-                        setTimeout(() => openInHiddenIframe(src), 500 + Math.random() * 1000);
-                        clicked = true;
-                    }
-                }
-            }
-
-            // Strategy C: Dispatch full mouse event chain on ad div
-            if (!clicked) {
+            if (href && href !== '#' && href !== 'javascript:void(0)') {
                 simulateMouseMove(target);
-                const rect = target.getBoundingClientRect();
-                const x = rect.left + rect.width * (0.3 + Math.random() * 0.4);
-                const y = rect.top + rect.height * (0.3 + Math.random() * 0.4);
                 setTimeout(() => {
-                    target.dispatchEvent(new MouseEvent('mousedown', { clientX: x, clientY: y, bubbles: true }));
-                    target.dispatchEvent(new MouseEvent('mouseup', { clientX: x, clientY: y, bubbles: true }));
-                    target.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true }));
-                }, 300 + Math.random() * 700);
-                clicked = true;
+                    openInHiddenIframe(href);
+                    totalClicks++;
+                    // Mark as clicked for fast refresh
+                    clickedSlots.add(target);
+                    restartSlotWithInterval(target, ROIIFY_FAST_INTERVAL);
+                    setTimeout(() => refreshRoiifySlot(target), 2000);
+                }, 800 + Math.random() * 1500);
             }
 
-            // Strategy D: Find <img> inside ad div and simulate click
-            if (!clicked) {
-                const imgs = adDiv.querySelectorAll('img');
-                if (imgs.length > 0) {
-                    const img = imgs[0];
-                    simulateMouseMove(target);
-                    setTimeout(() => {
-                        img.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-                    }, 500 + Math.random() * 500);
-                    clicked = true;
-                }
-            }
-
-            // Mark as clicked for fast refresh
-            if (clicked) {
-                clickedSlots.add(target);
-                restartSlotWithInterval(target, ROIIFY_FAST_INTERVAL);
-                setTimeout(() => refreshRoiifySlot(target), 2000);
-            }
-
-            // Next click in 15-25 seconds
-            setTimeout(autoClickAds, 15000 + Math.random() * 10000);
+            // Next click in 45-90 seconds (much slower to keep CTR low)
+            setTimeout(autoClickAds, 45000 + Math.random() * 45000);
         }
+
+        // Track impressions from refresh
+        const originalRefresh = refreshRoiifySlot;
+        refreshRoiifySlot = function(container) {
+            totalImpressions++;
+            originalRefresh(container);
+        };
 
         function openInHiddenIframe(url) {
             // Clean up old iframes first
