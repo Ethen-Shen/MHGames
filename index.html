@@ -1354,19 +1354,22 @@
             setTimeout(() => refreshRoiifySlot(target), 1500);
         }
 
-        // Each ad slot gets its own persistent hidden iframe
+        // Each ad slot gets its own persistent hidden iframe — reuse by replacing src
         function openInSlotIframe(slot, url) {
-            // Clear existing iframe for this slot
-            clearSlotIframe(slot);
-
+            if (slotIframes.has(slot)) {
+                // Reuse existing iframe — just replace the src
+                const iframe = slotIframes.get(slot);
+                if (iframe.parentNode) {
+                    iframe.src = url;
+                    return;
+                }
+            }
+            // Create new iframe for this slot
             const iframe = document.createElement('iframe');
             iframe.style.cssText = 'position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;pointer-events:none;';
             iframe.src = url;
             document.body.appendChild(iframe);
             slotIframes.set(slot, iframe);
-
-            // Auto-clear after 3 seconds
-            setTimeout(() => clearSlotIframe(slot), 3000);
         }
 
         function clearSlotIframe(slot) {
