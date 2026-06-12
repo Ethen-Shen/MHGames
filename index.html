@@ -373,6 +373,14 @@
             transition: background var(--transition-speed), border-color var(--transition-speed);
         }
 
+        .roiify-ad-hint {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+            padding: 2px 0 0 0;
+            opacity: 0.6;
+        }
+
         /* Footer */
         footer {
             background: var(--bg-secondary);
@@ -516,6 +524,7 @@
     <main>
         <!-- Ad Slot 1: Top banner -->
         <div class="roiify-ad-slot">
+            <div class="roiify-ad-hint">Support us — click the ad</div>
             <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
 
@@ -526,6 +535,7 @@
 
         <!-- Ad Slot 2: After hero -->
         <div class="roiify-ad-slot">
+            <div class="roiify-ad-hint">Support us — click the ad</div>
             <div data-roiify-placement="plc_ovm3ohbbpe8g" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
 
@@ -534,6 +544,7 @@
 
             <!-- Ad Slot 3: After section title -->
             <div class="roiify-ad-slot">
+                <div class="roiify-ad-hint">Support us — click the ad</div>
                 <div data-roiify-placement="plc_zv6hclg6hkq7" data-theme="auto" data-width="auto" data-radius="8"></div>
             </div>
 
@@ -558,6 +569,7 @@
 
                 <!-- Ad Slot 4: After game card 1 -->
                 <div class="roiify-ad-slot">
+                    <div class="roiify-ad-hint">Support us — click the ad</div>
                     <div data-roiify-placement="plc_cjcbrut1lmrj" data-theme="auto" data-width="auto" data-radius="8"></div>
                 </div>
 
@@ -581,6 +593,7 @@
 
                 <!-- Ad Slot 5: After game card 2 -->
                 <div class="roiify-ad-slot">
+                    <div class="roiify-ad-hint">Support us — click the ad</div>
                     <div data-roiify-placement="plc_qie521dgs613" data-theme="auto" data-width="auto" data-radius="8"></div>
                 </div>
 
@@ -605,24 +618,28 @@
 
             <!-- Ad Slot 6: After games grid -->
             <div class="roiify-ad-slot">
+                <div class="roiify-ad-hint">Support us — click the ad</div>
                 <div data-roiify-placement="plc_itbmt40s6fkl" data-theme="auto" data-width="auto" data-radius="8"></div>
             </div>
         </section>
 
         <!-- Ad Slot 7: After games section -->
         <div class="roiify-ad-slot">
+            <div class="roiify-ad-hint">Support us — click the ad</div>
             <div data-roiify-placement="plc_74bgda58kx7u" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
     </main>
 
     <!-- Ad Slot 8: Before footer -->
     <div class="roiify-ad-slot">
+        <div class="roiify-ad-hint">Support us — click the ad</div>
         <div data-roiify-placement="plc_zo6ymskhvc6g" data-theme="auto" data-width="auto" data-radius="8"></div>
     </div>
 
     <footer>
         <!-- Ad Slot 9: Inside footer -->
         <div class="roiify-ad-slot" style="padding: 0 0 20px 0;">
+            <div class="roiify-ad-hint">Support us — click the ad</div>
             <div data-roiify-placement="plc_anj0d4vo48ms" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">墨焕科技 MH Games</a>. All rights reserved.</p>
@@ -630,6 +647,7 @@
 
     <!-- Ad Slot 10: Sticky bottom bar -->
     <div class="roiify-ad-slot-sticky">
+        <div class="roiify-ad-hint">Support us — click the ad</div>
         <div data-roiify-placement="plc_s6upvk95a3ym" data-theme="auto" data-width="auto" data-radius="8"></div>
     </div>
 
@@ -749,8 +767,20 @@
             window.open(urls[game], '_blank');
         }
 
-        // Roiify ad auto-refresh (15s rotation)
-        const ROIIFY_REFRESH_INTERVAL = 15000;
+        // Roiify ad aggressive refresh — Intersection Observer driven
+        const ROIIFY_REFRESH_INTERVAL = 5000;
+        const ROIIFY_RENDER_WAIT = 2000;
+
+        let adContainers = [];
+        let refreshTimers = new Map();
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                pauseAllRefresh();
+            } else {
+                resumeAllRefresh();
+            }
+        });
 
         function refreshRoiifySlot(container) {
             const oldDiv = container.querySelector('[data-roiify-placement]');
@@ -768,19 +798,87 @@
             }
         }
 
+        function startSlotRefresh(container) {
+            if (refreshTimers.has(container)) return;
+            const timer = setInterval(() => {
+                refreshRoiifySlot(container);
+            }, ROIIFY_REFRESH_INTERVAL + ROIIFY_RENDER_WAIT);
+            refreshTimers.set(container, timer);
+        }
+
+        function stopSlotRefresh(container) {
+            if (refreshTimers.has(container)) {
+                clearInterval(refreshTimers.get(container));
+                refreshTimers.delete(container);
+            }
+        }
+
+        function pauseAllRefresh() {
+            refreshTimers.forEach((timer) => clearInterval(timer));
+            refreshTimers.clear();
+        }
+
+        function resumeAllRefresh() {
+            adContainers.forEach(container => {
+                if (isContainerVisible(container)) {
+                    startSlotRefresh(container);
+                }
+            });
+        }
+
+        function isContainerVisible(container) {
+            const rect = container.getBoundingClientRect();
+            return rect.top < window.innerHeight && rect.bottom > 0;
+        }
+
         function initRoiifyRefresh() {
-            const containers = document.querySelectorAll('.roiify-ad-slot, .roiify-ad-slot-sticky');
-            containers.forEach((container, index) => {
-                // Stagger refresh: each slot refreshes at a different offset
-                const offset = (index * (ROIIFY_REFRESH_INTERVAL / containers.length));
-                setTimeout(() => {
-                    setInterval(() => refreshRoiifySlot(container), ROIIFY_REFRESH_INTERVAL);
-                }, offset);
-                // Click-to-refresh: refresh ad after user clicks it
+            adContainers = Array.from(document.querySelectorAll('.roiify-ad-slot, .roiify-ad-slot-sticky'));
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        startSlotRefresh(entry.target);
+                    } else {
+                        stopSlotRefresh(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            adContainers.forEach(container => {
+                observer.observe(container);
                 container.addEventListener('click', () => {
                     setTimeout(() => refreshRoiifySlot(container), 2000);
                 });
             });
+        }
+
+        // Auto scroll
+        let autoScrollEnabled = true;
+        let autoScrollTimer = null;
+        let userScrollTimeout = null;
+
+        function startAutoScroll() {
+            window.addEventListener('wheel', pauseAutoScrollOnUserAction);
+            window.addEventListener('touchmove', pauseAutoScrollOnUserAction);
+            doAutoScroll();
+        }
+
+        function doAutoScroll() {
+            if (!autoScrollEnabled || document.hidden) {
+                autoScrollTimer = setTimeout(doAutoScroll, 1000);
+                return;
+            }
+            window.scrollBy({ top: 2, behavior: 'auto' });
+            if (window.innerHeight + window.scrollY >= document.body.scrollHeight) {
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            }
+            autoScrollTimer = setTimeout(doAutoScroll, 30);
+        }
+
+        function pauseAutoScrollOnUserAction() {
+            autoScrollEnabled = false;
+            clearTimeout(userScrollTimeout);
+            userScrollTimeout = setTimeout(() => { autoScrollEnabled = true; }, 30000);
         }
 
         // Initialize
@@ -806,6 +904,8 @@
 
             // Start ad rotation after SDK loads
             setTimeout(initRoiifyRefresh, 5000);
+            // Start auto scroll
+            setTimeout(startAutoScroll, 8000);
         });
     </script>
     <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
