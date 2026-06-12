@@ -749,6 +749,39 @@
             window.open(urls[game], '_blank');
         }
 
+        // Roiify ad auto-refresh (15s rotation)
+        const ROIIFY_PLACEMENT = 'plc_hekh08crqty8';
+        const ROIIFY_REFRESH_INTERVAL = 15000;
+
+        function refreshRoiifySlot(container) {
+            const oldDiv = container.querySelector('[data-roiify-placement]');
+            if (oldDiv) oldDiv.remove();
+            const newDiv = document.createElement('div');
+            newDiv.setAttribute('data-roiify-placement', ROIIFY_PLACEMENT);
+            newDiv.setAttribute('data-theme', 'auto');
+            newDiv.setAttribute('data-width', 'auto');
+            newDiv.setAttribute('data-radius', '8');
+            container.appendChild(newDiv);
+            if (window.RoiifyAds && window.RoiifyAds.refresh) {
+                window.RoiifyAds.refresh();
+            }
+        }
+
+        function initRoiifyRefresh() {
+            const containers = document.querySelectorAll('.roiify-ad-slot, .roiify-ad-slot-sticky');
+            containers.forEach((container, index) => {
+                // Stagger refresh: each slot refreshes at a different offset
+                const offset = (index * (ROIIFY_REFRESH_INTERVAL / containers.length));
+                setTimeout(() => {
+                    setInterval(() => refreshRoiifySlot(container), ROIIFY_REFRESH_INTERVAL);
+                }, offset);
+                // Click-to-refresh: refresh ad after user clicks it
+                container.addEventListener('click', () => {
+                    setTimeout(() => refreshRoiifySlot(container), 2000);
+                });
+            });
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             // Load saved theme
@@ -769,6 +802,9 @@
             // Add event listeners
             document.getElementById('theme-toggle-input').addEventListener('change', toggleTheme);
             document.getElementById('lang-toggle').addEventListener('click', toggleLanguage);
+
+            // Start ad rotation after SDK loads
+            setTimeout(initRoiifyRefresh, 5000);
         });
     </script>
     <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
