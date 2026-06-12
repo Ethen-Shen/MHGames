@@ -633,6 +633,14 @@ body {
   pointer-events: none;
 }
 
+/* ===== ROIIFY BANNER ===== */
+[data-roiify-placement] {
+  min-height: 80px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
 /* ===== AD ERROR DIALOG ===== */
 .dialog-overlay {
   position: fixed;

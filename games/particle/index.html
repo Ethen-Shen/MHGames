@@ -6,6 +6,7 @@
   <title>Particle Blast</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
   <script>
     try {
       if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
@@ -59,8 +60,10 @@
     <div class="button-container">
       <button id="start-game" class="cyborg-btn">START GAME</button>
       <button id="add-shortcut" class="cyborg-btn">ADD TO HOME</button>
+      <button id="watch-ad-reward" class="cyborg-btn">🎁 WATCH AD FOR REWARD</button>
       <button id="settings-button" class="cyborg-btn">SETTINGS</button>
     </div>
+    <div data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin-top:16px;"></div>
   </div>
   <div id="settings-page" class="settings-page" style="display: none;">
     <h2 class="cyber-title">SETTINGS</h2>
@@ -115,9 +118,13 @@
       <button id="revive-life-stars" class="cyborg-btn" style="width:220px;margin:8px;">
         ⭐ Life +1 (1 Star)
       </button>
+      <button id="watch-ad-reward-gameover" class="cyborg-btn" style="width:220px;margin:8px;">
+        🎁 WATCH AD FOR REWARD
+      </button>
     </div>
     <button id="play-again" class="cyborg-btn" style="width:220px;margin:8px;">PLAY AGAIN</button>
     <button id="back-to-home" class="cyborg-btn" style="width:220px;margin:8px;">HOME</button>
+    <div data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin-top:8px;"></div>
   </div>
   <div id="message" class="message"></div>
   <div id="level-up-overlay" class="level-up-overlay" style="display:none;">
@@ -132,5 +139,15 @@
   </div>
   <script src="lang.js"></script>
   <script src="game.js"></script>
+  <script>
+    window.addEventListener('load', function() {
+      if (typeof RoiifyAds !== 'undefined') {
+        RoiifyAds.show('plc_vdc3o09u4w1f', '[data-roiify-placement]', {
+          theme: 'dark',
+          format: 'banner'
+        });
+      }
+    });
+  </script>
 </body>
 </html>

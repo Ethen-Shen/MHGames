@@ -287,6 +287,32 @@ function showRewardedVideoAd(onReward) {
   showAd(onReward);
 }
 
+function watchAdForReward() {
+  if (!window.adReward) {
+    console.log("[AdsGram] adReward not available for reward button");
+    showMessage(getText('adError'));
+    return;
+  }
+
+  try {
+    window.adReward.show().then(function(result) {
+      console.log("[AdsGram] reward button result:", JSON.stringify(result));
+      if (result && result.done) {
+        addItem('timeExtend', 2);
+        showMessage(getText('adRewardSuccess'));
+      } else {
+        showMessage(getText('adNotCompleted'));
+      }
+    }).catch(function(result) {
+      console.log("[AdsGram] reward button error:", JSON.stringify(result));
+      showMessage(getText('adError'));
+    });
+  } catch (e) {
+    console.log("[AdsGram] reward button exception:", e);
+    showMessage(getText('adError'));
+  }
+}
+
 function showInterstitialAd(callback) {
   if (!window.adInterstitial) {
     console.log("[AdsGram] interstitial not available");
@@ -1030,6 +1056,22 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (e) {
         showMessage('Press menu button to add!');
       }
+    });
+  }
+
+  var watchAdRewardBtn = document.getElementById('watch-ad-reward');
+  if (watchAdRewardBtn) {
+    watchAdRewardBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      watchAdForReward();
+    });
+  }
+
+  var watchAdRewardGameoverBtn = document.getElementById('watch-ad-reward-gameover');
+  if (watchAdRewardGameoverBtn) {
+    watchAdRewardGameoverBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      watchAdForReward();
     });
   }
 });

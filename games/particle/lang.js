@@ -42,7 +42,9 @@ var languages = {
     shortcutNotAvailable: "Feature not supported",
     iosShortcutGuide: "Use Safari \"Share\" > \"Add to Home Screen\"",
     shortcutRewardSuccess: "🎁 +1 Time Item, +1 Life Item!",
-    entranceRewardSuccess: "🎁 +2 Time Items, +2 Life Items!"
+    entranceRewardSuccess: "🎁 +2 Time Items, +2 Life Items!",
+    watchAdReward: "WATCH AD FOR REWARD",
+    adRewardSuccess: "🎁 +2 Time Items!"
   }
 };
 
@@ -85,6 +87,8 @@ function updateLangUI() {
   el = document.getElementById('label-final-score'); if (el) el.textContent = getText('finalScore') + ':';
   el = document.getElementById('label-best-score'); if (el) el.textContent = getText('highScore') + ':';
   el = document.getElementById('age-rating-footer'); if (el) el.textContent = getText('ageRatingPrompt');
+  el = document.getElementById('watch-ad-reward'); if (el) el.textContent = '🎁 ' + getText('watchAdReward');
+  el = document.getElementById('watch-ad-reward-gameover'); if (el) el.textContent = '🎁 ' + getText('watchAdReward');
 }
 
 function initLanguage() {
