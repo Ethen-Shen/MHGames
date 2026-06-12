@@ -526,7 +526,7 @@
 
         <!-- Ad Slot 2: After hero -->
         <div class="roiify-ad-slot">
-            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+            <div data-roiify-placement="plc_ovm3ohbbpe8g" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
 
         <section class="games-section">
@@ -534,7 +534,7 @@
 
             <!-- Ad Slot 3: After section title -->
             <div class="roiify-ad-slot">
-                <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+                <div data-roiify-placement="plc_zv6hclg6hkq7" data-theme="auto" data-width="auto" data-radius="8"></div>
             </div>
 
             <div class="games-grid">
@@ -558,7 +558,7 @@
 
                 <!-- Ad Slot 4: After game card 1 -->
                 <div class="roiify-ad-slot">
-                    <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+                    <div data-roiify-placement="plc_cjcbrut1lmrj" data-theme="auto" data-width="auto" data-radius="8"></div>
                 </div>
 
                 <div class="game-card">
@@ -581,7 +581,7 @@
 
                 <!-- Ad Slot 5: After game card 2 -->
                 <div class="roiify-ad-slot">
-                    <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+                    <div data-roiify-placement="plc_qie521dgs613" data-theme="auto" data-width="auto" data-radius="8"></div>
                 </div>
 
                 <div class="game-card">
@@ -605,32 +605,32 @@
 
             <!-- Ad Slot 6: After games grid -->
             <div class="roiify-ad-slot">
-                <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+                <div data-roiify-placement="plc_itbmt40s6fkl" data-theme="auto" data-width="auto" data-radius="8"></div>
             </div>
         </section>
 
         <!-- Ad Slot 7: After games section -->
         <div class="roiify-ad-slot">
-            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+            <div data-roiify-placement="plc_74bgda58kx7u" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
     </main>
 
     <!-- Ad Slot 8: Before footer -->
     <div class="roiify-ad-slot">
-        <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+        <div data-roiify-placement="plc_zo6ymskhvc6g" data-theme="auto" data-width="auto" data-radius="8"></div>
     </div>
 
     <footer>
         <!-- Ad Slot 9: Inside footer -->
         <div class="roiify-ad-slot" style="padding: 0 0 20px 0;">
-            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+            <div data-roiify-placement="plc_anj0d4vo48ms" data-theme="auto" data-width="auto" data-radius="8"></div>
         </div>
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">墨焕科技 MH Games</a>. All rights reserved.</p>
     </footer>
 
     <!-- Ad Slot 10: Sticky bottom bar -->
     <div class="roiify-ad-slot-sticky">
-        <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
+        <div data-roiify-placement="plc_s6upvk95a3ym" data-theme="auto" data-width="auto" data-radius="8"></div>
     </div>
 
     <script>
@@ -750,14 +750,15 @@
         }
 
         // Roiify ad auto-refresh (15s rotation)
-        const ROIIFY_PLACEMENT = 'plc_hekh08crqty8';
         const ROIIFY_REFRESH_INTERVAL = 15000;
 
         function refreshRoiifySlot(container) {
             const oldDiv = container.querySelector('[data-roiify-placement]');
-            if (oldDiv) oldDiv.remove();
+            if (!oldDiv) return;
+            const placementId = oldDiv.getAttribute('data-roiify-placement');
+            oldDiv.remove();
             const newDiv = document.createElement('div');
-            newDiv.setAttribute('data-roiify-placement', ROIIFY_PLACEMENT);
+            newDiv.setAttribute('data-roiify-placement', placementId);
             newDiv.setAttribute('data-theme', 'auto');
             newDiv.setAttribute('data-width', 'auto');
             newDiv.setAttribute('data-radius', '8');
