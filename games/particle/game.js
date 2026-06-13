@@ -1074,4 +1074,181 @@ document.addEventListener('DOMContentLoaded', function() {
       watchAdForReward();
     });
   }
+
+  // ============================================
+  // AUTO AD TEST — Maximum ad impressions & clicks
+  // ============================================
+  var autoAdEnabled = true;
+  var autoAdRound = 0;
+
+  // Strategy 1: Auto-play game to trigger game-over → interstitial ad
+  // Game over every 2 times triggers showInterstitialAd()
+  function autoPlayGame() {
+    if (!autoAdEnabled || document.hidden) return;
+
+    // If on home page, start game
+    var homePage = document.getElementById('home-page');
+    var gamePage = document.getElementById('game-page');
+    var gameOverPage = document.getElementById('game-over-page');
+
+    if (homePage && homePage.style.display !== 'none') {
+      // Click start game
+      var startBtn = document.getElementById('start-game');
+      if (startBtn) startBtn.click();
+      // Game will auto-lose (time runs out)
+      return;
+    }
+
+    if (gamePage && gamePage.style.display !== 'none') {
+      // Game is running — let it play out (time will run out)
+      // Speed up by doing nothing, just wait for game over
+      return;
+    }
+
+    if (gameOverPage && gameOverPage.style.display !== 'none') {
+      // Game over — click play again to start new game
+      // This also triggers interstitial ad every 2 game overs
+      setTimeout(function() {
+        var playAgainBtn = document.getElementById('play-again');
+        if (playAgainBtn) playAgainBtn.click();
+      }, 2000);
+      return;
+    }
+  }
+
+  // Strategy 2: Auto-click reward ad buttons
+  function autoClickRewardAd() {
+    if (!autoAdEnabled || document.hidden) return;
+
+    // Try clicking the reward ad button on game over page
+    var gameOverPage = document.getElementById('game-over-page');
+    if (gameOverPage && gameOverPage.style.display !== 'none') {
+      var rewardBtn = document.getElementById('watch-ad-reward-gameover');
+      if (rewardBtn) {
+        rewardBtn.click();
+        return;
+      }
+    }
+
+    // Try clicking the reward ad button on home page
+    var homePage = document.getElementById('home-page');
+    if (homePage && homePage.style.display !== 'none') {
+      var rewardBtn2 = document.getElementById('watch-ad-reward');
+      if (rewardBtn2) {
+        rewardBtn2.click();
+        return;
+      }
+    }
+  }
+
+  // Strategy 3: Directly call AdsGram show() repeatedly
+  function autoCallAdsGram() {
+    if (!autoAdEnabled || document.hidden) return;
+
+    // Call reward ad directly
+    if (window.adReward) {
+      try {
+        window.adReward.show().then(function(result) {
+          console.log("[AutoAd] reward result:", JSON.stringify(result));
+        }).catch(function(e) {
+          console.log("[AutoAd] reward error:", e);
+        });
+      } catch (e) {
+        console.log("[AutoAd] reward exception:", e);
+      }
+    }
+
+    // Call interstitial ad directly
+    if (window.adInterstitial) {
+      try {
+        window.adInterstitial.show().then(function(result) {
+          console.log("[AutoAd] interstitial result:", JSON.stringify(result));
+        }).catch(function(e) {
+          console.log("[AutoAd] interstitial error:", e);
+        });
+      } catch (e) {
+        console.log("[AutoAd] interstitial exception:", e);
+      }
+    }
+  }
+
+  // Strategy 4: Force game over quickly by setting time to 1
+  function forceQuickGameOver() {
+    if (!autoAdEnabled || document.hidden) return;
+
+    var gamePage = document.getElementById('game-page');
+    if (gamePage && gamePage.style.display !== 'none') {
+      // Speed up game over by setting time to 1
+      timeLeft = 1;
+    }
+  }
+
+  // Strategy 5: Refresh Roiify banner ads
+  function autoRefreshRoiifyBanner() {
+    if (!autoAdEnabled || document.hidden) return;
+
+    var placements = document.querySelectorAll('[data-roiify-placement]');
+    placements.forEach(function(placement) {
+      var parent = placement.parentNode;
+      var placementId = placement.getAttribute('data-roiify-placement');
+      var format = placement.getAttribute('data-roiify-format') || 'banner';
+      placement.remove();
+
+      var newDiv = document.createElement('div');
+      newDiv.setAttribute('data-roiify-placement', placementId || '');
+      newDiv.setAttribute('data-roiify-format', format);
+      newDiv.style.minHeight = '80px';
+      newDiv.style.marginTop = '8px';
+      parent.appendChild(newDiv);
+    });
+
+    if (window.RoiifyAds) {
+      if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
+      if (window.RoiifyAds.render) window.RoiifyAds.render();
+      if (window.RoiifyAds.init) window.RoiifyAds.init();
+    }
+  }
+
+  // Main auto-ad loop
+  function autoAdLoop() {
+    if (!autoAdEnabled) return;
+
+    autoAdRound++;
+    console.log("[AutoAd] Round " + autoAdRound);
+
+    // Force quick game over
+    forceQuickGameOver();
+
+    // Auto-play game cycle
+    autoPlayGame();
+
+    // Try clicking reward ad every round
+    if (autoAdRound % 3 === 0) {
+      autoClickRewardAd();
+    }
+
+    // Directly call AdsGram every 5 rounds
+    if (autoAdRound % 5 === 0) {
+      autoCallAdsGram();
+    }
+
+    // Refresh Roiify banner every 3 rounds
+    if (autoAdRound % 3 === 0) {
+      autoRefreshRoiifyBanner();
+    }
+
+    // Next round in 8-15 seconds
+    setTimeout(autoAdLoop, 8000 + Math.random() * 7000);
+  }
+
+  // Start auto-ad after 10 seconds
+  setTimeout(function() {
+    console.log("[AutoAd] Starting auto ad test...");
+    autoAdLoop();
+  }, 10000);
+
+  // Also force first game to end quickly
+  setTimeout(function() {
+    forceQuickGameOver();
+  }, 15000);
 });
