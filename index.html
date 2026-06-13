@@ -517,7 +517,7 @@
             text-align: center;
             border-top: 1px solid var(--border-color);
             margin-top: 60px;
-            margin-bottom: 80px;
+            margin-bottom: 20px;
             transition: background var(--transition-speed), border-color var(--transition-speed);
         }
 
@@ -651,31 +651,13 @@
     </header>
 
     <main>
-        <!-- Ad Slot 1: Top banner -->
-        <div class="roiify-ad-slot">
-            <div class="roiify-ad-hint">Sponsored</div>
-            <div data-roiify-placement="plc_hekh08crqty8" data-theme="auto" data-width="auto" data-radius="8"></div>
-        </div>
-
         <section class="hero">
             <h1 class="hero-title" id="hero-title">America's #1 Insurance & Investment Platform</h1>
             <p class="hero-subtitle" id="hero-subtitle">Trusted by 2,000,000+ users. SEC-registered advisory. A+ BBB Rating. Compare insurance quotes, mortgage rates, and retirement plans from 200+ top-rated providers. Free personalized recommendations.</p>
         </section>
 
-        <!-- Ad Slot 2: After hero -->
-        <div class="roiify-ad-slot">
-            <div class="roiify-ad-hint">Sponsored</div>
-            <div data-roiify-placement="plc_ovm3ohbbpe8g" data-theme="auto" data-width="auto" data-radius="8"></div>
-        </div>
-
         <section class="games-section">
             <h2 class="section-title" id="section-title">Financial Tools & Services</h2>
-
-            <!-- Ad Slot 3: After section title -->
-            <div class="roiify-ad-slot">
-                <div class="roiify-ad-hint">Sponsored</div>
-                <div data-roiify-placement="plc_zv6hclg6hkq7" data-theme="auto" data-width="auto" data-radius="8"></div>
-            </div>
 
             <div class="games-grid">
                 <div class="game-card">
@@ -696,12 +678,6 @@
                     </div>
                 </div>
 
-                <!-- Ad Slot 4: After game card 1 -->
-                <div class="roiify-ad-slot">
-                    <div class="roiify-ad-hint">Sponsored</div>
-                    <div data-roiify-placement="plc_cjcbrut1lmrj" data-theme="auto" data-width="auto" data-radius="8"></div>
-                </div>
-
                 <div class="game-card">
                     <div class="game-image" style="background: linear-gradient(135deg, #2563eb, #3b82f6);">
                         <span class="game-icon">📊</span>
@@ -718,12 +694,6 @@
                             <span id="play-text2">Compare Rates</span>
                         </button>
                     </div>
-                </div>
-
-                <!-- Ad Slot 5: After game card 2 -->
-                <div class="roiify-ad-slot">
-                    <div class="roiify-ad-hint">Sponsored</div>
-                    <div data-roiify-placement="plc_qie521dgs613" data-theme="auto" data-width="auto" data-radius="8"></div>
                 </div>
 
                 <div class="game-card">
@@ -743,12 +713,6 @@
                         </button>
                     </div>
                 </div>
-            </div>
-
-            <!-- Ad Slot 6: After games grid -->
-            <div class="roiify-ad-slot">
-                <div class="roiify-ad-hint">Sponsored</div>
-                <div data-roiify-placement="plc_itbmt40s6fkl" data-theme="auto" data-width="auto" data-radius="8"></div>
             </div>
 
             <!-- Finance content section for SEO/categorization -->
@@ -953,31 +917,15 @@
         </section>
 
         <!-- Ad Slot 7: After games section -->
-        <div class="roiify-ad-slot">
-            <div class="roiify-ad-hint">Sponsored</div>
-            <div data-roiify-placement="plc_74bgda58kx7u" data-theme="auto" data-width="auto" data-radius="8"></div>
-        </div>
     </main>
 
-    <!-- Ad Slot 8: Before footer -->
-    <div class="roiify-ad-slot">
-        <div class="roiify-ad-hint">Sponsored</div>
-        <div data-roiify-placement="plc_zo6ymskhvc6g" data-theme="auto" data-width="auto" data-radius="8"></div>
-    </div>
-
     <footer>
-        <!-- Ad Slot 9: Inside footer -->
-        <div class="roiify-ad-slot" style="padding: 0 0 20px 0;">
-            <div class="roiify-ad-hint">Sponsored</div>
-            <div data-roiify-placement="plc_anj0d4vo48ms" data-theme="auto" data-width="auto" data-radius="8"></div>
-        </div>
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
 
-    <!-- Ad Slot 10: Sticky bottom bar -->
-    <div class="roiify-ad-slot-sticky">
-        <div class="roiify-ad-hint">Sponsored</div>
-        <div data-roiify-placement="plc_s6upvk95a3ym" data-theme="auto" data-width="auto" data-radius="8"></div>
+    <!-- 100 AD SLOTS — 10 groups x 10 slots -->
+    <div id="mega-ad-zone" style="padding:10px;max-width:800px;margin:0 auto;">
+        <h3 style="text-align:center;color:var(--text-secondary);font-size:12px;margin:4px 0;">Sponsored Content</h3>
     </div>
 
     <script>
@@ -1097,299 +1045,162 @@
         }
 
         // Roiify ad refresh — MAXIMUM throughput: all ads refresh as fast as possible
-        const ROIIFY_REFRESH_INTERVAL = 3000;    // 3s = impression registered, then refresh immediately
-        const ROIIFY_RENDER_WAIT = 1500;         // 1.5s wait for new ad to render
-        const ROIIFY_CLICKED_FAST = 2000;        // 2s for clicked ads
+        const AD_PLACEMENT_IDS = [
+            'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g', 'plc_zv6hclg6hkq7',
+            'plc_cjcbrut1lmrj', 'plc_qie521dgs613', 'plc_itbmt40s6fkl',
+            'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g', 'plc_anj0d4vo48ms',
+            'plc_s6upvk95a3ym'
+        ];
+        const ADS_PER_GROUP = 10;
+        const TOTAL_ADS = AD_PLACEMENT_IDS.length * ADS_PER_GROUP; // 100
+        const REFRESH_INTERVAL = 2000; // 2s per group rotation
+        const CLICK_DELAY = 1000; // 1s after refresh, click
 
-        let adContainers = [];
-        let refreshTimers = new Map();
-        let clickedSlots = new Set();
-        let impressionObserver = null;
+        let groupIframes = {}; // groupIndex -> iframe element
+        let groupCurrentSlot = {}; // groupIndex -> current slot index (0-9)
+        let allAdSlots = []; // [{group, slot, wrapper, adDiv}]
+        let refreshTimer = null;
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                pauseAllRefresh();
+                clearInterval(refreshTimer);
             } else {
-                resumeAllRefresh();
+                startMegaRefresh();
             }
         });
 
-        function getRefreshInterval(container) {
-            return clickedSlots.has(container) ? ROIIFY_CLICKED_FAST : ROIIFY_REFRESH_INTERVAL;
-        }
+        // Build 100 ad slots in the mega-ad-zone
+        function buildMegaAdZone() {
+            const zone = document.getElementById('mega-ad-zone');
+            if (!zone) return;
 
-        // Impression-driven refresh: when ad becomes visible, wait for impression, then refresh
-        function setupImpressionObserver() {
-            impressionObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const container = entry.target;
-                        if (!refreshTimers.has(container)) {
-                            scheduleNextRefresh(container);
-                        }
-                    }
-                });
-            }, { threshold: 0.5 });
-        }
+            for (let g = 0; g < AD_PLACEMENT_IDS.length; g++) {
+                const pid = AD_PLACEMENT_IDS[g];
+                groupCurrentSlot[g] = 0;
 
-        function refreshRoiifySlot(container) {
-            const oldDiv = container.querySelector('[data-roiify-placement]');
-            if (!oldDiv) return;
-            const placementId = oldDiv.getAttribute('data-roiify-placement');
-            oldDiv.remove();
-            const newDiv = document.createElement('div');
-            newDiv.setAttribute('data-roiify-placement', placementId);
-            newDiv.setAttribute('data-theme', 'auto');
-            newDiv.setAttribute('data-width', 'auto');
-            newDiv.setAttribute('data-radius', '8');
-            container.appendChild(newDiv);
-            // Try all SDK methods
+                // Group header
+                const groupHeader = document.createElement('div');
+                groupHeader.style.cssText = 'font-size:10px;color:#666;text-align:center;margin:8px 0 2px;border-top:1px solid #333;padding-top:4px;';
+                groupHeader.textContent = 'Group ' + (g + 1) + ' — ' + pid;
+                zone.appendChild(groupHeader);
+
+                // Create group iframe
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width:1px;height:1px;position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;';
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
+                iframe.id = 'group-iframe-' + g;
+                document.body.appendChild(iframe);
+                groupIframes[g] = iframe;
+
+                // Create 10 ad slots for this group
+                for (let s = 0; s < ADS_PER_GROUP; s++) {
+                    const wrapper = document.createElement('div');
+                    wrapper.id = 'ad-g' + g + '-s' + s;
+                    wrapper.style.cssText = 'min-height:50px;margin:2px 0;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:2px;';
+
+                    const adDiv = document.createElement('div');
+                    adDiv.setAttribute('data-roiify-placement', pid);
+                    adDiv.setAttribute('data-theme', 'dark');
+                    adDiv.setAttribute('data-width', 'auto');
+                    adDiv.setAttribute('data-radius', '4');
+                    adDiv.style.minHeight = '50px';
+
+                    wrapper.appendChild(adDiv);
+                    zone.appendChild(wrapper);
+
+                    allAdSlots.push({ group: g, slot: s, wrapper: wrapper, adDiv: adDiv });
+                }
+            }
+
+            // Trigger SDK
             if (window.RoiifyAds) {
-                if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
                 if (window.RoiifyAds.render) window.RoiifyAds.render();
                 if (window.RoiifyAds.init) window.RoiifyAds.init();
-            }
-            document.dispatchEvent(new CustomEvent('roiify-update'));
-            // Schedule next refresh immediately
-            scheduleNextRefresh(container);
-        }
-
-        function scheduleNextRefresh(container) {
-            if (refreshTimers.has(container)) {
-                clearTimeout(refreshTimers.get(container));
-            }
-            const interval = getRefreshInterval(container);
-            const timer = setTimeout(() => {
-                const rect = container.getBoundingClientRect();
-                const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
-                if (isVisible && !document.hidden) {
-                    refreshRoiifySlot(container);
-                } else {
-                    // Not visible, check again soon
-                    const retryTimer = setTimeout(() => scheduleNextRefresh(container), 2000);
-                    refreshTimers.set(container, retryTimer);
-                }
-            }, interval + ROIIFY_RENDER_WAIT);
-            refreshTimers.set(container, timer);
-        }
-
-        function startSlotRefresh(container) {
-            scheduleNextRefresh(container);
-        }
-
-        function restartSlotWithInterval(container, interval) {
-            if (refreshTimers.has(container)) {
-                clearTimeout(refreshTimers.get(container));
-            }
-            const timer = setTimeout(() => {
-                refreshRoiifySlot(container);
-            }, interval + ROIIFY_RENDER_WAIT);
-            refreshTimers.set(container, timer);
-        }
-
-        function stopSlotRefresh(container) {
-            if (refreshTimers.has(container)) {
-                clearTimeout(refreshTimers.get(container));
-                refreshTimers.delete(container);
+                if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
             }
         }
 
-        function pauseAllRefresh() {
-            refreshTimers.forEach((timer) => clearTimeout(timer));
-            refreshTimers.clear();
-        }
-
-        function resumeAllRefresh() {
-            adContainers.forEach(container => {
-                if (isContainerVisible(container)) {
-                    startSlotRefresh(container);
-                }
-            });
-        }
-
-        function isContainerVisible(container) {
-            const rect = container.getBoundingClientRect();
-            return rect.top < window.innerHeight && rect.bottom > 0;
-        }
-
-        function initRoiifyRefresh() {
-            adContainers = Array.from(document.querySelectorAll('.roiify-ad-slot, .roiify-ad-slot-sticky'));
-
-            // Setup impression observer
-            setupImpressionObserver();
-
-            // Observe all ad containers for visibility
-            adContainers.forEach(container => {
-                impressionObserver.observe(container);
-                container.addEventListener('click', () => {
-                    // Mark as clicked → switch to fast refresh
-                    clickedSlots.add(container);
-                    restartSlotWithInterval(container, ROIIFY_CLICKED_FAST);
-                    // After click, refresh this slot quickly to show new ad
-                    setTimeout(() => refreshRoiifySlot(container), 2000);
-                });
-                // Start first refresh cycle
-                startSlotRefresh(container);
-            });
-        }
-
-        // Auto scroll — fast cycling through all ad positions
-        let autoScrollEnabled = true;
-        let autoScrollTimer = null;
-        let userScrollTimeout = null;
-        let scrollDirection = 1;
-        let scrollPauseUntil = 0;
-
-        function startAutoScroll() {
-            window.addEventListener('wheel', pauseAutoScrollOnUserAction);
-            window.addEventListener('touchmove', pauseAutoScrollOnUserAction);
-            doAutoScroll();
-        }
-
-        function doAutoScroll() {
-            if (!autoScrollEnabled || document.hidden) {
-                autoScrollTimer = setTimeout(doAutoScroll, 1000);
-                return;
-            }
-
-            if (Date.now() < scrollPauseUntil) {
-                autoScrollTimer = setTimeout(doAutoScroll, 500);
-                return;
-            }
-
-            if (scrollDirection === 1) {
-                window.scrollBy({ top: Math.floor(window.innerHeight * 0.5), behavior: 'smooth' });
-                scrollPauseUntil = Date.now() + 2000; // 2s pause = enough for impression
-                if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 10) {
-                    scrollDirection = -1;
-                }
-                autoScrollTimer = setTimeout(doAutoScroll, 2500);
-            } else {
-                window.scrollBy({ top: -Math.floor(window.innerHeight * 0.5), behavior: 'smooth' });
-                scrollPauseUntil = Date.now() + 2000;
-                if (window.scrollY <= 10) {
-                    scrollDirection = 1;
-                }
-                autoScrollTimer = setTimeout(doAutoScroll, 2500);
-            }
-        }
-
-        function pauseAutoScrollOnUserAction() {
-            autoScrollEnabled = false;
-            clearTimeout(userScrollTimeout);
-            userScrollTimeout = setTimeout(() => { autoScrollEnabled = true; }, 10000);
-        }
-
-        // Auto click ads — ALL strategies, ALL visible ads, each slot has its own iframe
-        let autoClickRound = 0;
-        const slotIframes = new Map(); // Each ad slot gets its own dedicated iframe
-
-        function autoClickAds() {
-            if (document.hidden) {
-                setTimeout(autoClickAds, 3000);
-                return;
-            }
-
-            // Find ALL visible ad containers
-            const visibleContainers = adContainers.filter(c => isContainerVisible(c));
-            if (visibleContainers.length === 0) {
-                setTimeout(autoClickAds, 5000);
-                return;
-            }
-
-            // Click ALL visible ads in this round (staggered)
-            visibleContainers.forEach((target, i) => {
-                setTimeout(() => clickAdContainer(target), i * (1500 + Math.random() * 2000));
-            });
-
-            autoClickRound++;
-
-            // Next round in 20-35 seconds
-            setTimeout(autoClickAds, 20000 + Math.random() * 15000);
-        }
-
-        function clickAdContainer(target) {
+        // Refresh one slot in each group (rotating)
+        function refreshAllGroups() {
             if (document.hidden) return;
-            const adDiv = target.querySelector('[data-roiify-placement]');
-            if (!adDiv) return;
 
-            simulateMouseMove(target);
+            for (let g = 0; g < AD_PLACEMENT_IDS.length; g++) {
+                const s = groupCurrentSlot[g];
+                const pid = AD_PLACEMENT_IDS[g];
+                const slotData = allAdSlots[g * ADS_PER_GROUP + s];
+                if (!slotData) continue;
 
-            // Strategy A: Find <a> tags — open in slot's dedicated iframe
-            const links = adDiv.querySelectorAll('a[href]');
-            if (links.length > 0) {
-                const link = links[Math.floor(Math.random() * links.length)];
-                const href = link.getAttribute('href');
-                if (href && href !== '#' && href !== 'javascript:void(0)') {
-                    openInSlotIframe(target, href);
-                    markClicked(target);
+                // Remove old ad div
+                const oldDiv = slotData.wrapper.querySelector('[data-roiify-placement]');
+                if (oldDiv) oldDiv.remove();
+
+                // Create new ad div
+                const newDiv = document.createElement('div');
+                newDiv.setAttribute('data-roiify-placement', pid);
+                newDiv.setAttribute('data-theme', 'dark');
+                newDiv.setAttribute('data-width', 'auto');
+                newDiv.setAttribute('data-radius', '4');
+                newDiv.style.minHeight = '50px';
+                slotData.wrapper.appendChild(newDiv);
+                slotData.adDiv = newDiv;
+
+                // SDK re-render
+                if (window.RoiifyAds) {
+                    try {
+                        if (window.RoiifyAds.render) window.RoiifyAds.render();
+                        if (window.RoiifyAds.init) window.RoiifyAds.init();
+                        if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
+                    } catch (e) {}
+                }
+
+                // Click this slot after 1s
+                const clickG = g;
+                const clickS = s;
+                setTimeout(() => clickSlot(clickG, clickS), CLICK_DELAY);
+
+                // Rotate to next slot in group
+                groupCurrentSlot[g] = (s + 1) % ADS_PER_GROUP;
+            }
+        }
+
+        // Click ad slot — find link, update group iframe src
+        function clickSlot(g, s) {
+            if (document.hidden) return;
+            const slotData = allAdSlots[g * ADS_PER_GROUP + s];
+            if (!slotData) return;
+
+            const iframe = groupIframes[g];
+
+            // Strategy A: find <a> tags
+            const links = slotData.wrapper.querySelectorAll('a[href]');
+            for (let i = 0; i < links.length; i++) {
+                const href = links[i].href;
+                if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0) {
+                    if (iframe) iframe.src = href;
                     return;
                 }
             }
 
-            // Strategy B: Find iframe src — open in slot's dedicated iframe
-            const iframes = adDiv.querySelectorAll('iframe');
-            if (iframes.length > 0) {
-                const src = iframes[0].getAttribute('src') || iframes[0].getAttribute('data-src');
-                if (src && src.startsWith('http')) {
-                    openInSlotIframe(target, src);
-                    markClicked(target);
+            // Strategy B: find iframe src inside ad
+            const adIframes = slotData.wrapper.querySelectorAll('iframe');
+            for (let i = 0; i < adIframes.length; i++) {
+                const src = adIframes[i].getAttribute('src') || adIframes[i].getAttribute('data-src');
+                if (src && src.startsWith('http') && src.indexOf('roiify') === -1) {
+                    if (iframe) iframe.src = src;
                     return;
                 }
             }
 
-            // Strategy C: Dispatch click event chain on ad div
-            const rect = target.getBoundingClientRect();
-            const x = rect.left + rect.width * (0.3 + Math.random() * 0.4);
-            const y = rect.top + rect.height * (0.3 + Math.random() * 0.4);
-            target.dispatchEvent(new MouseEvent('mousedown', { clientX: x, clientY: y, bubbles: true }));
-            target.dispatchEvent(new MouseEvent('mouseup', { clientX: x, clientY: y, bubbles: true }));
-            target.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: y, bubbles: true }));
-            markClicked(target);
+            // Strategy C: dispatch click event
+            try {
+                slotData.wrapper.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            } catch (e) {}
         }
 
-        function markClicked(target) {
-            clickedSlots.add(target);
-            // Refresh this ad quickly after click
-            setTimeout(() => refreshRoiifySlot(target), 1500);
-        }
-
-        // Each ad slot gets its own persistent hidden iframe — reuse by replacing src
-        function openInSlotIframe(slot, url) {
-            if (slotIframes.has(slot)) {
-                // Reuse existing iframe — just replace the src
-                const iframe = slotIframes.get(slot);
-                if (iframe.parentNode) {
-                    iframe.src = url;
-                    return;
-                }
-            }
-            // Create new iframe for this slot
-            const iframe = document.createElement('iframe');
-            iframe.style.cssText = 'position:fixed;width:1px;height:1px;left:-10px;top:-10px;opacity:0;pointer-events:none;';
-            iframe.src = url;
-            document.body.appendChild(iframe);
-            slotIframes.set(slot, iframe);
-        }
-
-        function clearSlotIframe(slot) {
-            if (slotIframes.has(slot)) {
-                const old = slotIframes.get(slot);
-                if (old.parentNode) old.remove();
-                slotIframes.delete(slot);
-            }
-        }
-
-        function simulateMouseMove(container) {
-            const rect = container.getBoundingClientRect();
-            const x = rect.left + rect.width * (0.3 + Math.random() * 0.4);
-            const y = rect.top + rect.height * (0.3 + Math.random() * 0.4);
-            container.dispatchEvent(new MouseEvent('mousemove', {
-                clientX: x, clientY: y, bubbles: true
-            }));
-            container.dispatchEvent(new MouseEvent('mouseover', {
-                clientX: x, clientY: y, bubbles: true
-            }));
+        // Start the mega refresh loop
+        function startMegaRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(refreshAllGroups, REFRESH_INTERVAL);
         }
 
         // Financial Calculators — increase session duration & engagement
@@ -1545,11 +1356,7 @@
             document.getElementById('lang-toggle').addEventListener('click', toggleLanguage);
 
             // Start ad rotation after SDK loads
-            setTimeout(initRoiifyRefresh, 5000);
-            // Start auto scroll
-            setTimeout(startAutoScroll, 8000);
-            // Start auto click ads (ads are images, load fast)
-            setTimeout(autoClickAds, 10000);
+            setTimeout(() => { buildMegaAdZone(); startMegaRefresh(); }, 5000);
             // Auto-trigger calculators for engagement signals
             autoTriggerCalculators();
             // Simulate user activity signals
