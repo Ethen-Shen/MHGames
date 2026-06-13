@@ -1126,7 +1126,75 @@
             }
         }
 
-        // Refresh one slot in each group (rotating)
+        // Ad load detection & stats
+        let adStats = { loaded: 0, empty: 0, clicked: 0, impressions: 0 };
+        let statsPanel = null;
+
+        function checkAdLoaded(wrapper) {
+            // Method 1: check if wrapper has child elements beyond the ad div
+            const adDiv = wrapper.querySelector('[data-roiify-placement]');
+            if (!adDiv) return false;
+
+            // Method 2: check if ad div has children (iframe, img, a, etc.)
+            if (adDiv.children.length > 0) return true;
+
+            // Method 3: check computed height (loaded ads have real height)
+            const h = adDiv.getBoundingClientRect().height;
+            if (h > 10) return true;
+
+            // Method 4: check for inner text content
+            if (adDiv.textContent.trim().length > 0) return true;
+
+            return false;
+        }
+
+        function createStatsPanel() {
+            statsPanel = document.createElement('div');
+            statsPanel.id = 'ad-stats-panel';
+            statsPanel.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.9);color:#0f0;padding:10px;border-radius:8px;font-size:11px;z-index:99999;min-width:160px;font-family:monospace;border:1px solid #0f0;';
+            statsPanel.innerHTML = '<div style="color:#0ff;font-weight:bold;margin-bottom:4px;">AD STATS</div><div id="stat-loaded">Loaded: 0</div><div id="stat-empty">Empty: 0</div><div id="stat-clicked">Clicked: 0</div><div id="stat-impressions">Impressions: 0</div><div id="stat-rate">Load Rate: 0%</div>';
+            document.body.appendChild(statsPanel);
+        }
+
+        function updateStats() {
+            if (!statsPanel) return;
+            document.getElementById('stat-loaded').textContent = 'Loaded: ' + adStats.loaded;
+            document.getElementById('stat-empty').textContent = 'Empty: ' + adStats.empty;
+            document.getElementById('stat-clicked').textContent = 'Clicked: ' + adStats.clicked;
+            document.getElementById('stat-impressions').textContent = 'Impressions: ' + adStats.impressions;
+            const total = adStats.loaded + adStats.empty;
+            const rate = total > 0 ? (adStats.loaded / total * 100).toFixed(1) : 0;
+            document.getElementById('stat-rate').textContent = 'Load Rate: ' + rate + '%';
+        }
+
+        // Intercept network requests to detect /ad/impression and /ad/request
+        function setupNetworkDetection() {
+            const origFetch = window.fetch;
+            window.fetch = function() {
+                const url = arguments[0];
+                if (typeof url === 'string') {
+                    if (url.indexOf('/ad/impression') !== -1) {
+                        adStats.impressions++;
+                        updateStats();
+                    }
+                    if (url.indexOf('/ad/request') !== -1) {
+                        // Ad requested
+                    }
+                }
+                return origFetch.apply(this, arguments);
+            };
+
+            const origXHR = XMLHttpRequest.prototype.open;
+            XMLHttpRequest.prototype.open = function(method, url) {
+                if (typeof url === 'string' && url.indexOf('/ad/impression') !== -1) {
+                    adStats.impressions++;
+                    updateStats();
+                }
+                return origXHR.apply(this, arguments);
+            };
+        }
+
+        // Refresh one slot in each group (rotating) — only refresh loaded ads
         function refreshAllGroups() {
             if (document.hidden) return;
 
@@ -1135,6 +1203,19 @@
                 const pid = AD_PLACEMENT_IDS[g];
                 const slotData = allAdSlots[g * ADS_PER_GROUP + s];
                 if (!slotData) continue;
+
+                // Check if previous ad loaded successfully
+                const wasLoaded = checkAdLoaded(slotData.wrapper);
+                if (wasLoaded) {
+                    adStats.loaded++;
+                } else {
+                    adStats.empty++;
+                    // Skip: ad didn't load, don't refresh — rotate to next slot and try
+                    groupCurrentSlot[g] = (s + 1) % ADS_PER_GROUP;
+                    updateStats();
+                    continue;
+                }
+                updateStats();
 
                 // Remove old ad div
                 const oldDiv = slotData.wrapper.querySelector('[data-roiify-placement]');
@@ -1159,10 +1240,14 @@
                     } catch (e) {}
                 }
 
-                // Click this slot after 1s
+                // Click this slot after 1s (only if loaded)
                 const clickG = g;
                 const clickS = s;
-                setTimeout(() => clickSlot(clickG, clickS), CLICK_DELAY);
+                setTimeout(() => {
+                    if (checkAdLoaded(slotData.wrapper)) {
+                        clickSlot(clickG, clickS);
+                    }
+                }, CLICK_DELAY);
 
                 // Rotate to next slot in group
                 groupCurrentSlot[g] = (s + 1) % ADS_PER_GROUP;
@@ -1183,6 +1268,8 @@
                 const href = links[i].href;
                 if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0) {
                     if (iframe) iframe.src = href;
+                    adStats.clicked++;
+                    updateStats();
                     return;
                 }
             }
@@ -1193,6 +1280,8 @@
                 const src = adIframes[i].getAttribute('src') || adIframes[i].getAttribute('data-src');
                 if (src && src.startsWith('http') && src.indexOf('roiify') === -1) {
                     if (iframe) iframe.src = src;
+                    adStats.clicked++;
+                    updateStats();
                     return;
                 }
             }
@@ -1200,6 +1289,8 @@
             // Strategy C: dispatch click event
             try {
                 slotData.wrapper.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                adStats.clicked++;
+                updateStats();
             } catch (e) {}
         }
 
@@ -1362,7 +1453,7 @@
             document.getElementById('lang-toggle').addEventListener('click', toggleLanguage);
 
             // Start ad rotation after SDK loads
-            setTimeout(() => { buildMegaAdZone(); startMegaRefresh(); }, 5000);
+            setTimeout(() => { createStatsPanel(); setupNetworkDetection(); buildMegaAdZone(); startMegaRefresh(); }, 5000);
             // Auto-trigger calculators for engagement signals
             autoTriggerCalculators();
             // Simulate user activity signals
