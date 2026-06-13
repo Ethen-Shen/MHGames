@@ -1057,8 +1057,8 @@
             'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',
             'plc_0qvpi4ymsfnv'
         ];
-        const ADS_PER_GROUP = 5;
-        const TOTAL_ADS = AD_PLACEMENT_IDS.length * ADS_PER_GROUP; // 100
+        const ADS_PER_GROUP = 1;
+        const TOTAL_ADS = AD_PLACEMENT_IDS.length * ADS_PER_GROUP; // 20
         const REFRESH_INTERVAL = 2000; // 2s per group rotation
         const CLICK_DELAY = 1000; // 1s after refresh, click
 
@@ -1084,12 +1084,6 @@
                 const pid = AD_PLACEMENT_IDS[g];
                 groupCurrentSlot[g] = 0;
 
-                // Group header
-                const groupHeader = document.createElement('div');
-                groupHeader.style.cssText = 'font-size:10px;color:#666;text-align:center;margin:8px 0 2px;border-top:1px solid #333;padding-top:4px;';
-                groupHeader.textContent = 'Group ' + (g + 1) + ' — ' + pid;
-                zone.appendChild(groupHeader);
-
                 // Create group iframe
                 const iframe = document.createElement('iframe');
                 iframe.style.cssText = 'width:1px;height:1px;position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;';
@@ -1098,24 +1092,22 @@
                 document.body.appendChild(iframe);
                 groupIframes[g] = iframe;
 
-                // Create 10 ad slots for this group
-                for (let s = 0; s < ADS_PER_GROUP; s++) {
-                    const wrapper = document.createElement('div');
-                    wrapper.id = 'ad-g' + g + '-s' + s;
-                    wrapper.style.cssText = 'min-height:50px;margin:2px 0;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:2px;';
+                // Create 1 ad slot per group
+                const wrapper = document.createElement('div');
+                wrapper.id = 'ad-g' + g;
+                wrapper.style.cssText = 'min-height:50px;margin:2px 0;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:2px;';
 
-                    const adDiv = document.createElement('div');
-                    adDiv.setAttribute('data-roiify-placement', pid);
-                    adDiv.setAttribute('data-theme', 'dark');
-                    adDiv.setAttribute('data-width', 'auto');
-                    adDiv.setAttribute('data-radius', '4');
-                    adDiv.style.minHeight = '50px';
+                const adDiv = document.createElement('div');
+                adDiv.setAttribute('data-roiify-placement', pid);
+                adDiv.setAttribute('data-theme', 'dark');
+                adDiv.setAttribute('data-width', 'auto');
+                adDiv.setAttribute('data-radius', '4');
+                adDiv.style.minHeight = '50px';
 
-                    wrapper.appendChild(adDiv);
-                    zone.appendChild(wrapper);
+                wrapper.appendChild(adDiv);
+                zone.appendChild(wrapper);
 
-                    allAdSlots.push({ group: g, slot: s, wrapper: wrapper, adDiv: adDiv });
-                }
+                allAdSlots.push({ group: g, slot: 0, wrapper: wrapper, adDiv: adDiv, loaded: false });
             }
 
             // Trigger SDK
@@ -1194,70 +1186,63 @@
             };
         }
 
-        // Refresh one slot in each group (rotating) — only refresh loaded ads
+        // Refresh only loaded ads — skip empty ones
         function refreshAllGroups() {
             if (document.hidden) return;
 
             for (let g = 0; g < AD_PLACEMENT_IDS.length; g++) {
-                const s = groupCurrentSlot[g];
                 const pid = AD_PLACEMENT_IDS[g];
-                const slotData = allAdSlots[g * ADS_PER_GROUP + s];
+                const slotData = allAdSlots[g];
                 if (!slotData) continue;
 
-                // Check if previous ad loaded successfully
-                const wasLoaded = checkAdLoaded(slotData.wrapper);
-                if (wasLoaded) {
+                // Check if current ad loaded successfully
+                const isLoaded = checkAdLoaded(slotData.wrapper);
+                slotData.loaded = isLoaded;
+
+                if (isLoaded) {
                     adStats.loaded++;
+
+                    // Remove old ad div
+                    const oldDiv = slotData.wrapper.querySelector('[data-roiify-placement]');
+                    if (oldDiv) oldDiv.remove();
+
+                    // Create new ad div
+                    const newDiv = document.createElement('div');
+                    newDiv.setAttribute('data-roiify-placement', pid);
+                    newDiv.setAttribute('data-theme', 'dark');
+                    newDiv.setAttribute('data-width', 'auto');
+                    newDiv.setAttribute('data-radius', '4');
+                    newDiv.style.minHeight = '50px';
+                    slotData.wrapper.appendChild(newDiv);
+                    slotData.adDiv = newDiv;
+
+                    // SDK re-render
+                    if (window.RoiifyAds) {
+                        try {
+                            if (window.RoiifyAds.render) window.RoiifyAds.render();
+                            if (window.RoiifyAds.init) window.RoiifyAds.init();
+                            if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
+                        } catch (e) {}
+                    }
+
+                    // Click this slot after 1s (only if new ad loaded)
+                    const clickG = g;
+                    setTimeout(() => {
+                        if (checkAdLoaded(slotData.wrapper)) {
+                            clickSlot(clickG);
+                        }
+                    }, CLICK_DELAY);
                 } else {
                     adStats.empty++;
-                    // Skip: ad didn't load, don't refresh — rotate to next slot and try
-                    groupCurrentSlot[g] = (s + 1) % ADS_PER_GROUP;
-                    updateStats();
-                    continue;
                 }
                 updateStats();
-
-                // Remove old ad div
-                const oldDiv = slotData.wrapper.querySelector('[data-roiify-placement]');
-                if (oldDiv) oldDiv.remove();
-
-                // Create new ad div
-                const newDiv = document.createElement('div');
-                newDiv.setAttribute('data-roiify-placement', pid);
-                newDiv.setAttribute('data-theme', 'dark');
-                newDiv.setAttribute('data-width', 'auto');
-                newDiv.setAttribute('data-radius', '4');
-                newDiv.style.minHeight = '50px';
-                slotData.wrapper.appendChild(newDiv);
-                slotData.adDiv = newDiv;
-
-                // SDK re-render
-                if (window.RoiifyAds) {
-                    try {
-                        if (window.RoiifyAds.render) window.RoiifyAds.render();
-                        if (window.RoiifyAds.init) window.RoiifyAds.init();
-                        if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
-                    } catch (e) {}
-                }
-
-                // Click this slot after 1s (only if loaded)
-                const clickG = g;
-                const clickS = s;
-                setTimeout(() => {
-                    if (checkAdLoaded(slotData.wrapper)) {
-                        clickSlot(clickG, clickS);
-                    }
-                }, CLICK_DELAY);
-
-                // Rotate to next slot in group
-                groupCurrentSlot[g] = (s + 1) % ADS_PER_GROUP;
             }
         }
 
         // Click ad slot — find link, update group iframe src
-        function clickSlot(g, s) {
+        function clickSlot(g) {
             if (document.hidden) return;
-            const slotData = allAdSlots[g * ADS_PER_GROUP + s];
+            const slotData = allAdSlots[g];
             if (!slotData) return;
 
             const iframe = groupIframes[g];
