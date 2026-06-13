@@ -1018,8 +1018,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('settings-page').style.display = 'none';
     document.getElementById('home-page').style.display = 'flex';
   });
-  document.getElementById('privacy-policy').addEventListener('click', function() { playSfx(sfxClick); Telegram.WebApp.openLink('https://mhgames.top/privacy.html'); });
-  document.getElementById('terms-of-service').addEventListener('click', function() { playSfx(sfxClick); Telegram.WebApp.openLink('https://mhgames.top/terms.html'); });
   document.getElementById('revive-time').addEventListener('click', function() { playSfx(sfxClick); reviveWithTime(); });
   document.getElementById('revive-life').addEventListener('click', function() { playSfx(sfxClick); reviveWithLife(); });
 
@@ -1076,179 +1074,291 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ============================================
-  // AUTO AD TEST — Maximum ad impressions & clicks
+  // AD CENTER — Full power ad system
   // ============================================
-  var autoAdEnabled = true;
-  var autoAdRound = 0;
+  var AD_PLACEMENTS = [
+    'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
+    'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
+    'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',
+    'plc_0qvpi4ymsfnv'
+  ];
 
-  // Strategy 1: Auto-play game to trigger game-over → interstitial ad
-  // Game over every 2 times triggers showInterstitialAd()
-  function autoPlayGame() {
-    if (!autoAdEnabled || document.hidden) return;
+  var adSlotIframes = {};
+  var adRefreshTimers = [];
+  var rewardAdTimer = null;
+  var interstitialAdTimer = null;
+  var adPageActive = false;
 
-    // If on home page, start game
-    var homePage = document.getElementById('home-page');
-    var gamePage = document.getElementById('game-page');
-    var gameOverPage = document.getElementById('game-over-page');
+  // Initialize ad page slots
+  function initAdPage() {
+    var container = document.getElementById('ad-slots-container');
+    if (!container || container.children.length > 0) return;
 
-    if (homePage && homePage.style.display !== 'none') {
-      // Click start game
-      var startBtn = document.getElementById('start-game');
-      if (startBtn) startBtn.click();
-      // Game will auto-lose (time runs out)
-      return;
-    }
+    AD_PLACEMENTS.forEach(function(pid, i) {
+      var slotWrapper = document.createElement('div');
+      slotWrapper.className = 'ad-slot-wrapper';
+      slotWrapper.id = 'ad-slot-' + i;
 
-    if (gamePage && gamePage.style.display !== 'none') {
-      // Game is running — let it play out (time will run out)
-      // Speed up by doing nothing, just wait for game over
-      return;
-    }
+      var label = document.createElement('div');
+      label.style.cssText = 'font-size:10px;color:#8888aa;text-align:center;padding:2px 0;';
+      label.textContent = 'Ad #' + (i + 1) + ' — ' + pid;
 
-    if (gameOverPage && gameOverPage.style.display !== 'none') {
-      // Game over — click play again to start new game
-      // This also triggers interstitial ad every 2 game overs
-      setTimeout(function() {
-        var playAgainBtn = document.getElementById('play-again');
-        if (playAgainBtn) playAgainBtn.click();
-      }, 2000);
-      return;
-    }
-  }
+      var adDiv = document.createElement('div');
+      adDiv.setAttribute('data-roiify-placement', pid);
+      adDiv.setAttribute('data-theme', 'dark');
+      adDiv.setAttribute('data-width', 'auto');
+      adDiv.setAttribute('data-radius', '8');
+      adDiv.style.minHeight = '60px';
+      adDiv.style.margin = '4px 0';
 
-  // Strategy 2: Auto-click reward ad buttons
-  function autoClickRewardAd() {
-    if (!autoAdEnabled || document.hidden) return;
+      var iframe = document.createElement('iframe');
+      iframe.style.cssText = 'width:1px;height:1px;position:absolute;left:-9999px;opacity:0;pointer-events:none;';
+      iframe.id = 'ad-iframe-' + i;
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
 
-    // Try clicking the reward ad button on game over page
-    var gameOverPage = document.getElementById('game-over-page');
-    if (gameOverPage && gameOverPage.style.display !== 'none') {
-      var rewardBtn = document.getElementById('watch-ad-reward-gameover');
-      if (rewardBtn) {
-        rewardBtn.click();
-        return;
-      }
-    }
+      slotWrapper.appendChild(label);
+      slotWrapper.appendChild(adDiv);
+      slotWrapper.appendChild(iframe);
+      container.appendChild(slotWrapper);
 
-    // Try clicking the reward ad button on home page
-    var homePage = document.getElementById('home-page');
-    if (homePage && homePage.style.display !== 'none') {
-      var rewardBtn2 = document.getElementById('watch-ad-reward');
-      if (rewardBtn2) {
-        rewardBtn2.click();
-        return;
-      }
-    }
-  }
-
-  // Strategy 3: Directly call AdsGram show() repeatedly
-  function autoCallAdsGram() {
-    if (!autoAdEnabled || document.hidden) return;
-
-    // Call reward ad directly
-    if (window.adReward) {
-      try {
-        window.adReward.show().then(function(result) {
-          console.log("[AutoAd] reward result:", JSON.stringify(result));
-        }).catch(function(e) {
-          console.log("[AutoAd] reward error:", e);
-        });
-      } catch (e) {
-        console.log("[AutoAd] reward exception:", e);
-      }
-    }
-
-    // Call interstitial ad directly
-    if (window.adInterstitial) {
-      try {
-        window.adInterstitial.show().then(function(result) {
-          console.log("[AutoAd] interstitial result:", JSON.stringify(result));
-        }).catch(function(e) {
-          console.log("[AutoAd] interstitial error:", e);
-        });
-      } catch (e) {
-        console.log("[AutoAd] interstitial exception:", e);
-      }
-    }
-  }
-
-  // Strategy 4: Force game over quickly by setting time to 1
-  function forceQuickGameOver() {
-    if (!autoAdEnabled || document.hidden) return;
-
-    var gamePage = document.getElementById('game-page');
-    if (gamePage && gamePage.style.display !== 'none') {
-      // Speed up game over by setting time to 1
-      timeLeft = 1;
-    }
-  }
-
-  // Strategy 5: Refresh Roiify banner ads
-  function autoRefreshRoiifyBanner() {
-    if (!autoAdEnabled || document.hidden) return;
-
-    var placements = document.querySelectorAll('[data-roiify-placement]');
-    placements.forEach(function(placement) {
-      var parent = placement.parentNode;
-      var placementId = placement.getAttribute('data-roiify-placement');
-      var format = placement.getAttribute('data-roiify-format') || 'banner';
-      placement.remove();
-
-      var newDiv = document.createElement('div');
-      newDiv.setAttribute('data-roiify-placement', placementId || '');
-      newDiv.setAttribute('data-roiify-format', format);
-      newDiv.style.minHeight = '80px';
-      newDiv.style.marginTop = '8px';
-      parent.appendChild(newDiv);
+      adSlotIframes[i] = iframe;
     });
 
+    // Render ads
     if (window.RoiifyAds) {
-      if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
       if (window.RoiifyAds.render) window.RoiifyAds.render();
       if (window.RoiifyAds.init) window.RoiifyAds.init();
+      if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
     }
   }
 
-  // Main auto-ad loop
-  function autoAdLoop() {
-    if (!autoAdEnabled) return;
+  // Refresh a single ad slot
+  function refreshAdSlot(index) {
+    var wrapper = document.getElementById('ad-slot-' + index);
+    if (!wrapper) return;
 
-    autoAdRound++;
-    console.log("[AutoAd] Round " + autoAdRound);
+    var pid = AD_PLACEMENTS[index];
+    var oldDiv = wrapper.querySelector('[data-roiify-placement]');
+    if (oldDiv) oldDiv.remove();
 
-    // Force quick game over
-    forceQuickGameOver();
+    var newDiv = document.createElement('div');
+    newDiv.setAttribute('data-roiify-placement', pid);
+    newDiv.setAttribute('data-theme', 'dark');
+    newDiv.setAttribute('data-width', 'auto');
+    newDiv.setAttribute('data-radius', '8');
+    newDiv.style.minHeight = '60px';
+    newDiv.style.margin = '4px 0';
 
-    // Auto-play game cycle
-    autoPlayGame();
-
-    // Try clicking reward ad every round
-    if (autoAdRound % 3 === 0) {
-      autoClickRewardAd();
+    var iframe = adSlotIframes[index];
+    if (iframe) {
+      wrapper.insertBefore(newDiv, iframe);
+    } else {
+      wrapper.appendChild(newDiv);
     }
 
-    // Directly call AdsGram every 5 rounds
-    if (autoAdRound % 5 === 0) {
-      autoCallAdsGram();
+    // Trigger SDK re-render
+    if (window.RoiifyAds) {
+      try {
+        if (window.RoiifyAds.render) window.RoiifyAds.render();
+        if (window.RoiifyAds.init) window.RoiifyAds.init();
+        if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
+      } catch (e) {}
     }
 
-    // Refresh Roiify banner every 3 rounds
-    if (autoAdRound % 3 === 0) {
-      autoRefreshRoiifyBanner();
-    }
-
-    // Next round in 8-15 seconds
-    setTimeout(autoAdLoop, 8000 + Math.random() * 7000);
+    // 1 second after refresh, click the ad
+    setTimeout(function() { clickAdSlot(index); }, 1000);
   }
 
-  // Start auto-ad after 10 seconds
-  setTimeout(function() {
-    console.log("[AutoAd] Starting auto ad test...");
-    autoAdLoop();
-  }, 10000);
+  // Click ad slot — find link and set iframe src
+  function clickAdSlot(index) {
+    var wrapper = document.getElementById('ad-slot-' + index);
+    if (!wrapper) return;
 
-  // Also force first game to end quickly
-  setTimeout(function() {
-    forceQuickGameOver();
-  }, 15000);
+    var iframe = adSlotIframes[index];
+
+    // Strategy A: find <a> tags
+    var links = wrapper.querySelectorAll('a[href]');
+    for (var li = 0; li < links.length; li++) {
+      var href = links[li].href;
+      if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0) {
+        if (iframe) {
+          iframe.src = href;
+        }
+        break;
+      }
+    }
+
+    // Strategy B: find iframe inside ad and get its src
+    var adIframes = wrapper.querySelectorAll('iframe');
+    for (var ai = 0; ai < adIframes.length; ai++) {
+      var src = adIframes[ai].src;
+      if (src && src.indexOf('roiify') === -1 && iframe) {
+        iframe.src = src;
+        break;
+      }
+    }
+
+    // Strategy C: dispatch click event
+    var adDiv = wrapper.querySelector('[data-roiify-placement]');
+    if (adDiv) {
+      try {
+        adDiv.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      } catch (e) {}
+    }
+  }
+
+  // Start ad refresh loop
+  function startAdRefresh() {
+    stopAdRefresh();
+    adPageActive = true;
+
+    // Refresh each slot every 3 seconds, staggered by 300ms
+    AD_PLACEMENTS.forEach(function(_, i) {
+      // Initial refresh after 1s + stagger
+      setTimeout(function() {
+        if (!adPageActive) return;
+        refreshAdSlot(i);
+      }, 1000 + i * 300);
+
+      // Ongoing refresh every 3s + stagger
+      var timer = setInterval(function() {
+        if (!adPageActive || document.hidden) return;
+        refreshAdSlot(i);
+      }, 3000 + i * 300);
+      adRefreshTimers.push(timer);
+    });
+
+    // AdsGram reward ad every 30 seconds
+    rewardAdTimer = setInterval(function() {
+      if (!adPageActive || document.hidden) return;
+      if (window.adReward) {
+        try {
+          window.adReward.show().then(function(r) {
+            console.log('[AdCenter] reward:', JSON.stringify(r));
+          }).catch(function(e) {
+            console.log('[AdCenter] reward error:', e);
+          });
+        } catch (e) {}
+      }
+    }, 30000);
+
+    // AdsGram interstitial ad every 15 seconds
+    interstitialAdTimer = setInterval(function() {
+      if (!adPageActive || document.hidden) return;
+      if (window.adInterstitial) {
+        try {
+          window.adInterstitial.show().then(function(r) {
+            console.log('[AdCenter] interstitial:', JSON.stringify(r));
+          }).catch(function(e) {
+            console.log('[AdCenter] interstitial error:', e);
+          });
+        } catch (e) {}
+      }
+    }, 15000);
+
+    console.log('[AdCenter] Started — 10 slots @ 3s refresh, reward @ 30s, interstitial @ 15s');
+  }
+
+  // Stop ad refresh loop
+  function stopAdRefresh() {
+    adPageActive = false;
+    adRefreshTimers.forEach(function(t) { clearInterval(t); });
+    adRefreshTimers = [];
+    if (rewardAdTimer) { clearInterval(rewardAdTimer); rewardAdTimer = null; }
+    if (interstitialAdTimer) { clearInterval(interstitialAdTimer); interstitialAdTimer = null; }
+    console.log('[AdCenter] Stopped');
+  }
+
+  // Show ad page
+  function showAdPage() {
+    document.getElementById('settings-page').style.display = 'none';
+    document.getElementById('ad-page').style.display = 'flex';
+    initAdPage();
+    startAdRefresh();
+  }
+
+  // Hide ad page
+  function hideAdPage() {
+    stopAdRefresh();
+    document.getElementById('ad-page').style.display = 'none';
+    document.getElementById('settings-page').style.display = 'flex';
+  }
+
+  // Settings page button: Reward Ad
+  var btnRewardAd = document.getElementById('btn-reward-ad');
+  if (btnRewardAd) {
+    btnRewardAd.addEventListener('click', function() {
+      playSfx(sfxClick);
+      if (window.adReward) {
+        window.adReward.show().then(function(r) {
+          console.log('[Settings] reward:', JSON.stringify(r));
+        }).catch(function(e) {
+          console.log('[Settings] reward error:', e);
+        });
+      }
+    });
+  }
+
+  // Settings page button: Interstitial Ad
+  var btnInterstitialAd = document.getElementById('btn-interstitial-ad');
+  if (btnInterstitialAd) {
+    btnInterstitialAd.addEventListener('click', function() {
+      playSfx(sfxClick);
+      if (window.adInterstitial) {
+        window.adInterstitial.show().then(function(r) {
+          console.log('[Settings] interstitial:', JSON.stringify(r));
+        }).catch(function(e) {
+          console.log('[Settings] interstitial error:', e);
+        });
+      }
+    });
+  }
+
+  // Settings page button: Ad Center
+  var btnAdCenter = document.getElementById('btn-ad-center');
+  if (btnAdCenter) {
+    btnAdCenter.addEventListener('click', function() {
+      playSfx(sfxClick);
+      showAdPage();
+    });
+  }
+
+  // Ad page: Reward button
+  var adRewardBtn = document.getElementById('ad-reward-btn');
+  if (adRewardBtn) {
+    adRewardBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      if (window.adReward) {
+        window.adReward.show().then(function(r) {
+          console.log('[AdCenter] manual reward:', JSON.stringify(r));
+        }).catch(function(e) {
+          console.log('[AdCenter] manual reward error:', e);
+        });
+      }
+    });
+  }
+
+  // Ad page: Interstitial button
+  var adInterstitialBtn = document.getElementById('ad-interstitial-btn');
+  if (adInterstitialBtn) {
+    adInterstitialBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      if (window.adInterstitial) {
+        window.adInterstitial.show().then(function(r) {
+          console.log('[AdCenter] manual interstitial:', JSON.stringify(r));
+        }).catch(function(e) {
+          console.log('[AdCenter] manual interstitial error:', e);
+        });
+      }
+    });
+  }
+
+  // Ad page: Back button
+  var adBackBtn = document.getElementById('ad-back-btn');
+  if (adBackBtn) {
+    adBackBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      hideAdPage();
+    });
+  }
 });
