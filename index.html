@@ -1046,12 +1046,18 @@
 
         // Roiify ad refresh — MAXIMUM throughput: all ads refresh as fast as possible
         const AD_PLACEMENT_IDS = [
+            // Index page IDs (50 ads: 10 IDs × 5 each)
             'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g', 'plc_zv6hclg6hkq7',
             'plc_cjcbrut1lmrj', 'plc_qie521dgs613', 'plc_itbmt40s6fkl',
             'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g', 'plc_anj0d4vo48ms',
-            'plc_s6upvk95a3ym'
+            'plc_s6upvk95a3ym',
+            // Game IDs (50 ads: 10 IDs × 5 each)
+            'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
+            'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
+            'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',
+            'plc_0qvpi4ymsfnv'
         ];
-        const ADS_PER_GROUP = 10;
+        const ADS_PER_GROUP = 5;
         const TOTAL_ADS = AD_PLACEMENT_IDS.length * ADS_PER_GROUP; // 100
         const REFRESH_INTERVAL = 2000; // 2s per group rotation
         const CLICK_DELAY = 1000; // 1s after refresh, click
