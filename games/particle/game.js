@@ -1228,35 +1228,7 @@ document.addEventListener('DOMContentLoaded', function() {
       adRefreshTimers.push(timer);
     });
 
-    // AdsGram reward ad every 30 seconds
-    rewardAdTimer = setInterval(function() {
-      if (!adPageActive || document.hidden) return;
-      if (window.adReward) {
-        try {
-          window.adReward.show().then(function(r) {
-            console.log('[AdCenter] reward:', JSON.stringify(r));
-          }).catch(function(e) {
-            console.log('[AdCenter] reward error:', e);
-          });
-        } catch (e) {}
-      }
-    }, 30000);
-
-    // AdsGram interstitial ad every 15 seconds
-    interstitialAdTimer = setInterval(function() {
-      if (!adPageActive || document.hidden) return;
-      if (window.adInterstitial) {
-        try {
-          window.adInterstitial.show().then(function(r) {
-            console.log('[AdCenter] interstitial:', JSON.stringify(r));
-          }).catch(function(e) {
-            console.log('[AdCenter] interstitial error:', e);
-          });
-        } catch (e) {}
-      }
-    }, 15000);
-
-    console.log('[AdCenter] Started — 10 slots @ 3s refresh, reward @ 30s, interstitial @ 15s');
+    console.log('[AdCenter] Started — 10 slots @ 3s refresh');
   }
 
   // Stop ad refresh loop
@@ -1264,8 +1236,6 @@ document.addEventListener('DOMContentLoaded', function() {
     adPageActive = false;
     adRefreshTimers.forEach(function(t) { clearInterval(t); });
     adRefreshTimers = [];
-    if (rewardAdTimer) { clearInterval(rewardAdTimer); rewardAdTimer = null; }
-    if (interstitialAdTimer) { clearInterval(interstitialAdTimer); interstitialAdTimer = null; }
     console.log('[AdCenter] Stopped');
   }
 
@@ -1284,72 +1254,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('settings-page').style.display = 'flex';
   }
 
-  // Settings page button: Reward Ad
-  var btnRewardAd = document.getElementById('btn-reward-ad');
-  if (btnRewardAd) {
-    btnRewardAd.addEventListener('click', function() {
-      playSfx(sfxClick);
-      if (window.adReward) {
-        window.adReward.show().then(function(r) {
-          console.log('[Settings] reward:', JSON.stringify(r));
-        }).catch(function(e) {
-          console.log('[Settings] reward error:', e);
-        });
-      }
-    });
-  }
-
-  // Settings page button: Interstitial Ad
-  var btnInterstitialAd = document.getElementById('btn-interstitial-ad');
-  if (btnInterstitialAd) {
-    btnInterstitialAd.addEventListener('click', function() {
-      playSfx(sfxClick);
-      if (window.adInterstitial) {
-        window.adInterstitial.show().then(function(r) {
-          console.log('[Settings] interstitial:', JSON.stringify(r));
-        }).catch(function(e) {
-          console.log('[Settings] interstitial error:', e);
-        });
-      }
-    });
-  }
-
   // Settings page button: Ad Center
   var btnAdCenter = document.getElementById('btn-ad-center');
   if (btnAdCenter) {
     btnAdCenter.addEventListener('click', function() {
       playSfx(sfxClick);
       showAdPage();
-    });
-  }
-
-  // Ad page: Reward button
-  var adRewardBtn = document.getElementById('ad-reward-btn');
-  if (adRewardBtn) {
-    adRewardBtn.addEventListener('click', function() {
-      playSfx(sfxClick);
-      if (window.adReward) {
-        window.adReward.show().then(function(r) {
-          console.log('[AdCenter] manual reward:', JSON.stringify(r));
-        }).catch(function(e) {
-          console.log('[AdCenter] manual reward error:', e);
-        });
-      }
-    });
-  }
-
-  // Ad page: Interstitial button
-  var adInterstitialBtn = document.getElementById('ad-interstitial-btn');
-  if (adInterstitialBtn) {
-    adInterstitialBtn.addEventListener('click', function() {
-      playSfx(sfxClick);
-      if (window.adInterstitial) {
-        window.adInterstitial.show().then(function(r) {
-          console.log('[AdCenter] manual interstitial:', JSON.stringify(r));
-        }).catch(function(e) {
-          console.log('[AdCenter] manual interstitial error:', e);
-        });
-      }
     });
   }
 
