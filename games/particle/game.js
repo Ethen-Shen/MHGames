@@ -1077,6 +1077,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // AD CENTER — Full power ad system
   // ============================================
   var AD_PLACEMENTS = [
+    'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g', 'plc_zv6hclg6hkq7',
+    'plc_cjcbrut1lmrj', 'plc_qie521dgs613', 'plc_itbmt40s6fkl',
+    'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g', 'plc_anj0d4vo48ms',
+    'plc_s6upvk95a3ym',
     'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
     'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
     'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',

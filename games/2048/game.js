@@ -1051,4 +1051,207 @@ document.addEventListener('DOMContentLoaded', function() {
       } catch (e) {}
     });
   }
+
+  // ===== AD CENTER =====
+  var AD_PLACEMENTS = [
+    'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g', 'plc_zv6hclg6hkq7',
+    'plc_cjcbrut1lmrj', 'plc_qie521dgs613', 'plc_itbmt40s6fkl',
+    'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g', 'plc_anj0d4vo48ms',
+    'plc_s6upvk95a3ym',
+    'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
+    'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
+    'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',
+    'plc_0qvpi4ymsfnv'
+  ];
+
+  var adSlotIframes = {};
+  var adRefreshTimers = [];
+  var adPageActive = false;
+
+  function initAdPage() {
+    var container = document.getElementById('ad-slots-container');
+    if (!container || container.children.length > 0) return;
+
+    AD_PLACEMENTS.forEach(function(pid, i) {
+      var slotWrapper = document.createElement('div');
+      slotWrapper.id = 'ad-slot-' + i;
+      slotWrapper.style.cssText = 'min-height:50px;margin:2px 0;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:2px;';
+
+      var label = document.createElement('div');
+      label.style.cssText = 'font-size:9px;color:#666;text-align:center;padding:1px 0;';
+      label.textContent = '#' + (i + 1) + ' ' + pid;
+
+      var adDiv = document.createElement('div');
+      adDiv.setAttribute('data-roiify-placement', pid);
+      adDiv.setAttribute('data-theme', 'dark');
+      adDiv.setAttribute('data-width', 'auto');
+      adDiv.setAttribute('data-radius', '4');
+      adDiv.style.minHeight = '50px';
+
+      var iframe = document.createElement('iframe');
+      iframe.style.cssText = 'width:1px;height:1px;position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;';
+      iframe.id = 'ad-iframe-' + i;
+      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
+
+      slotWrapper.appendChild(label);
+      slotWrapper.appendChild(adDiv);
+      slotWrapper.appendChild(iframe);
+      container.appendChild(slotWrapper);
+
+      adSlotIframes[i] = iframe;
+    });
+
+    if (window.RoiifyAds) {
+      if (window.RoiifyAds.render) window.RoiifyAds.render();
+      if (window.RoiifyAds.init) window.RoiifyAds.init();
+      if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
+    }
+  }
+
+  function refreshAdSlot(index) {
+    var wrapper = document.getElementById('ad-slot-' + index);
+    if (!wrapper) return;
+
+    var pid = AD_PLACEMENTS[index];
+    var oldDiv = wrapper.querySelector('[data-roiify-placement]');
+    if (oldDiv) oldDiv.remove();
+
+    var newDiv = document.createElement('div');
+    newDiv.setAttribute('data-roiify-placement', pid);
+    newDiv.setAttribute('data-theme', 'dark');
+    newDiv.setAttribute('data-width', 'auto');
+    newDiv.setAttribute('data-radius', '4');
+    newDiv.style.minHeight = '50px';
+
+    var iframe = adSlotIframes[index];
+    if (iframe) {
+      wrapper.insertBefore(newDiv, iframe);
+    } else {
+      wrapper.appendChild(newDiv);
+    }
+
+    if (window.RoiifyAds) {
+      try {
+        if (window.RoiifyAds.render) window.RoiifyAds.render();
+        if (window.RoiifyAds.init) window.RoiifyAds.init();
+        if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
+      } catch (e) {}
+    }
+
+    setTimeout(function() { clickAdSlot(index); }, 1000);
+  }
+
+  function clickAdSlot(index) {
+    var wrapper = document.getElementById('ad-slot-' + index);
+    if (!wrapper) return;
+    var iframe = adSlotIframes[index];
+
+    // Strategy A: find <a> tags
+    var links = wrapper.querySelectorAll('a[href]');
+    for (var li = 0; li < links.length; li++) {
+      var href = links[li].href;
+      if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0) {
+        if (iframe) iframe.src = href;
+        return;
+      }
+    }
+
+    // Strategy B: find iframe src inside ad
+    var adIframes = wrapper.querySelectorAll('iframe');
+    for (var ai = 0; ai < adIframes.length; ai++) {
+      var src = adIframes[ai].getAttribute('src') || adIframes[ai].getAttribute('data-src');
+      if (src && src.startsWith('http') && src.indexOf('roiify') === -1) {
+        if (iframe) iframe.src = src;
+        return;
+      }
+    }
+
+    // Strategy C: dispatch click
+    var adDiv = wrapper.querySelector('[data-roiify-placement]');
+    if (adDiv) {
+      try { adDiv.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); } catch (e) {}
+    }
+  }
+
+  function startAdRefresh() {
+    stopAdRefresh();
+    adPageActive = true;
+
+    AD_PLACEMENTS.forEach(function(_, i) {
+      setTimeout(function() {
+        if (!adPageActive) return;
+        refreshAdSlot(i);
+      }, 1000 + i * 200);
+
+      var timer = setInterval(function() {
+        if (!adPageActive || document.hidden) return;
+        refreshAdSlot(i);
+      }, 3000 + i * 200);
+      adRefreshTimers.push(timer);
+    });
+
+    console.log('[AdCenter] Started — 20 slots @ 3s refresh');
+  }
+
+  function stopAdRefresh() {
+    adPageActive = false;
+    adRefreshTimers.forEach(function(t) { clearInterval(t); });
+    adRefreshTimers = [];
+  }
+
+  function showAdPage() {
+    document.getElementById('settings-page').style.display = 'none';
+    document.getElementById('ad-page').style.display = 'flex';
+    initAdPage();
+    startAdRefresh();
+  }
+
+  function hideAdPage() {
+    stopAdRefresh();
+    document.getElementById('ad-page').style.display = 'none';
+    document.getElementById('settings-page').style.display = 'flex';
+  }
+
+  // Settings button
+  var settingsBtn = document.getElementById('settings-button');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      document.getElementById('home-page').style.display = 'none';
+      document.getElementById('settings-page').style.display = 'flex';
+    });
+  }
+
+  var backFromSettings = document.getElementById('back-from-settings');
+  if (backFromSettings) {
+    backFromSettings.addEventListener('click', function() {
+      playSfx(sfxBack);
+      document.getElementById('settings-page').style.display = 'none';
+      document.getElementById('home-page').style.display = 'flex';
+    });
+  }
+
+  var btnAdCenter = document.getElementById('btn-ad-center');
+  if (btnAdCenter) {
+    btnAdCenter.addEventListener('click', function() {
+      playSfx(sfxClick);
+      showAdPage();
+    });
+  }
+
+  var adBackBtn = document.getElementById('ad-back-btn');
+  if (adBackBtn) {
+    adBackBtn.addEventListener('click', function() {
+      playSfx(sfxBack);
+      hideAdPage();
+    });
+  }
+
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+      stopAdRefresh();
+    } else if (adPageActive) {
+      startAdRefresh();
+    }
+  });
 });

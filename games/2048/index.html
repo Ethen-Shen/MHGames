@@ -62,6 +62,7 @@
       <div class="button-container">
         <button id="play-button" class="start-button cyborg-btn">PLAY</button>
         <button id="add-shortcut" class="cyborg-btn">ADD TO HOME</button>
+        <button id="settings-button" class="cyborg-btn">SETTINGS</button>
       </div>
     </div>
     <div id="level-select-page" class="level-select-page" style="display: none">
@@ -124,6 +125,18 @@
         </div>
       </div>
     </div>
+    <div id="settings-page" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;">
+      <h2 class="cyber-title">SETTINGS</h2>
+      <div style="margin:10px 0;width:100%;max-width:300px;">
+        <button id="btn-ad-center" class="cyborg-btn" style="width:100%;padding:10px;font-size:14px;">💰 AD CENTER</button>
+      </div>
+      <button id="back-from-settings" class="cyborg-btn" style="width:240px;margin-top:20px;">BACK</button>
+    </div>
+    <div id="ad-page" style="display:none;flex-direction:column;align-items:center;min-height:100vh;padding:20px;">
+      <h2 class="cyber-title">AD CENTER</h2>
+      <div id="ad-slots-container" style="width:100%;max-width:400px;margin:10px auto;"></div>
+      <button id="ad-back-btn" class="cyborg-btn" style="width:240px;margin-top:20px;">BACK</button>
+    </div>
     <div id="game-over-page" class="game-over-page" style="display: none">
       <h2 class="cyber-title" id="game-over-title">GAME OVER</h2>
       <div class="final-score">
@@ -165,5 +178,6 @@
     </div>
     <script src="lang.js"></script>
     <script src="game.js"></script>
+    <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
   </body>
 </html>
