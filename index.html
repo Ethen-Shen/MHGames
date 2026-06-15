@@ -1117,7 +1117,14 @@
                 wrapper.setAttribute('data-roiify-placement', '');
                 wrapper.setAttribute('data-roiify-format', 'banner');
                 grid.appendChild(wrapper);
-                adElements.push({ id: slotId, pid: pid, el: wrapper });
+                
+                const iframe = document.createElement('iframe');
+                iframe.id = 'ad-iframe-' + Date.now() + '-' + i;
+                iframe.style.cssText = 'width: 1px; height: 1px; display: none; border: none;';
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                document.body.appendChild(iframe);
+                
+                adElements.push({ id: slotId, pid: pid, el: wrapper, iframe: iframe });
             }
             // Scroll ad zone into view for SDK visibility tracking
             const zone = document.getElementById('ad-zone');
@@ -1160,12 +1167,17 @@
             const slot = adElements[index];
             if (!slot) return;
 
-            // Strategy 1: Find <a> tags inside the rendered ad and click
+            // Strategy 1: Find <a> tags inside the rendered ad and load in hidden iframe
             const links = slot.el.querySelectorAll('a[href]');
             for (const link of links) {
                 const href = link.href;
                 if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
-                    try { link.click(); return; } catch(e) {}
+                    try { 
+                        if (slot.iframe) {
+                            slot.iframe.src = href;
+                        }
+                        return; 
+                    } catch(e) {}
                 }
             }
 
@@ -1187,6 +1199,12 @@
         function destroyAdSlots() {
             const grid = document.getElementById('ad-grid');
             if (grid) grid.innerHTML = '';
+            
+            for (const slot of adElements) {
+                if (slot.iframe && slot.iframe.parentNode) {
+                    slot.iframe.parentNode.removeChild(slot.iframe);
+                }
+            }
             adElements = [];
         }
 
