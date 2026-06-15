@@ -1167,33 +1167,16 @@
             const slot = adElements[index];
             if (!slot) return;
 
-            // Strategy 1: Find <a> tags inside the rendered ad and load in hidden iframe
             const links = slot.el.querySelectorAll('a[href]');
             for (const link of links) {
                 const href = link.href;
                 if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
-                    try { 
-                        if (slot.iframe) {
-                            slot.iframe.src = href;
-                        }
-                        return; 
-                    } catch(e) {}
+                    if (slot.iframe) {
+                        slot.iframe.src = href;
+                    }
+                    return;
                 }
             }
-
-            // Strategy 2: Find iframes inside ad and dispatch click
-            const iframes = slot.el.querySelectorAll('iframe');
-            for (const iframe of iframes) {
-                try {
-                    iframe.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-                    return;
-                } catch(e) {}
-            }
-
-            // Strategy 3: Dispatch click on the ad container itself
-            try {
-                slot.el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-            } catch(e) {}
         }
 
         function destroyAdSlots() {
