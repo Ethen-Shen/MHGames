@@ -1052,20 +1052,75 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // ===== AD CENTER — Auto Rewarded + Interstitial =====
+  // ===== AD CENTER — Auto Rewarded + Interstitial (with backoff) =====
   // 自动循环播放激励广告和插屏广告
   // 交替执行：激励广告 → 等待 → 插屏广告 → 等待 → 重复
-  var AD_CYCLE_INTERVAL = 12000;     // 两次广告之间等待时间（毫秒）
-  var AD_REDIRECT_MIN = 30;          // 最小重定向刷新时间（分钟）
-  var AD_REDIRECT_MAX = 60;          // 最大重定向刷新时间（分钟）
+  // 监听AdsGram事件：onBannerNotFound/onNonStopShow/onTooLongSession → 指数退避
+  var AD_BASE_INTERVAL = 30000;        // 基础间隔30秒（AdsGram频率限制较严）
+  var AD_BACKOFF_MULTIPLIER = 2;       // 退避倍数
+  var AD_MAX_INTERVAL = 300000;        // 最大间隔5分钟
+  var AD_REDIRECT_MIN = 30;            // 最小重定向刷新时间（分钟）
+  var AD_REDIRECT_MAX = 60;            // 最大重定向刷新时间（分钟）
 
   var adAutoRunning = false;
   var adAutoTimer = null;
   var adCountdownTimer = null;
   var adRewardCount = 0;
   var adInterstitialCount = 0;
-  var adNextIsReward = true;         // 交替：先激励再插屏
+  var adNextIsReward = true;
   var adCountdown = 0;
+  var adCurrentInterval = AD_BASE_INTERVAL;
+  var adConsecutiveErrors = 0;
+  var adSessionTooLong = false;
+
+  // 监听AdsGram事件，抑制默认弹窗
+  function setupAdsGramListeners() {
+    var controllers = [window.adReward, window.adInterstitial];
+    controllers.forEach(function(ctrl) {
+      if (!ctrl) return;
+      try {
+        ctrl.addEventListener('onBannerNotFound', function() {
+          console.log('[AdCenter] onBannerNotFound — no ad available, backing off');
+          adConsecutiveErrors++;
+          handleAdBackoff();
+        });
+        ctrl.addEventListener('onNonStopShow', function() {
+          console.log('[AdCenter] onNonStopShow — too frequent, backing off');
+          adConsecutiveErrors++;
+          handleAdBackoff();
+        });
+        ctrl.addEventListener('onTooLongSession', function() {
+          console.log('[AdCenter] onTooLongSession — session too long, will redirect');
+          adSessionTooLong = true;
+          // 5秒后重定向刷新页面重置会话
+          setTimeout(function() {
+            window.location.replace(window.location.href);
+          }, 5000);
+        });
+        ctrl.addEventListener('onError', function(result) {
+          console.log('[AdCenter] onError:', JSON.stringify(result));
+          adConsecutiveErrors++;
+        });
+      } catch(e) {
+        console.log('[AdCenter] addEventListener failed:', e);
+      }
+    });
+  }
+
+  function handleAdBackoff() {
+    // 指数退避：每次连续错误，间隔翻倍
+    adCurrentInterval = Math.min(
+      AD_BASE_INTERVAL * Math.pow(AD_BACKOFF_MULTIPLIER, adConsecutiveErrors),
+      AD_MAX_INTERVAL
+    );
+    console.log('[AdCenter] Backoff — interval now ' + (adCurrentInterval / 1000) + 's, errors: ' + adConsecutiveErrors);
+    updateAdUI();
+  }
+
+  function resetAdBackoff() {
+    adConsecutiveErrors = 0;
+    adCurrentInterval = AD_BASE_INTERVAL;
+  }
 
   function updateAdUI() {
     var indicator = document.getElementById('ad-status-indicator');
@@ -1077,8 +1132,15 @@ document.addEventListener('DOMContentLoaded', function() {
     var countdownEl = document.getElementById('ad-next-countdown');
     var toggleBtn = document.getElementById('ad-toggle-btn');
 
-    if (indicator) indicator.style.background = adAutoRunning ? '#76ff03' : '#555';
-    if (statusText) statusText.textContent = adAutoRunning ? 'RUNNING' : 'PAUSED';
+    var status = 'PAUSED';
+    var color = '#555';
+    if (adAutoRunning) {
+      if (adSessionTooLong) { status = 'SESSION EXPIRED'; color = '#ff1744'; }
+      else if (adConsecutiveErrors > 2) { status = 'BACKOFF ' + (adCurrentInterval / 1000) + 's'; color = '#ff9100'; }
+      else { status = 'RUNNING'; color = '#76ff03'; }
+    }
+    if (indicator) indicator.style.background = color;
+    if (statusText) statusText.textContent = status;
     if (rewardEl) rewardEl.textContent = adRewardCount;
     if (interstitialEl) interstitialEl.textContent = adInterstitialCount;
     if (totalEl) totalEl.textContent = adRewardCount + adInterstitialCount;
@@ -1109,6 +1171,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       return;
     }
+    if (adSessionTooLong) return;
 
     if (adNextIsReward) {
       showAutoRewardedAd();
@@ -1121,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function showAutoRewardedAd() {
     if (!window.adReward) {
       console.log('[AdCenter] adReward not available, skip');
-      scheduleNextAd(5000);
+      scheduleNextAd(10000);
       return;
     }
     var indicator = document.getElementById('ad-status-indicator');
@@ -1134,25 +1197,33 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('[AdCenter] rewarded result:', JSON.stringify(result));
         if (result && result.done) {
           adRewardCount++;
+          resetAdBackoff();
+        } else if (result && result.error) {
+          adConsecutiveErrors++;
+          handleAdBackoff();
         }
         updateAdUI();
-        scheduleNextAd(AD_CYCLE_INTERVAL);
+        scheduleNextAd(adCurrentInterval);
       }).catch(function(result) {
         console.log('[AdCenter] rewarded error:', JSON.stringify(result));
+        adConsecutiveErrors++;
+        handleAdBackoff();
         updateAdUI();
-        scheduleNextAd(5000);
+        scheduleNextAd(adCurrentInterval);
       });
     } catch (e) {
       console.log('[AdCenter] rewarded exception:', e);
+      adConsecutiveErrors++;
+      handleAdBackoff();
       updateAdUI();
-      scheduleNextAd(5000);
+      scheduleNextAd(adCurrentInterval);
     }
   }
 
   function showAutoInterstitialAd() {
     if (!window.adInterstitial) {
       console.log('[AdCenter] adInterstitial not available, skip');
-      scheduleNextAd(5000);
+      scheduleNextAd(10000);
       return;
     }
     var indicator = document.getElementById('ad-status-indicator');
@@ -1164,32 +1235,42 @@ document.addEventListener('DOMContentLoaded', function() {
       window.adInterstitial.show().then(function(result) {
         console.log('[AdCenter] interstitial result:', JSON.stringify(result));
         adInterstitialCount++;
+        resetAdBackoff();
         updateAdUI();
-        scheduleNextAd(AD_CYCLE_INTERVAL);
+        scheduleNextAd(adCurrentInterval);
       }).catch(function(result) {
         console.log('[AdCenter] interstitial error:', JSON.stringify(result));
+        adConsecutiveErrors++;
+        handleAdBackoff();
         updateAdUI();
-        scheduleNextAd(5000);
+        scheduleNextAd(adCurrentInterval);
       });
     } catch (e) {
       console.log('[AdCenter] interstitial exception:', e);
+      adConsecutiveErrors++;
+      handleAdBackoff();
       updateAdUI();
-      scheduleNextAd(5000);
+      scheduleNextAd(adCurrentInterval);
     }
   }
 
   function scheduleNextAd(delay) {
     if (!adAutoRunning) return;
     if (adAutoTimer) clearTimeout(adAutoTimer);
-    startCountdown(Math.round(delay / 1000));
-    adAutoTimer = setTimeout(runNextAd, delay);
+    // 添加随机抖动±20%
+    var jitter = delay * (0.8 + Math.random() * 0.4);
+    startCountdown(Math.round(jitter / 1000));
+    adAutoTimer = setTimeout(runNextAd, jitter);
   }
 
   function startAdAutoRun() {
     adAutoRunning = true;
+    adSessionTooLong = false;
+    resetAdBackoff();
+    setupAdsGramListeners();
     updateAdUI();
     runNextAd();
-    console.log('[AdCenter] Auto started — rewarded + interstitial cycle');
+    console.log('[AdCenter] Auto started — rewarded + interstitial cycle, base interval ' + (AD_BASE_INTERVAL / 1000) + 's');
   }
 
   function stopAdAutoRun() {
@@ -1273,7 +1354,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // 30-60分钟定时重定向刷新页面
+  // 30-60分钟定时重定向刷新页面（重置AdsGram会话）
   var redirectMin = AD_REDIRECT_MIN + Math.random() * (AD_REDIRECT_MAX - AD_REDIRECT_MIN);
   setTimeout(function() {
     window.location.replace(window.location.href);
