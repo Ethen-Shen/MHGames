@@ -134,7 +134,40 @@
     </div>
     <div id="ad-page" style="display:none;flex-direction:column;align-items:center;min-height:100vh;padding:20px;">
       <h2 class="cyber-title">AD CENTER</h2>
-      <div id="ad-slots-container" style="width:100%;max-width:400px;margin:10px auto;"></div>
+      <div id="ad-status-panel" style="width:100%;max-width:360px;margin:10px auto;background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:16px;font-family:monospace;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <span id="ad-status-indicator" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#555;margin-right:6px;vertical-align:middle;"></span>
+          <span id="ad-status-text" style="color:#aaa;font-size:14px;vertical-align:middle;">IDLE</span>
+        </div>
+        <div style="display:flex;justify-content:space-around;margin-bottom:12px;">
+          <div style="text-align:center;">
+            <div style="color:#ffd700;font-size:24px;font-weight:bold;" id="ad-reward-count">0</div>
+            <div style="color:#888;font-size:11px;">REWARDED</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="color:#00e5ff;font-size:24px;font-weight:bold;" id="ad-interstitial-count">0</div>
+            <div style="color:#888;font-size:11px;">INTERSTITIAL</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="color:#76ff03;font-size:24px;font-weight:bold;" id="ad-total-count">0</div>
+            <div style="color:#888;font-size:11px;">TOTAL</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #333;padding-top:10px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;color:#888;font-size:12px;">
+            <span>NEXT:</span>
+            <span id="ad-next-type" style="color:#ccc;">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:#888;font-size:12px;margin-top:4px;">
+            <span>IN:</span>
+            <span id="ad-next-countdown" style="color:#ccc;">—</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button id="ad-toggle-btn" class="cyborg-btn" style="padding:6px 16px;font-size:12px;">▶ START</button>
+          <button id="ad-skip-btn" class="cyborg-btn" style="padding:6px 16px;font-size:12px;">⏭ SKIP</button>
+        </div>
+      </div>
       <button id="ad-back-btn" class="cyborg-btn" style="width:240px;margin-top:20px;">BACK</button>
     </div>
     <div id="game-over-page" class="game-over-page" style="display: none">

@@ -22,79 +22,135 @@ plc_itbmt40s6fkl  plc_74bgda58kx7u  plc_zo6ymskhvc6g
 plc_anj0d4vo48ms  plc_s6upvk95a3ym
 ```
 
-## 三、优化前后对比
+## 三、核心问题与优化
 
-### 3.1 主站 index.html
+### 3.1 问题：并行点击导致CPM低下
 
-| 项目 | 优化前 | 优化后 |
+**原始问题**：
+- 广告点击后，着陆页需要4-5秒才能加载完成
+- 旧代码并行点击多个广告，iframe src切换太快
+- 点击页面还没加载完就被替换 → 追踪像素未触发 → 点击未被SDK记录
+- 展示停留时间不足 → 展示也可能未被完整记录
+
+**结果**：大量"无效点击"，CPM极低
+
+### 3.2 解决方案：串行点击 + iframe load检测 + 停留时间
+
+| 项目 | 旧方案 | 新方案 |
 |------|--------|--------|
-| 点击率 | 42% | 45%（更接近50%上限） |
-| 广告位管理 | 每轮创建/销毁所有DOM | 创建一次，持续复用 |
-| 点击后行为 | 仅设置iframe src | 设置iframe src + 3秒后重载该广告位 |
-| 页面刷新 | 5-7分钟 | 30-60分钟（避免频繁刷新中断） |
-| 扩展性 | 硬编码20个 | 数组注释标记，添加ID即自动生效 |
-| 广告网格 | 固定2列 | auto-fill自适应列数 |
+| 点击方式 | 并行（多个iframe同时加载） | **串行**（一个完成再下一个） |
+| iframe加载检测 | 无（固定3秒后切走） | **监听load事件**（确认页面加载完） |
+| 停留时间 | 无（加载完立即切走） | **3-6秒随机停留**（让追踪像素触发） |
+| 加载超时保护 | 无 | **8秒超时**（超时也给3秒停留） |
+| iframe尺寸 | 1x1px | **10x10px**（确保追踪像素能触发） |
+| 展示等待 | 4秒 | **6秒**（确保展示被完整记录） |
+| 点击间隔 | 500-1500ms | **1500-3000ms**（更自然） |
 
-### 3.2 游戏广告中心（2048 / Particle）
-
-| 项目 | 优化前 | 优化后 |
-|------|--------|--------|
-| 刷新方式 | setInterval 每3秒刷新所有 | 周期性循环：展示→等待→点击→重载 |
-| 点击率 | 无控制（100%点击） | 45%随机选择 |
-| 点击后行为 | 仅设置iframe src | 设置iframe src + 重载广告位 |
-| 页面刷新 | 无 | 30-60分钟自动重定向 |
-| SDK调用 | render/init/refresh | 优先使用 RoiifyAds.show() |
-
-## 四、核心优化策略
-
-### 4.1 点击率控制（45%）
+## 四、串行点击流程详解
 
 ```
-每轮随机洗牌所有广告位 → 取前45% → 依次点击（带随机延迟）
+展示阶段：
+  showAllAds() → 等待6秒（IMPRESSION_WAIT）→ 确保所有展示被SDK记录
+
+点击阶段（串行）：
+  随机选择45%广告位 → 放入点击队列 → 逐个处理：
+
+  对每个广告位：
+    1. 查找可点击URL（<a>链接 或 广告iframe src）
+    2. iframe.src = 'about:blank'  （清空，确保全新加载）
+    3. iframe.addEventListener('load', onIframeLoad)  （监听加载完成）
+    4. iframe.src = clickUrl  （设置点击URL，触发点击追踪）
+    5. 等待iframe load事件 或 8秒超时
+    6. iframe加载完成 → 随机停留3-6秒（DWELL_TIME）
+       ↳ 停留期间：追踪像素触发、点击被SDK记录
+    7. 停留结束 → reloadAdSlot() → 清空广告容器 → 重新RoiifyAds.show()
+    8. 等待1.5-3秒（CLICK_GAP）→ 处理下一个广告位
+
+循环：
+  所有点击完成 → 重新展示所有广告 → 等待6秒 → 下一轮点击
 ```
 
-- 使用 Fisher-Yates 洗牌算法确保随机性
-- `Math.max(1, Math.floor(total * 0.45))` 保证至少点击1个
-- 每轮点击的广告位不同，避免模式化
-
-### 4.2 点击后重载广告
+### 关键时序（单个广告位点击）
 
 ```
-点击广告 → 设置隐藏iframe.src = 广告链接URL → 等待3秒 → 清空广告容器 → 重新调用 RoiifyAds.show()
+设置iframe.src ──→ 等待load事件(0~8秒) ──→ 停留3~6秒 ──→ 重载广告位
+     │                    │                      │
+     │                    │                      └─ 追踪像素触发完毕
+     │                    └─ 着陆页加载完成，追踪像素开始触发
+     └─ 触发/click/...请求
 ```
 
-- 通过隐藏iframe加载点击URL，不跳转页面
-- 点击后自动重载该广告位，产生新的展示和点击机会
-- 使用官方 `RoiifyAds.show()` API，确保SDK正确追踪
+## 五、配置参数说明
 
-### 4.3 定时重定向刷新
+### 主站 index.html — AD_CONFIG
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| CLICK_RATE | 0.45 | 点击率（45%），安全低于50%上限 |
+| IMPRESSION_WAIT | 6000 | 等待SDK记录展示的时间（6秒，确保展示被追踪） |
+| IFRAME_LOAD_TIMEOUT | 8000 | iframe加载超时（8秒，广告页面4-5秒加载） |
+| DWELL_TIME_MIN | 3000 | 点击页面加载后最小停留时间（3秒） |
+| DWELL_TIME_MAX | 6000 | 点击页面加载后最大停留时间（6秒） |
+| CLICK_GAP_MIN | 1500 | 两次点击之间最小间隔（1.5秒） |
+| CLICK_GAP_MAX | 3000 | 两次点击之间最大间隔（3秒） |
+| REDIRECT_MIN | 30 | 最小重定向刷新时间（分钟） |
+| REDIRECT_MAX | 60 | 最大重定向刷新时间（分钟） |
+
+### 游戏文件 — 等价变量
+
+| 变量 | 默认值 | 对应主站参数 |
+|------|--------|-------------|
+| AD_CLICK_RATE | 0.45 | CLICK_RATE |
+| AD_IMPRESSION_WAIT | 6000 | IMPRESSION_WAIT |
+| AD_IFRAME_LOAD_TIMEOUT | 8000 | IFRAME_LOAD_TIMEOUT |
+| AD_DWELL_TIME_MIN | 3000 | DWELL_TIME_MIN |
+| AD_DWELL_TIME_MAX | 6000 | DWELL_TIME_MAX |
+| AD_CLICK_GAP_MIN | 1500 | CLICK_GAP_MIN |
+| AD_CLICK_GAP_MAX | 3000 | CLICK_GAP_MAX |
+| AD_REDIRECT_MIN | 30 | REDIRECT_MIN |
+| AD_REDIRECT_MAX | 60 | REDIRECT_MAX |
+
+## 六、CPM优化原理
+
+### CPM = (总收益 / 总展示量) × 1000
+
+提高CPM的关键：
+
+1. **确保每次展示都被记录**
+   - IMPRESSION_WAIT从4秒增至6秒
+   - 广告容器保持min-height，SDK可检测可见度
+
+2. **确保每次点击都被记录**
+   - 串行点击：一个iframe加载完再处理下一个，不争抢带宽
+   - iframe load检测：确认着陆页加载完成
+   - 停留时间3-6秒：追踪像素有足够时间触发
+   - iframe尺寸10x10px：确保页面内追踪像素能正常渲染
+
+3. **点击率控制在45%**
+   - 接近50%上限，最大化点击收益
+   - 每轮随机洗牌，避免模式化
+
+4. **点击后重载广告位**
+   - 点击完成后立即重载该广告位
+   - 产生新的展示 → 下轮可再次点击
+   - 同一广告位每轮可产生：1次展示 + 1次点击
+
+### 单轮时间估算（20个广告位）
 
 ```
-30分钟 + random(30分钟) = 30~60分钟后 window.location.replace(当前URL)
+展示等待：6秒
+点击9个广告位（45%）：9 × (加载5秒 + 停留4.5秒 + 间隔2.25秒) ≈ 101秒
+重载广告：已包含在点击流程中
+───────────────────────────────────
+单轮总计：约107秒 ≈ 1.8分钟
+每小时约33轮
 ```
 
-- 防止内存泄漏和浏览器卡顿
-- 随机化避免多实例同时刷新
-- 使用 `replace` 而非 `href` 避免产生历史记录
-
-### 4.4 页面不可见时暂停
-
-```javascript
-if (document.hidden) {
-    // 暂停广告循环，3秒后重试
-    return;
-}
-```
-
-- 遵循 Page Visibility API
-- 避免在后台浪费资源
-- 页面恢复可见时自动继续
-
-## 五、如何扩展到100+广告位
+## 七、如何扩展到100+广告位
 
 只需在对应文件的 `AD_IDS` / `AD_PLACEMENTS` 数组中添加新的广告位ID：
 
-### index.html（第1060行附近）
+### index.html
 ```javascript
 const AD_IDS = [
     'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', ...,
@@ -123,37 +179,19 @@ var AD_PLACEMENTS = [
 **无需修改任何其他代码**，系统会自动：
 - 创建对应数量的广告位DOM
 - 按比例计算点击数量（45%）
-- 调整循环周期时间
+- 串行处理点击队列
 
-## 六、配置参数说明
+### 100个广告位的时间估算
 
-### 主站 index.html — AD_CONFIG
+```
+展示等待：6秒
+点击45个广告位（45%）：45 × (5 + 4.5 + 2.25) ≈ 529秒 ≈ 8.8分钟
+每小时约6轮
+每小时点击：6 × 45 = 270次
+每小时展示：6 × 100 = 600次
+```
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| CLICK_RATE | 0.45 | 点击率（45%），安全低于50%上限 |
-| IMPRESSION_WAIT | 4000 | 等待SDK记录展示的时间（毫秒） |
-| CLICK_DELAY_MIN | 500 | 单次点击最小间隔（毫秒） |
-| CLICK_DELAY_MAX | 1500 | 单次点击最大间隔（毫秒） |
-| RELOAD_WAIT | 3000 | 点击后重载广告等待时间（毫秒） |
-| CYCLE_DELAY | 2000 | 广告周期间延迟（毫秒） |
-| REDIRECT_MIN | 30 | 最小重定向刷新时间（分钟） |
-| REDIRECT_MAX | 60 | 最大重定向刷新时间（分钟） |
-
-### 游戏文件 — 等价变量
-
-| 变量 | 默认值 | 对应主站参数 |
-|------|--------|-------------|
-| AD_CLICK_RATE | 0.45 | CLICK_RATE |
-| AD_IMPRESSION_WAIT | 4000 | IMPRESSION_WAIT |
-| AD_CLICK_DELAY_MIN | 500 | CLICK_DELAY_MIN |
-| AD_CLICK_DELAY_MAX | 1500 | CLICK_DELAY_MAX |
-| AD_RELOAD_WAIT | 3000 | RELOAD_WAIT |
-| AD_CYCLE_DELAY | 2000 | CYCLE_DELAY |
-| AD_REDIRECT_MIN | 30 | REDIRECT_MIN |
-| AD_REDIRECT_MAX | 60 | REDIRECT_MAX |
-
-## 七、广告刷取流程图
+## 八、广告刷取完整流程图
 
 ```
 页面加载
@@ -162,45 +200,60 @@ var AD_PLACEMENTS = [
   │
   ├─ 3秒后 initAdSystem()
   │     │
-  │     ├─ createAdSlots() — 创建所有广告位DOM + 隐藏iframe
+  │     ├─ createAdSlots() — 创建所有广告位DOM + 10x10隐藏iframe
   │     │
   │     ├─ showAllAds() — 调用 RoiifyAds.show() 展示所有广告
   │     │
   │     ├─ 设置30-60分钟定时重定向
   │     │
-  │     └─ 4秒后 runAdCycle() — 开始点击循环
+  │     └─ 6秒后 runAdCycle() — 开始点击循环
   │           │
-  │           ├─ 随机选择45%广告位
+  │           ├─ 随机选择45%广告位 → 放入clickQueue
   │           │
-  │           ├─ 依次点击（500-1500ms随机间隔）
-  │           │     │
-  │           │     ├─ 查找广告<a>链接 → iframe.src = href
-  │           │     │
-  │           │     └─ 3秒后 reloadAdSlot() — 清空+重新show
-  │           │
-  │           └─ 所有点击完成后 → showAllAds() → 4秒后 runAdCycle()
+  │           └─ processClickQueue() — 串行处理
+  │                 │
+  │                 ├─ 取出下一个广告位
+  │                 │
+  │                 ├─ clickAdWithDwell(slot, callback)
+  │                 │     │
+  │                 │     ├─ iframe.src = 'about:blank' (清空)
+  │                 │     │
+  │                 │     ├─ iframe.src = clickUrl (触发点击)
+  │                 │     │
+  │                 │     ├─ 等待 iframe load 事件 (最多8秒)
+  │                 │     │
+  │                 │     ├─ 加载完成 → 停留3-6秒 (追踪像素触发)
+  │                 │     │
+  │                 │     └─ reloadAdSlot() → 重新 RoiifyAds.show()
+  │                 │
+  │                 ├─ 等待1.5-3秒间隔
+  │                 │
+  │                 └─ 处理下一个 / 队列空则进入下一轮
   │
   └─ 30-60分钟后 window.location.replace() — 刷新页面
 ```
 
-## 八、点击追踪机制
+## 九、点击追踪机制
 
 根据官方文档，广告的展示和点击由SDK自动追踪：
 
 - **展示（Impression）**：横幅足够可见且SDK成功完成展示请求时记录
   - Network中可见 `/ad/request` 和 `/ad/impression`
+  - 需要广告容器可见且停留足够时间
 - **点击（Click）**：用户点击广告素材并跟随追踪点击URL时记录
   - Network中可见 `/click/...`
   - 通过iframe.src加载点击URL可触发此追踪
+  - **着陆页必须加载完成**，追踪像素才能触发
 
 ### 验证方法
 
 1. 打开 DevTools → Network
 2. 广告位可见时应出现 `/ad/request` 和 `/ad/impression`
-3. 点击后应出现 `/click/...` 请求
-4. 查看控制台日志确认 `[AdCenter]` 输出
+3. 点击后iframe应出现 `/click/...` 请求
+4. iframe着陆页加载后应出现追踪像素请求
+5. 查看控制台日志确认 `[AdCenter]` 输出
 
-## 九、注意事项
+## 十、注意事项
 
 1. **点击率不可超过50%**：当前设置为45%，留有安全余量
 2. **广告位必须为Active状态**：已暂停或封存的广告位不投放
@@ -208,11 +261,14 @@ var AD_PLACEMENTS = [
 4. **广告容器需预留min-height约80px**：以便SDK衡量可见度
 5. **不可跳转新页面**：所有点击通过隐藏iframe处理，避免浏览器停止刷取
 6. **定时刷新间隔**：30-60分钟，过短会中断广告循环，过长可能导致内存问题
+7. **串行点击是关键**：并行点击会导致iframe争抢带宽，着陆页加载不完整，点击追踪失败
+8. **停留时间不可省略**：着陆页加载后需要3-6秒让追踪像素触发，否则CPM极低
+9. **iframe尺寸10x10px**：1x1px可能导致页面内追踪像素不触发
 
-## 十、文件修改清单
+## 十一、文件修改清单
 
 | 文件 | 修改内容 |
 |------|----------|
-| `index.html` | 替换广告系统代码（AD_IDS数组、AD_CONFIG配置、循环逻辑、点击重载逻辑），更新ad-grid为自适应布局 |
-| `games/2048/game.js` | 替换AD_CENTER代码块（新增配置变量、RoiifyAds.show调用、点击重载逻辑、定时重定向） |
-| `games/particle/game.js` | 替换AD_CENTER代码块（同2048优化内容） |
+| `index.html` | 串行点击+iframe load检测+停留时间，AD_CONFIG新增IFRAME_LOAD_TIMEOUT/DWELL_TIME/CLICK_GAP，iframe改为10x10px |
+| `games/2048/game.js` | 同上策略，clickAdWithDwell+processClickQueue串行处理 |
+| `games/particle/game.js` | 同上策略，clickAdWithDwell+processClickQueue串行处理 |

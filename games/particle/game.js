@@ -1074,203 +1074,164 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   // ============================================
-  // AD CENTER — Optimized
-  // 只需在 AD_PLACEMENTS 数组中添加更多广告位ID即可扩展（支持100+）
-  // 点击率控制在50%以内，点击后修改iframe src重新请求广告
+  // AD CENTER — Auto Rewarded + Interstitial
+  // 自动循环播放激励广告和插屏广告
+  // 交替执行：激励广告 → 等待 → 插屏广告 → 等待 → 重复
   // ============================================
-  var AD_PLACEMENTS = [
-    'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
-    'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
-    'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',
-    'plc_0qvpi4ymsfnv', 'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g',
-    'plc_zv6hclg6hkq7', 'plc_cjcbrut1lmrj', 'plc_qie521dgs613',
-    'plc_itbmt40s6fkl', 'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g',
-    'plc_anj0d4vo48ms', 'plc_s6upvk95a3ym'
-    // ▼▼▼ 在此添加更多广告位ID，支持100+ ▼▼▼
-    // 'plc_new_id_1',
-    // 'plc_new_id_2',
-    // ▲▲▲ 添加位置结束 ▲▲▲
-  ];
+  var AD_CYCLE_INTERVAL = 12000;     // 两次广告之间等待时间（毫秒）
+  var AD_REDIRECT_MIN = 30;          // 最小重定向刷新时间（分钟）
+  var AD_REDIRECT_MAX = 60;          // 最大重定向刷新时间（分钟）
 
-  var AD_CLICK_RATE = 0.45;
-  var AD_IMPRESSION_WAIT = 4000;
-  var AD_CLICK_DELAY_MIN = 500;
-  var AD_CLICK_DELAY_MAX = 1500;
-  var AD_RELOAD_WAIT = 3000;
-  var AD_CYCLE_DELAY = 2000;
-  var AD_REDIRECT_MIN = 30;
-  var AD_REDIRECT_MAX = 60;
+  var adAutoRunning = false;
+  var adAutoTimer = null;
+  var adCountdownTimer = null;
+  var adRewardCount = 0;
+  var adInterstitialCount = 0;
+  var adNextIsReward = true;
+  var adCountdown = 0;
 
-  var adSlotIframes = {};
-  var adRefreshTimers = [];
-  var adPageActive = false;
+  function updateAdUI() {
+    var indicator = document.getElementById('ad-status-indicator');
+    var statusText = document.getElementById('ad-status-text');
+    var rewardEl = document.getElementById('ad-reward-count');
+    var interstitialEl = document.getElementById('ad-interstitial-count');
+    var totalEl = document.getElementById('ad-total-count');
+    var nextTypeEl = document.getElementById('ad-next-type');
+    var countdownEl = document.getElementById('ad-next-countdown');
+    var toggleBtn = document.getElementById('ad-toggle-btn');
 
-  function initAdPage() {
-    var container = document.getElementById('ad-slots-container');
-    if (!container || container.children.length > 0) return;
-
-    AD_PLACEMENTS.forEach(function(pid, i) {
-      var slotWrapper = document.createElement('div');
-      slotWrapper.className = 'ad-slot-wrapper';
-      slotWrapper.id = 'ad-slot-' + i;
-
-      var label = document.createElement('div');
-      label.style.cssText = 'font-size:10px;color:#8888aa;text-align:center;padding:2px 0;';
-      label.textContent = 'Ad #' + (i + 1) + ' — ' + pid;
-
-      var adDiv = document.createElement('div');
-      adDiv.setAttribute('data-roiify-placement', pid);
-      adDiv.setAttribute('data-roiify-format', 'banner');
-      adDiv.style.minHeight = '60px';
-      adDiv.style.margin = '4px 0';
-
-      var iframe = document.createElement('iframe');
-      iframe.style.cssText = 'width:1px;height:1px;position:absolute;left:-9999px;opacity:0;pointer-events:none;';
-      iframe.id = 'ad-iframe-' + i;
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
-
-      slotWrapper.appendChild(label);
-      slotWrapper.appendChild(adDiv);
-      slotWrapper.appendChild(iframe);
-      container.appendChild(slotWrapper);
-
-      adSlotIframes[i] = iframe;
-    });
-
-    // 使用官方SDK展示广告
-    if (window.RoiifyAds && window.RoiifyAds.show) {
-      AD_PLACEMENTS.forEach(function(pid, i) {
-        try {
-          window.RoiifyAds.show(pid, '#ad-slot-' + i + ' [data-roiify-placement]', {
-            theme: 'dark',
-            format: 'banner'
-          });
-        } catch(e) {}
-      });
-    }
-    if (window.RoiifyAds) {
-      if (window.RoiifyAds.render) window.RoiifyAds.render();
-      if (window.RoiifyAds.init) window.RoiifyAds.init();
-      if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
-    }
+    if (indicator) indicator.style.background = adAutoRunning ? '#76ff03' : '#555';
+    if (statusText) statusText.textContent = adAutoRunning ? 'RUNNING' : 'PAUSED';
+    if (rewardEl) rewardEl.textContent = adRewardCount;
+    if (interstitialEl) interstitialEl.textContent = adInterstitialCount;
+    if (totalEl) totalEl.textContent = adRewardCount + adInterstitialCount;
+    if (nextTypeEl) nextTypeEl.textContent = adAutoRunning ? (adNextIsReward ? 'Rewarded' : 'Interstitial') : '—';
+    if (countdownEl) countdownEl.textContent = adAutoRunning ? adCountdown + 's' : '—';
+    if (toggleBtn) toggleBtn.textContent = adAutoRunning ? '⏸ PAUSE' : '▶ START';
   }
 
-  function clickAdSlot(index) {
-    var wrapper = document.getElementById('ad-slot-' + index);
-    if (!wrapper) return;
-    var iframe = adSlotIframes[index];
-
-    // 策略A：查找<a>链接
-    var links = wrapper.querySelectorAll('a[href]');
-    for (var li = 0; li < links.length; li++) {
-      var href = links[li].href;
-      if (href && href !== '#' && href !== '' && href.indexOf('javascript:') !== 0) {
-        if (iframe) iframe.src = href;
-        setTimeout(function() { reloadAdSlot(index); }, AD_RELOAD_WAIT);
-        return;
+  function startCountdown(seconds) {
+    if (adCountdownTimer) clearInterval(adCountdownTimer);
+    adCountdown = seconds;
+    updateAdUI();
+    adCountdownTimer = setInterval(function() {
+      adCountdown--;
+      if (adCountdown <= 0) {
+        clearInterval(adCountdownTimer);
+        adCountdownTimer = null;
+        adCountdown = 0;
       }
-    }
-
-    // 策略B：查找广告内iframe的src
-    var adIframes = wrapper.querySelectorAll('iframe');
-    for (var ai = 0; ai < adIframes.length; ai++) {
-      var src = adIframes[ai].getAttribute('src') || adIframes[ai].getAttribute('data-src');
-      if (src && src.startsWith('http') && src.indexOf('roiify') === -1) {
-        if (iframe) iframe.src = src;
-        setTimeout(function() { reloadAdSlot(index); }, AD_RELOAD_WAIT);
-        return;
-      }
-    }
+      updateAdUI();
+    }, 1000);
   }
 
-  function reloadAdSlot(index) {
-    if (document.hidden || !adPageActive) return;
-    var wrapper = document.getElementById('ad-slot-' + index);
-    if (!wrapper) return;
-    var pid = AD_PLACEMENTS[index];
-    var oldDiv = wrapper.querySelector('[data-roiify-placement]');
-    if (oldDiv) oldDiv.remove();
-
-    var newDiv = document.createElement('div');
-    newDiv.setAttribute('data-roiify-placement', pid);
-    newDiv.setAttribute('data-roiify-format', 'banner');
-    newDiv.style.minHeight = '60px';
-    newDiv.style.margin = '4px 0';
-
-    var iframe = adSlotIframes[index];
-    if (iframe) {
-      wrapper.insertBefore(newDiv, iframe);
-    } else {
-      wrapper.appendChild(newDiv);
-    }
-
-    // 使用官方SDK重新展示广告
-    if (window.RoiifyAds && window.RoiifyAds.show) {
-      try {
-        window.RoiifyAds.show(pid, '#ad-slot-' + index + ' [data-roiify-placement]', {
-          theme: 'dark',
-          format: 'banner'
-        });
-      } catch(e) {}
-    }
-    if (window.RoiifyAds) {
-      try {
-        if (window.RoiifyAds.render) window.RoiifyAds.render();
-        if (window.RoiifyAds.init) window.RoiifyAds.init();
-        if (window.RoiifyAds.refresh) window.RoiifyAds.refresh();
-      } catch(e) {}
-    }
-  }
-
-  function runAdCycle() {
-    if (!adPageActive || document.hidden) {
-      if (adPageActive) {
-        adRefreshTimers.push(setTimeout(runAdCycle, 3000));
+  function runNextAd() {
+    if (!adAutoRunning || document.hidden) {
+      if (adAutoRunning) {
+        adAutoTimer = setTimeout(runNextAd, 3000);
       }
       return;
     }
-    // 随机选择要点击的广告（~45%点击率）
-    var clickCount = Math.max(1, Math.floor(AD_PLACEMENTS.length * AD_CLICK_RATE));
-    var indices = [];
-    for (var i = 0; i < AD_PLACEMENTS.length; i++) indices.push(i);
-    for (var i = indices.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var tmp = indices[i]; indices[i] = indices[j]; indices[j] = tmp;
+
+    if (adNextIsReward) {
+      showAutoRewardedAd();
+    } else {
+      showAutoInterstitialAd();
     }
-    var toClick = indices.slice(0, clickCount);
-
-    toClick.forEach(function(idx, order) {
-      var delay = order * (AD_CLICK_DELAY_MIN + Math.random() * (AD_CLICK_DELAY_MAX - AD_CLICK_DELAY_MIN));
-      setTimeout(function() { clickAdSlot(idx); }, delay);
-    });
-
-    var totalClickTime = clickCount * AD_CLICK_DELAY_MAX + AD_RELOAD_WAIT + AD_CYCLE_DELAY;
-    adRefreshTimers.push(setTimeout(runAdCycle, totalClickTime));
+    adNextIsReward = !adNextIsReward;
   }
 
-  function startAdRefresh() {
-    stopAdRefresh();
-    adPageActive = true;
-    adRefreshTimers.push(setTimeout(runAdCycle, AD_IMPRESSION_WAIT));
-    console.log('[AdCenter] Started — ' + AD_PLACEMENTS.length + ' slots, ' + Math.round(AD_CLICK_RATE * 100) + '% click rate');
+  function showAutoRewardedAd() {
+    if (!window.adReward) {
+      console.log('[AdCenter] adReward not available, skip');
+      scheduleNextAd(5000);
+      return;
+    }
+    var indicator = document.getElementById('ad-status-indicator');
+    var statusText = document.getElementById('ad-status-text');
+    if (indicator) indicator.style.background = '#ffd700';
+    if (statusText) statusText.textContent = 'SHOWING REWARDED...';
+
+    try {
+      window.adReward.show().then(function(result) {
+        console.log('[AdCenter] rewarded result:', JSON.stringify(result));
+        if (result && result.done) {
+          adRewardCount++;
+        }
+        updateAdUI();
+        scheduleNextAd(AD_CYCLE_INTERVAL);
+      }).catch(function(result) {
+        console.log('[AdCenter] rewarded error:', JSON.stringify(result));
+        updateAdUI();
+        scheduleNextAd(5000);
+      });
+    } catch (e) {
+      console.log('[AdCenter] rewarded exception:', e);
+      updateAdUI();
+      scheduleNextAd(5000);
+    }
   }
 
-  function stopAdRefresh() {
-    adPageActive = false;
-    adRefreshTimers.forEach(function(t) { clearTimeout(t); });
-    adRefreshTimers = [];
-    console.log('[AdCenter] Stopped');
+  function showAutoInterstitialAd() {
+    if (!window.adInterstitial) {
+      console.log('[AdCenter] adInterstitial not available, skip');
+      scheduleNextAd(5000);
+      return;
+    }
+    var indicator = document.getElementById('ad-status-indicator');
+    var statusText = document.getElementById('ad-status-text');
+    if (indicator) indicator.style.background = '#00e5ff';
+    if (statusText) statusText.textContent = 'SHOWING INTERSTITIAL...';
+
+    try {
+      window.adInterstitial.show().then(function(result) {
+        console.log('[AdCenter] interstitial result:', JSON.stringify(result));
+        adInterstitialCount++;
+        updateAdUI();
+        scheduleNextAd(AD_CYCLE_INTERVAL);
+      }).catch(function(result) {
+        console.log('[AdCenter] interstitial error:', JSON.stringify(result));
+        updateAdUI();
+        scheduleNextAd(5000);
+      });
+    } catch (e) {
+      console.log('[AdCenter] interstitial exception:', e);
+      updateAdUI();
+      scheduleNextAd(5000);
+    }
+  }
+
+  function scheduleNextAd(delay) {
+    if (!adAutoRunning) return;
+    if (adAutoTimer) clearTimeout(adAutoTimer);
+    startCountdown(Math.round(delay / 1000));
+    adAutoTimer = setTimeout(runNextAd, delay);
+  }
+
+  function startAdAutoRun() {
+    adAutoRunning = true;
+    updateAdUI();
+    runNextAd();
+    console.log('[AdCenter] Auto started — rewarded + interstitial cycle');
+  }
+
+  function stopAdAutoRun() {
+    adAutoRunning = false;
+    if (adAutoTimer) { clearTimeout(adAutoTimer); adAutoTimer = null; }
+    if (adCountdownTimer) { clearInterval(adCountdownTimer); adCountdownTimer = null; }
+    adCountdown = 0;
+    updateAdUI();
+    console.log('[AdCenter] Auto stopped — R:' + adRewardCount + ' I:' + adInterstitialCount);
   }
 
   function showAdPage() {
     document.getElementById('settings-page').style.display = 'none';
     document.getElementById('ad-page').style.display = 'flex';
-    initAdPage();
-    startAdRefresh();
+    updateAdUI();
   }
 
   function hideAdPage() {
-    stopAdRefresh();
+    stopAdAutoRun();
     document.getElementById('ad-page').style.display = 'none';
     document.getElementById('settings-page').style.display = 'flex';
   }
@@ -1290,6 +1251,33 @@ document.addEventListener('DOMContentLoaded', function() {
     adBackBtn.addEventListener('click', function() {
       playSfx(sfxClick);
       hideAdPage();
+    });
+  }
+
+  // Ad page: Toggle start/pause
+  var adToggleBtn = document.getElementById('ad-toggle-btn');
+  if (adToggleBtn) {
+    adToggleBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      if (adAutoRunning) {
+        stopAdAutoRun();
+      } else {
+        startAdAutoRun();
+      }
+    });
+  }
+
+  // Ad page: Skip to next ad
+  var adSkipBtn = document.getElementById('ad-skip-btn');
+  if (adSkipBtn) {
+    adSkipBtn.addEventListener('click', function() {
+      playSfx(sfxClick);
+      if (adAutoRunning && adAutoTimer) {
+        clearTimeout(adAutoTimer);
+        adAutoTimer = null;
+        if (adCountdownTimer) { clearInterval(adCountdownTimer); adCountdownTimer = null; }
+        runNextAd();
+      }
     });
   }
 
