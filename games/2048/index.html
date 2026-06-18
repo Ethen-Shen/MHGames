@@ -64,6 +64,7 @@
         <button id="add-shortcut" class="cyborg-btn">ADD TO HOME</button>
         <button id="settings-button" class="cyborg-btn">SETTINGS</button>
       </div>
+      <div data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin-top:16px;"></div>
     </div>
     <div id="level-select-page" class="level-select-page" style="display: none">
       <h2 class="cyber-title">SELECT LEVEL</h2>
@@ -201,6 +202,7 @@
       <button id="back-to-home" class="back-home-button cyborg-btn">
         HOME
       </button>
+      <div data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin-top:8px;"></div>
     </div>
     <div class="age-rating-box-fixed">
       <div class="age-rating-inner">
@@ -211,6 +213,53 @@
     </div>
     <script src="lang.js"></script>
     <script src="game.js"></script>
-    <!-- roiify SDK paused — pending domain verification, will re-enable with new IDs -->
+    <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
+    <script>
+      // Roiify banner ads — mohuan.asia 组
+      const BANNER_2048_IDS = [
+        'plc_me8xesetl9ic', 'plc_m9e65m6g2y64', 'plc_h563dwew7a50',
+        'plc_ad5w7xfo4elj', 'plc_m29z5usvh20w'
+      ];
+
+      window.addEventListener('load', function() {
+        if (typeof RoiifyAds === 'undefined') return;
+        // 在首页和游戏结束页显示banner
+        const homeBanner = document.querySelector('#home-page [data-roiify-placement]');
+        const overBanner = document.querySelector('#game-over-page [data-roiify-placement]');
+        if (homeBanner) {
+          try {
+            RoiifyAds.show(BANNER_2048_IDS[0], '#home-page [data-roiify-placement]', {
+              theme: 'dark', format: 'banner'
+            });
+          } catch(e) {}
+        }
+        if (overBanner) {
+          try {
+            RoiifyAds.show(BANNER_2048_IDS[1], '#game-over-page [data-roiify-placement]', {
+              theme: 'dark', format: 'banner'
+            });
+          } catch(e) {}
+        }
+        // 每60秒轮换banner广告位
+        let rotIdx = 0;
+        setInterval(() => {
+          rotIdx = (rotIdx + 1) % BANNER_2048_IDS.length;
+          if (homeBanner) {
+            try {
+              RoiifyAds.show(BANNER_2048_IDS[rotIdx], '#home-page [data-roiify-placement]', {
+                theme: 'dark', format: 'banner'
+              });
+            } catch(e) {}
+          }
+          if (overBanner) {
+            try {
+              RoiifyAds.show(BANNER_2048_IDS[(rotIdx + 1) % BANNER_2048_IDS.length], '#game-over-page [data-roiify-placement]', {
+                theme: 'dark', format: 'banner'
+              });
+            } catch(e) {}
+          }
+        }, 60000);
+      });
+    </script>
   </body>
 </html>

