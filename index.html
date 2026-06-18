@@ -932,10 +932,11 @@
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
 
-    <!-- Scalable AD SLOTS — 自动根据 AD_IDS 数组生成 -->
+    <!-- Scalable AD SLOTS — paused, pending domain verification
     <div id="ad-zone" style="padding:10px;max-width:900px;margin:0 auto;">
         <div id="ad-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px;"></div>
     </div>
+    -->
 
     <script>
         // Language translations
@@ -1053,10 +1054,8 @@
             window.open(urls[game], '_blank');
         }
 
-        // ===== Optimized Ad System — Sequential Click + Dwell Time =====
-        // 核心策略：串行点击，每次点击等待iframe加载完成+停留时间后再处理下一个
-        // 保证每次点击都被SDK完整追踪，最大化CPM
-        // 只需在 AD_IDS 数组中添加更多广告位ID即可扩展（支持100+）
+        /* ===== Roiify Ad System PAUSED — pending domain verification =====
+        // 验证成功后拿到新ID时取消注释即可恢复
         const AD_IDS = [
             'plc_vdc3o09u4w1f', 'plc_0a2ms00dezm3', 'plc_etiioz0nfabd',
             'plc_ct198r84dcn0', 'plc_kxmvxrphen2k', 'plc_am5j87frwb0p',
@@ -1065,22 +1064,18 @@
             'plc_zv6hclg6hkq7', 'plc_cjcbrut1lmrj', 'plc_qie521dgs613',
             'plc_itbmt40s6fkl', 'plc_74bgda58kx7u', 'plc_zo6ymskhvc6g',
             'plc_anj0d4vo48ms', 'plc_s6upvk95a3ym'
-            // ▼▼▼ 在此添加更多广告位ID，支持100+ ▼▼▼
-            // 'plc_new_id_1',
-            // 'plc_new_id_2',
-            // ▲▲▲ 添加位置结束 ▲▲▲
         ];
 
         const AD_CONFIG = {
-            CLICK_RATE: 0.45,           // 45% 点击率（安全低于50%）
-            IMPRESSION_WAIT: 6000,      // 等待SDK记录展示（6秒，确保展示被追踪）
-            IFRAME_LOAD_TIMEOUT: 8000,  // iframe加载超时（8秒，广告页面4-5秒加载）
-            DWELL_TIME_MIN: 3000,       // 点击页面加载后最小停留时间（3秒）
-            DWELL_TIME_MAX: 6000,       // 点击页面加载后最大停留时间（6秒）
-            CLICK_GAP_MIN: 1500,        // 两次点击之间最小间隔（1.5秒）
-            CLICK_GAP_MAX: 3000,        // 两次点击之间最大间隔（3秒）
-            REDIRECT_MIN: 30,           // 最小重定向刷新时间（分钟）
-            REDIRECT_MAX: 60,           // 最大重定向刷新时间（分钟）
+            CLICK_RATE: 0.45,
+            IMPRESSION_WAIT: 6000,
+            IFRAME_LOAD_TIMEOUT: 8000,
+            DWELL_TIME_MIN: 3000,
+            DWELL_TIME_MAX: 6000,
+            CLICK_GAP_MIN: 1500,
+            CLICK_GAP_MAX: 3000,
+            REDIRECT_MIN: 30,
+            REDIRECT_MAX: 60,
         };
 
         let adSlots = [];
@@ -1091,9 +1086,7 @@
         function initAdSystem() {
             createAdSlots();
             showAllAds();
-            // 等待展示记录后开始点击循环
             adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT);
-            // 设置30-60分钟定时重定向刷新页面
             const redirectMin = AD_CONFIG.REDIRECT_MIN +
                 Math.random() * (AD_CONFIG.REDIRECT_MAX - AD_CONFIG.REDIRECT_MIN);
             setTimeout(() => {
@@ -1115,7 +1108,6 @@
                 wrapper.setAttribute('data-roiify-placement', '');
                 wrapper.setAttribute('data-roiify-format', 'banner');
                 grid.appendChild(wrapper);
-                // 隐藏iframe用于加载点击URL，尺寸稍大以确保追踪像素触发
                 const iframe = document.createElement('iframe');
                 iframe.id = 'ad-iframe-' + i;
                 iframe.style.cssText = 'width:10px;height:10px;position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;border:none;';
@@ -1146,12 +1138,10 @@
                 adCycleTimer = setTimeout(runAdCycle, 3000);
                 return;
             }
-            // 随机选择要点击的广告（~45%点击率）
             const clickCount = Math.max(1, Math.floor(adSlots.length * AD_CONFIG.CLICK_RATE));
             const shuffled = [...adSlots].sort(() => Math.random() - 0.5);
             clickQueue = shuffled.slice(0, clickCount);
             isClicking = true;
-            // 串行处理点击队列
             processClickQueue();
         }
 
@@ -1161,7 +1151,6 @@
                 return;
             }
             if (clickQueue.length === 0) {
-                // 所有点击完成，重新展示广告并进入下一轮
                 isClicking = false;
                 showAllAds();
                 adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT);
@@ -1169,7 +1158,6 @@
             }
             const slot = clickQueue.shift();
             clickAdWithDwell(slot, () => {
-                // 点击+停留完成后，等待间隔再处理下一个
                 const gap = AD_CONFIG.CLICK_GAP_MIN +
                     Math.random() * (AD_CONFIG.CLICK_GAP_MAX - AD_CONFIG.CLICK_GAP_MIN);
                 setTimeout(processClickQueue, gap);
@@ -1178,9 +1166,7 @@
 
         function clickAdWithDwell(slot, callback) {
             if (document.hidden) { callback(); return; }
-            // 查找广告中的可点击链接
             let clickUrl = null;
-            // 策略A：查找广告中的<a>链接
             const links = slot.el.querySelectorAll('a[href]');
             for (const link of links) {
                 const href = link.href;
@@ -1189,7 +1175,6 @@
                     break;
                 }
             }
-            // 策略B：查找广告内iframe的src
             if (!clickUrl) {
                 const adIframes = slot.el.querySelectorAll('iframe');
                 for (const adIframe of adIframes) {
@@ -1201,33 +1186,24 @@
                 }
             }
             if (!clickUrl) { callback(); return; }
-
-            // 先清空iframe确保全新加载
             slot.iframe.src = 'about:blank';
             let loadHandled = false;
-
             function onIframeLoad() {
                 if (loadHandled) return;
                 loadHandled = true;
                 slot.iframe.removeEventListener('load', onIframeLoad);
-                // iframe加载完成 → 停留一段时间让追踪像素触发
                 const dwell = AD_CONFIG.DWELL_TIME_MIN +
                     Math.random() * (AD_CONFIG.DWELL_TIME_MAX - AD_CONFIG.DWELL_TIME_MIN);
                 setTimeout(() => {
-                    // 停留结束 → 重载该广告位
                     reloadAdSlot(slot);
                     callback();
                 }, dwell);
             }
-
-            // 监听iframe加载完成
             slot.iframe.addEventListener('load', onIframeLoad);
-            // 设置加载超时：如果8秒内没加载完，也继续处理
             setTimeout(() => {
                 if (!loadHandled) {
                     loadHandled = true;
                     slot.iframe.removeEventListener('load', onIframeLoad);
-                    // 超时也要给一段停留时间
                     const dwell = AD_CONFIG.DWELL_TIME_MIN;
                     setTimeout(() => {
                         reloadAdSlot(slot);
@@ -1235,17 +1211,13 @@
                     }, dwell);
                 }
             }, AD_CONFIG.IFRAME_LOAD_TIMEOUT);
-
-            // 设置iframe src触发点击
             slot.iframe.src = clickUrl;
             slot.clicked = true;
         }
 
         function reloadAdSlot(slot) {
             if (document.hidden) return;
-            // 清空广告内容，保留属性
             slot.el.innerHTML = '';
-            // 重新调用SDK展示广告
             if (window.RoiifyAds && window.RoiifyAds.show) {
                 try {
                     window.RoiifyAds.show(slot.pid, '#' + slot.id, {
@@ -1255,6 +1227,7 @@
                 } catch(e) {}
             }
         }
+        ===== END Roiify Ad System PAUSED ===== */
 
         // Financial Calculators — increase session duration & engagement
         function calcLifeInsurance() {
@@ -1408,8 +1381,8 @@
             document.getElementById('theme-toggle-input').addEventListener('change', toggleTheme);
             document.getElementById('lang-toggle').addEventListener('click', toggleLanguage);
 
-            // Start optimized ad system after SDK loads
-            setTimeout(() => { initAdSystem(); }, 3000);
+            // Start optimized ad system after SDK loads — PAUSED pending domain verification
+            // setTimeout(() => { initAdSystem(); }, 3000);
             // Auto-trigger calculators for engagement signals
             autoTriggerCalculators();
             // Simulate user activity signals
@@ -1418,6 +1391,6 @@
             autoInteractCalculators();
         });
     </script>
-    <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
+    <!-- roiify SDK paused — pending domain verification, will re-enable with new IDs -->
 </body>
 </html>

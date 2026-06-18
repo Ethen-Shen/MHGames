@@ -6,7 +6,7 @@
   <title>Particle Blast</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-  <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
+  <!-- roiify SDK paused — pending domain verification, will re-enable with new IDs -->
   <script>
     try {
       if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
@@ -63,7 +63,7 @@
       <button id="watch-ad-reward" class="cyborg-btn">🎁 WATCH AD FOR REWARD</button>
       <button id="settings-button" class="cyborg-btn">SETTINGS</button>
     </div>
-    <div data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin-top:16px;"></div>
+    <!-- roiify banner paused — pending domain verification -->
   </div>
   <div id="settings-page" class="settings-page" style="display: none;">
     <h2 class="cyber-title">SETTINGS</h2>
@@ -159,7 +159,7 @@
     </div>
     <button id="play-again" class="cyborg-btn" style="width:220px;margin:8px;">PLAY AGAIN</button>
     <button id="back-to-home" class="cyborg-btn" style="width:220px;margin:8px;">HOME</button>
-    <div data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin-top:8px;"></div>
+    <!-- roiify banner paused — pending domain verification -->
   </div>
   <div id="message" class="message"></div>
   <div id="level-up-overlay" class="level-up-overlay" style="display:none;">
@@ -174,7 +174,7 @@
   </div>
   <script src="lang.js"></script>
   <script src="game.js"></script>
-  <script>
+    <!-- roiify show paused — pending domain verification
     window.addEventListener('load', function() {
       if (typeof RoiifyAds !== 'undefined') {
         RoiifyAds.show('plc_vdc3o09u4w1f', '[data-roiify-placement]', {
@@ -183,6 +183,6 @@
         });
       }
     });
-  </script>
+    -->
 </body>
 </html>
