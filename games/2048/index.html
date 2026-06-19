@@ -215,50 +215,46 @@
     <script src="game.js"></script>
     <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
     <script>
-      // Roiify banner ads — mohuan.asia 组
-      const BANNER_2048_IDS = [
-        'plc_me8xesetl9ic', 'plc_m9e65m6g2y64', 'plc_h563dwew7a50',
-        'plc_ad5w7xfo4elj', 'plc_m29z5usvh20w'
+      // Roiify banner ads — 自然轮换版
+      const G2048_BANNER_IDS = [
+        'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
+        'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
+        'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
+        'plc_m29z5usvh20w'
       ];
+      let g2048Idx = Math.floor(Math.random() * G2048_BANNER_IDS.length);
 
-      window.addEventListener('load', function() {
+      function show2048Banners() {
         if (typeof RoiifyAds === 'undefined') return;
-        // 在首页和游戏结束页显示banner
         const homeBanner = document.querySelector('#home-page [data-roiify-placement]');
         const overBanner = document.querySelector('#game-over-page [data-roiify-placement]');
         if (homeBanner) {
+          homeBanner.innerHTML = '';
           try {
-            RoiifyAds.show(BANNER_2048_IDS[0], '#home-page [data-roiify-placement]', {
-              theme: 'dark', format: 'banner'
+            RoiifyAds.show(G2048_BANNER_IDS[g2048Idx % G2048_BANNER_IDS.length], homeBanner, {
+              theme: 'auto', width: 'auto', radius: '8'
             });
           } catch(e) {}
         }
         if (overBanner) {
+          overBanner.innerHTML = '';
           try {
-            RoiifyAds.show(BANNER_2048_IDS[1], '#game-over-page [data-roiify-placement]', {
-              theme: 'dark', format: 'banner'
+            RoiifyAds.show(G2048_BANNER_IDS[(g2048Idx + 1) % G2048_BANNER_IDS.length], overBanner, {
+              theme: 'auto', width: 'auto', radius: '8'
             });
           } catch(e) {}
         }
-        // 每60秒轮换banner广告位
-        let rotIdx = 0;
-        setInterval(() => {
-          rotIdx = (rotIdx + 1) % BANNER_2048_IDS.length;
-          if (homeBanner) {
-            try {
-              RoiifyAds.show(BANNER_2048_IDS[rotIdx], '#home-page [data-roiify-placement]', {
-                theme: 'dark', format: 'banner'
-              });
-            } catch(e) {}
-          }
-          if (overBanner) {
-            try {
-              RoiifyAds.show(BANNER_2048_IDS[(rotIdx + 1) % BANNER_2048_IDS.length], '#game-over-page [data-roiify-placement]', {
-                theme: 'dark', format: 'banner'
-              });
-            } catch(e) {}
-          }
-        }, 60000);
+      }
+
+      window.addEventListener('load', function() {
+        show2048Banners();
+        // 每75-105秒轮换
+        function rotate() {
+          g2048Idx = (g2048Idx + 2) % G2048_BANNER_IDS.length;
+          show2048Banners();
+          setTimeout(rotate, 75000 + Math.random() * 30000);
+        }
+        setTimeout(rotate, 75000 + Math.random() * 30000);
       });
     </script>
   </body>

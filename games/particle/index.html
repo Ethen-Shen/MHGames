@@ -175,31 +175,38 @@
   <script src="lang.js"></script>
   <script src="game.js"></script>
   <script>
-    // Roiify banner ads — mohuan.asia 组
-    const PARTICLE_BANNER_IDS = [
+    // Roiify banner ads — 自然轮换版
+    const P_BANNER_IDS = [
       'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
-      'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a'
+      'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
+      'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
+      'plc_m29z5usvh20w'
     ];
-    let particleBannerIdx = 0;
+    let pBannerIdx = Math.floor(Math.random() * P_BANNER_IDS.length);
 
-    function showNextParticleBanner() {
+    function showParticleBanners() {
       if (typeof RoiifyAds === 'undefined') return;
-      const selectors = document.querySelectorAll('[data-roiify-placement]');
-      selectors.forEach((el, i) => {
-        const pid = PARTICLE_BANNER_IDS[i % PARTICLE_BANNER_IDS.length];
+      const slots = document.querySelectorAll('[data-roiify-placement]');
+      slots.forEach((el, i) => {
+        const pid = P_BANNER_IDS[(pBannerIdx + i) % P_BANNER_IDS.length];
+        el.innerHTML = '';
         try {
-          RoiifyAds.show(pid, '[data-roiify-placement]:nth-of-type(' + (i+1) + ')', {
-            theme: 'dark',
-            format: 'banner'
-          });
+          RoiifyAds.show(pid, el, { theme: 'auto', width: 'auto', radius: '8' });
         } catch(e) {}
       });
     }
 
     window.addEventListener('load', function() {
-      showNextParticleBanner();
-      // 每60秒轮换banner广告位
-      setInterval(showNextParticleBanner, 60000);
+      showParticleBanners();
+      // 每90秒轮换，带随机抖动
+      function rotateBanners() {
+        pBannerIdx = (pBannerIdx + slots_count) % P_BANNER_IDS.length;
+        showParticleBanners();
+        const next = 75000 + Math.random() * 30000; // 75-105秒
+        setTimeout(rotateBanners, next);
+      }
+      const slots_count = document.querySelectorAll('[data-roiify-placement]').length;
+      setTimeout(rotateBanners, 75000 + Math.random() * 30000);
     });
   </script>
 </body>
