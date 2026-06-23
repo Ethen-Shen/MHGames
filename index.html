@@ -838,19 +838,19 @@
                 <h3 style="color:var(--text-primary);font-size:18px;margin-bottom:16px;">🛡️ Life Insurance Needs Calculator</h3>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Annual Income ($)</label>
+                        <label for="calc-income" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Annual Income ($)</label>
                         <input id="calc-income" type="number" value="100000" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Outstanding Debts ($)</label>
+                        <label for="calc-debts" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Outstanding Debts ($)</label>
                         <input id="calc-debts" type="number" value="250000" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Number of Dependents</label>
+                        <label for="calc-dependents" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Number of Dependents</label>
                         <input id="calc-dependents" type="number" value="2" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Years of Coverage</label>
+                        <label for="calc-years" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Years of Coverage</label>
                         <input id="calc-years" type="number" value="20" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                 </div>
@@ -863,19 +863,19 @@
                 <h3 style="color:var(--text-primary);font-size:18px;margin-bottom:16px;">📊 Mortgage Payment Calculator</h3>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Home Price ($)</label>
+                        <label for="calc-home-price" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Home Price ($)</label>
                         <input id="calc-home-price" type="number" value="400000" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Down Payment ($)</label>
+                        <label for="calc-down-payment" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Down Payment ($)</label>
                         <input id="calc-down-payment" type="number" value="80000" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Interest Rate (%)</label>
+                        <label for="calc-rate" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Interest Rate (%)</label>
                         <input id="calc-rate" type="number" value="6.5" step="0.1" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Loan Term (years)</label>
+                        <label for="calc-term" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Loan Term (years)</label>
                         <select id="calc-term" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                             <option value="30">30 years</option>
                             <option value="20">20 years</option>
@@ -892,19 +892,19 @@
                 <h3 style="color:var(--text-primary);font-size:18px;margin-bottom:16px;">💰 Retirement Savings Calculator</h3>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Current Age</label>
+                        <label for="calc-age" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Current Age</label>
                         <input id="calc-age" type="number" value="35" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Retirement Age</label>
+                        <label for="calc-retire-age" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Retirement Age</label>
                         <input id="calc-retire-age" type="number" value="65" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Current Savings ($)</label>
+                        <label for="calc-savings" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Current Savings ($)</label>
                         <input id="calc-savings" type="number" value="150000" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                     <div>
-                        <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Monthly Contribution ($)</label>
+                        <label for="calc-monthly" style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px;">Monthly Contribution ($)</label>
                         <input id="calc-monthly" type="number" value="2000" style="width:100%;padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);font-size:14px;">
                     </div>
                 </div>
