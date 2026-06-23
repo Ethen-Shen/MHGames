@@ -175,7 +175,7 @@
   <script src="lang.js"></script>
   <script src="game.js"></script>
   <!-- Hidden iframe for ad clicks -->
-  <iframe name="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
+  <!-- v7.1: iframe已移除，改用dispatchEvent+fetch -->
   <script>
     // Roiify banner ads — v7 基于SDK源码完整分析
     // B=2000ms连续可见阈值，点击立即确认展示，等2.5秒后点击确保展示有效
@@ -207,8 +207,11 @@
       var slot = available[Math.floor(Math.random() * available.length)];
       var link = slot.querySelector('a[href]');
       if (!link) return false;
-      link.target = 'ad_click_frame';
-      link.click();
+      // v7.1: dispatchEvent触发SDK点击监听→确认展示，fetch请求clickUrl→记录点击
+      // 不用iframe，避免X-Frame-Options/CSP报错
+      var event = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+      link.dispatchEvent(event);
+      fetch(link.href, { mode: 'no-cors', redirect: 'manual' }).catch(function() {});
       return true;
     }
 

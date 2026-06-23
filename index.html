@@ -934,8 +934,7 @@
         <p class="footer-text" id="footer-text">© 2024 <a href="#" class="footer-link">MH Finance — Insurance & Investment Advisory</a>. All rights reserved. NPN #000000</p>
     </footer>
 
-    <!-- Hidden iframe for ad clicks — link.target='ad_click_frame' redirects click here -->
-    <iframe name="ad_click_frame" id="ad_click_frame" style="width:0;height:0;border:none;position:absolute;left:-9999px;"></iframe>
+    <!-- v7.1: iframe已移除，改用dispatchEvent+fetch避免X-Frame-Options报错 -->
 
     <script>
         // Language translations
@@ -1217,10 +1216,23 @@
                 return;
             }
 
-            // 覆盖target → 在隐藏iframe中打开（不离开当前页面）
-            link.target = 'ad_click_frame';
-            // 触发点击 → SDK的click监听(capture阶段)确认展示 + 浏览器GET clickUrl → 服务端记录点击
-            link.click();
+            var clickUrl = link.href;
+
+            // v7.1: 不用iframe，避免X-Frame-Options/CSP报错
+            //
+            // SDK源码M()的click监听(capture阶段):
+            //   e.addEventListener("click", s => {
+            //     let x = s.target.closest("a[href]");
+            //     !x || !e.contains(x) || d();  // d()=立即发送/ad/impression
+            //   }, true);
+            //
+            // dispatchEvent触发SDK的capture监听 → 确认展示
+            // 但不触发浏览器默认导航 → 无iframe加载 → 无X-Frame-Options错误
+            var event = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+            link.dispatchEvent(event);
+
+            // fetch clickUrl → GET请求 → roiify服务端记录点击 → 302重定向（不跟随）
+            fetch(clickUrl, { mode: 'no-cors', redirect: 'manual' }).catch(function() {});
 
             // 间隔后点击下一个
             setTimeout(function() {
