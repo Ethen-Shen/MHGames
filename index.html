@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MH Finance — #1 Insurance & Investment Platform | Trusted by 2M+ Users</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
     <meta name="description" content="MH Finance is the leading insurance comparison and financial planning platform trusted by over 2 million users. Compare life insurance, auto insurance, health insurance, mortgage rates, 401k plans, and investment portfolios. SEC-registered advisory. A+ BBB Rating. Serving US and Japan markets.">
     <meta name="keywords" content="insurance quotes, life insurance, auto insurance, health insurance, mortgage rates, loan calculator, financial planning, investment, retirement, annuity, 401k, IRA, tax planning, wealth management, term life insurance, whole life insurance, universal life, variable annuity, fixed annuity, index annuity, long-term care insurance, disability insurance, homeowners insurance, renters insurance, business insurance, liability insurance, Medicare supplement, ACA marketplace, Roth IRA, traditional IRA, 403b, 457 plan, pension, social security, estate planning, trust fund, wealth preservation, tax-deferred investment, portfolio diversification, asset allocation, financial advisor, certified financial planner, fiduciary, investment advisory, SEC registered, FINRA member, SIPC protected">
     <meta name="robots" content="index, follow">
@@ -1231,8 +1232,8 @@
             var event = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
             link.dispatchEvent(event);
 
-            // fetch clickUrl → GET请求 → roiify服务端记录点击 → 302重定向（不跟随）
-            fetch(clickUrl, { mode: 'no-cors' }).catch(function() {});
+            // fetch clickUrl → GET请求 → roiify记录点击 → 不跟随302（避免广告主403/CSP错误）
+            fetch(clickUrl, { redirect: 'manual' }).catch(function() {});
 
             // 间隔后点击下一个
             setTimeout(function() {
