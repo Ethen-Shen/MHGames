@@ -256,7 +256,7 @@
         // 不用iframe，避免X-Frame-Options/CSP报错
         var event = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
         link.dispatchEvent(event);
-        fetch(link.href, { mode: 'no-cors', redirect: 'manual' }).catch(function() {});
+        fetch(link.href, { mode: 'no-cors' }).catch(function() {});
         return true;
       }
 

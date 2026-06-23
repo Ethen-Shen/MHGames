@@ -1232,7 +1232,7 @@
             link.dispatchEvent(event);
 
             // fetch clickUrl → GET请求 → roiify服务端记录点击 → 302重定向（不跟随）
-            fetch(clickUrl, { mode: 'no-cors', redirect: 'manual' }).catch(function() {});
+            fetch(clickUrl, { mode: 'no-cors' }).catch(function() {});
 
             // 间隔后点击下一个
             setTimeout(function() {
